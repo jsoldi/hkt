@@ -1,0 +1,17 @@
+{
+  "type": "module",
+  "name": "hkt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./dist/index.js",
+  "scripts": {
+    "start": "npx tsc && node ./dist/index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^20.5.4",
+    "node-fetch": "^3.3.2",
+    "typescript": "^5.2.2"
+  }
+}
