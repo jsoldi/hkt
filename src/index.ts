@@ -1,7 +1,7 @@
-import { arrayMonad } from "./array.js";
+import { array } from "./array.js";
 import { Cont, contMonad } from "./cont.js";
 import { Gen, genMonad } from "./gen.js";
-import { trivialMonad } from "./trivial.js";
+import { trivial } from "./trivial.js";
 import { Either } from "./either.js";
 import { fail } from "./fail.js";
 import { chain, pipe } from "./pipe.js";

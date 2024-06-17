@@ -1,32 +1,29 @@
 import { HKT } from "./hkt.js";
-import { monad } from "./monad.js";
+import { IMonad, monad } from "./monad.js";
 
-type ContFun<T> = (handle: (a: T) => void) => void
+export type Cont<T> = (handle: (a: T) => void) => void
 
-export interface ContHKT extends HKT {
-    readonly type: ContFun<this["_A"]>
+export interface TCont extends HKT {
+    readonly type: Cont<this["_A"]>
 }
 
-export namespace Cont {
-    export function unit<A>(a: A): ContFun<A> {
-        return handle => handle(a);
-    }
-
-    export function bind<A, B>(fa: ContFun<A>, f: (a: A) => ContFun<B>): ContFun<B> {
-        return handle => fa(a => f(a)(handle));
-    }
-
-    export function delay(ms: number): ContFun<void> {
-        return (handle: () => void) => setTimeout(handle, ms);
-    }
-
-    export function lazy<T>(f: () => T): ContFun<Awaited<T>> {
-        return handle => (async () => handle(await f()))()
-    }
+export interface ICont extends IMonad<TCont> {
+    delay: (ms: number) => Cont<void>
+    lazy: <T>(f: () => T) => Cont<T>
 }
 
-export const contMonad = monad<ContHKT>({
-    unit: Cont.unit,
-    bind: Cont.bind
-});
+export const cont: ICont = (() => {
+    const delay = (ms: number): Cont<void> => handle => setTimeout(handle, ms);
+    const lazy = <T>(f: () => T): Cont<T> => handle => (async () => handle(await f()))();
 
+    const contMonad = monad<TCont>({
+        unit: a => handle => handle(a),
+        bind: (fa, f) => handle => fa(a => f(a)(handle))
+    });
+
+    return {
+        delay,
+        lazy,
+        ...contMonad
+    }
+})();

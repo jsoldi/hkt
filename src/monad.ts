@@ -1,11 +1,11 @@
 import { HKT, Kind } from "./hkt.js";
 
-export interface MonadBase<F extends HKT> {
+export interface IMonadBase<F extends HKT> {
     unit<A>(a: A): Kind<F, A>
     bind<A, B>(fa: Kind<F, A>, f: (a: A) => Kind<F, B>): Kind<F, B>
 }
 
-export interface Monad<F extends HKT> extends MonadBase<F> {
+export interface IMonad<F extends HKT> extends IMonadBase<F> {
     map<A, B>(fa: Kind<F, A>, f: (a: A) => B): Kind<F, B>
     join<A>(ffa: Kind<F, Kind<F, A>>): Kind<F, A>
     lift<A, B>(f: (a: A) => B): (fa: Kind<F, A>) => Kind<F, B>
@@ -39,7 +39,7 @@ export interface Monad<F extends HKT> extends MonadBase<F> {
     }
 }
 
-export function monad<F extends HKT>(base: MonadBase<F>): Monad<F> {
+export function monad<F extends HKT>(base: IMonadBase<F>): IMonad<F> {
     const map = <A, B>(fa: Kind<F, A>, f: (a: A) => B): Kind<F, B> => base.bind(fa, a => base.unit(f(a)));
     const join = <A>(ffa: Kind<F, Kind<F, A>>): Kind<F, A> => base.bind(ffa, fa => fa);
     const lift = <A, B>(f: (a: A) => B) => (fa: Kind<F, A>): Kind<F, B> => map(fa, f);

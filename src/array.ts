@@ -1,11 +1,11 @@
 import { HKT } from "./hkt.js";
-import { monad } from "./monad.js";
+import { IMonad, monad } from "./monad.js";
 
-export interface ArrayHKT extends HKT {
+export interface TArray extends HKT {
     readonly type: Array<this["_A"]>
 }
 
-export const arrayMonad = monad<ArrayHKT>({
+export const array = monad<TArray>({
     unit: a => [a],
     bind: (fa, f) => fa.flatMap(f)
 });
