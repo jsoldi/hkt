@@ -1,10 +1,10 @@
 import { array } from "./array.js";
-import { Cont, contMonad } from "./cont.js";
-import { Gen, genMonad } from "./gen.js";
+import { Cont, TCont, cont } from "./cont.js";
 import { trivial } from "./trivial.js";
 import { Either } from "./either.js";
-import { fail } from "./fail.js";
+import { fail, maybe } from "./fail.js";
 import { chain, pipe } from "./pipe.js";
+import { left } from "./left.js";
 
 export function test<T>(fa: Either<T, Error>) {
     return fail.pipe(
@@ -14,13 +14,16 @@ export function test<T>(fa: Either<T, Error>) {
 }
 
 async function main() {
-    const lel = test(fail.tryCatch(() => {
-        throw new Error("oh shite");
+    const mc = maybe.transform<TCont>(cont);
 
-        return { hey: 123 };
-    }));
+    const rats = mc.unit(10);
+    
+    //const lel = maybe.wrap(cont.delay)(123);
 
-    console.log(lel);
+    mc.pipe(
+        mc.unit(10),
+        a => cont.map(cont.delay(123), maybe.unit)
+    )
 }
 
 main();

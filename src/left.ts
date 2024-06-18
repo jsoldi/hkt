@@ -1,25 +1,23 @@
-import { Either, either } from "./either.js";
-import { HKT, Kind } from "./hkt.js";
+import { Either, either, Right, KEither } from "./either.js";
+import { KApp, KRoot } from "./hkt.js";
 import { IMonad, monad } from "./monad.js";
+import { ITransMonad } from "./transform.js";
 
-export interface TLeft<R> extends HKT {
-    readonly type: Either<this["_A"], R>
+export interface KLeftTransform<R> extends KRoot {
+    readonly 0: unknown // F
+    readonly 1: unknown // L
+    readonly body: KApp<[this[0], Either<this[1], R>]>
 }
 
-export interface TLeftTransform<R, F extends HKT> extends HKT {
-    type: Kind<F, Either<this["_A"], R>>
+export interface ILeft<R = unknown> extends ITransMonad<KApp<[KEither, R]>, KLeftTransform<R>> {
+    failure: (a: R) => Right<R>
+    orElse: <C>(f: (a: R) => C) => <A>(fa: Either<A, R>) => A | C
+    or: <A>(f: (b: R) => Either<A, R>) => <B>(fa: Either<B, R>) => Either<A | B, R>
+    elseThrow: <A>(fa: Either<A, R>) => A
+    tryCatch: <A>(onTry: () => A, onCatch: (e: unknown) => R) => Either<A, R>
 }
 
-export interface ILeft<R> extends IMonad<TLeft<R>> {
-    readonly failure: (b: R) => Either<unknown, R>
-    readonly tryCatch: <A>(onTry: () => A, onCatch: (e: unknown) => R) => Either<A, R>
-    readonly orElse: <C>(f: (a: R) => C) => <A>(fa: Either<A, R>) => A | C
-    readonly or: <A>(f: (b: R) => Either<A, R>) => <B>(fa: Either<B, R>) => Either<A | B, R>
-    readonly elseThrow: <A>(fa: Either<A, R>) => A
-    readonly transform: <F extends HKT>(outer: IMonad<F>) => IMonad<TLeftTransform<R, F>>
-}
-
-export function left<R>(): ILeft<R> {
+export function left<R = unknown>(): ILeft<R> {
     const failure = (b: R) => either.right(b);
     const orElse = <C>(f: (a: R) => C) => <A>(fa: Either<A, R>): A | C => !fa.left ? f(fa.value) : fa.value;
     const or = <A>(f: (b: R) => Either<A, R>) => <B>(fa: Either<B, R>): Either<A | B, R> => orElse(f)(either.left(fa))
@@ -33,18 +31,24 @@ export function left<R>(): ILeft<R> {
         }
     }
 
-    const leftMonad = monad<TLeft<R>>({
+    const transform = <F>(outer: IMonad<F>) => {
+        const lift = <A>(a: KApp<[F, A]>): KApp<[F, Either<A, R>]> => {
+            return outer.map(a, either.left);
+        }
+
+        const m = monad<KApp<[KLeftTransform<R>, F]>>({
+            unit: <A>(a: A): KApp<[F, Either<A, R>]> => outer.unit(either.left(a)),
+            bind: <A, B>(fa: KApp<[F, Either<A, R>]>, f: (a: A) => KApp<[F, Either<B, R>]>): KApp<[F, Either<B, R>]> =>
+                outer.bind(fa, ae => ae.left ? f(ae.value) : outer.unit(ae))
+        });
+
+        return { ...m, lift };
+    };
+
+    const m = monad<KApp<[KEither, R]>>({
         unit: either.left,
         bind: (fa, f) => fa.left ? f(fa.value) : fa
     });
 
-    const transform = <F extends HKT>(outer: IMonad<F>) => {
-        return monad<TLeftTransform<R, F>>({
-            unit: <A>(a: A): Kind<F, Either<A, R>> => outer.unit(either.left(a)),
-            bind: <A, B>(fa: Kind<F, Either<A, R>>, f: (a: A) => Kind<F, Either<B, R>>): Kind<F, Either<B, R>> =>
-                outer.bind(fa, ae => ae.left ? f(ae.value) : outer.unit(ae))
-        });
-    }
-
-    return { failure, orElse, or, elseThrow, tryCatch, ...leftMonad, transform };
+    return { failure, orElse, or, elseThrow, tryCatch, transform, ...m };
 }

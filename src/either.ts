@@ -1,14 +1,22 @@
-export interface Left<L> {
-    left: true
-    value: L
+import { KRoot } from "./hkt.js"
+
+export interface Left<out L> {
+    readonly left: true
+    readonly value: L
 }
 
-export interface Right<R> {
-    left: false
-    value: R
+export interface Right<out R> {
+    readonly left: false
+    readonly value: R
 }
 
 export type Either<L, R> = Left<L> | Right<R>
+
+export interface KEither extends KRoot {
+    readonly 0: unknown // Right
+    readonly 1: unknown // Left
+    readonly body: Either<this[1], this[0]>
+}
 
 export interface IEither {
     left: <A>(a: A) => Left<A>

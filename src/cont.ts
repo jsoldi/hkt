@@ -1,10 +1,11 @@
-import { HKT } from "./hkt.js";
+import { KRoot } from "./hkt.js";
 import { IMonad, monad } from "./monad.js";
 
 export type Cont<T> = (handle: (a: T) => void) => void
 
-export interface TCont extends HKT {
-    readonly type: Cont<this["_A"]>
+export interface TCont extends KRoot {
+    readonly 0: unknown
+    readonly body: Cont<this[0]>
 }
 
 export interface ICont extends IMonad<TCont> {

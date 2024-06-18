@@ -1,14 +1,16 @@
-import { HKT } from "./hkt.js"
+import { KRoot } from "./hkt.js"
 import { IMonad, monad } from "./monad.js"
 
 type Gen<T> = AsyncGenerator<T, void, void>
 
-export interface TGen extends HKT {
-    readonly type: Gen<this["_A"]>
+export interface KGen extends KRoot {
+    readonly 0: unknown
+    readonly body: Gen<this[0]>
 }
 
-interface IGen extends IMonad<TGen> {
+export interface IGen extends IMonad<KGen> {
     from: <T>(genlike: (() => Gen<T>) | T[] | Gen<T>) => Gen<T>
+    flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
     take: (n: number) => <T>(fa: Gen<T>) => Gen<T>
     forEach: <T>(f: (a: T) => void) => (fa: Gen<T>) => Gen<T>
     toArray: <T>(fa: Gen<T>) => Promise<T[]>
@@ -41,6 +43,8 @@ export const gen: IGen = (() => {
             yield* genlike
         }
     }
+
+    const flat = <T>(gen: Gen<Gen<T>>): Gen<T> => bind(gen, a => a);
 
     const take = (n: number) => async function* <T>(fa: Gen<T>): Gen<T> {
         for await (const a of fa) {
@@ -98,7 +102,7 @@ export const gen: IGen = (() => {
         }
     }
 
-    const genMonad = monad<TGen>({
+    const m = monad<KGen>({
         unit,
         bind
     });
@@ -106,11 +110,12 @@ export const gen: IGen = (() => {
     return {
         from,
         take,
+        flat,
         forEach,
         toArray,
         filter,
         takeWhile,
         skipWhile,
-        ...genMonad
+        ...m
     }
 })();
