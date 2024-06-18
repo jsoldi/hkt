@@ -1,29 +1,24 @@
-import { array } from "./array.js";
+import { KArray, array } from "./array.js";
 import { Cont, TCont, cont } from "./cont.js";
 import { trivial } from "./trivial.js";
-import { Either } from "./either.js";
+import { Either, IEither } from "./either.js";
 import { fail, maybe } from "./fail.js";
 import { chain, pipe } from "./pipe.js";
-import { left } from "./left.js";
-
-export function test<T>(fa: Either<T, Error>) {
-    return fail.pipe(
-        fa,
-        chain(JSON.stringify, fail.unit)
-    )
-}
+import { ILeft, KLeft, left } from "./left.js";
+import { KApp } from "./hkt.js";
 
 async function main() {
-    const mc = maybe.transform<TCont>(cont);
-
-    const rats = mc.unit(10);
+    // const mc = array.transform(maybe);
     
-    //const lel = maybe.wrap(cont.delay)(123);
+    var lel = array.fmap(        
+        (a: number) =>  {
+            console.log(`a: ${a}`)
+            return JSON.stringify(JSON.stringify(a));
+        },
+        (p, q) => `${q} -> ${p}`
+    );
 
-    mc.pipe(
-        mc.unit(10),
-        a => cont.map(cont.delay(123), maybe.unit)
-    )
+    console.log(lel);
 }
 
 main();

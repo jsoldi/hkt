@@ -12,12 +12,6 @@ export interface Right<out R> {
 
 export type Either<L, R> = Left<L> | Right<R>
 
-export interface KEither extends KRoot {
-    readonly 0: unknown // Right
-    readonly 1: unknown // Left
-    readonly body: Either<this[1], this[0]>
-}
-
 export interface IEither {
     left: <A>(a: A) => Left<A>
     right: <B>(b: B) => Right<B>

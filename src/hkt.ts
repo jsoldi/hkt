@@ -28,7 +28,7 @@ type Wrap<T> =
             : never
 
 // export type KApp<K extends KType & Constrain<K>> =
-export type KApp<K> =
+export type KApps<K> =
     Unwrap<K> extends readonly [infer H, ...infer T] 
         ? (T & KRoot<never>) extends H
             ? H extends KRoot 
@@ -37,7 +37,8 @@ export type KApp<K> =
             : Wrap<[H, ...T]>
         : K
 
-export type KApp2<A, B> = KApp<[A, B]>
-export type KApp3<A, B, C> = KApp<[[A, B], C]>
-export type KApp4<A, B, C, D> = KApp<[[[A, B], C], D]>
-export type KApp5<A, B, C, D, E> = KApp<[[[[A, B], C], D], E]>
+export type KApp<A, B> = KApps<[A, B]>
+
+export interface ITypeClass<F> {
+    readonly _args?: F
+}

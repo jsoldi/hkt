@@ -1,8 +1,8 @@
-import { KApp2, KApp3 } from "./hkt.js";
+import { KApp } from "./hkt.js";
 import { IMonad } from "./monad.js";
 
-export interface ITransform<F, T> extends IMonad<KApp2<T, F>> {
-    readonly lift: <A>(a: KApp2<F, A>) => KApp3<T, F, A>
+export interface ITransform<F, T> extends IMonad<KApp<T, F>> {
+    readonly lift: <A>(a: KApp<F, A>) => KApp<KApp<T, F>, A>
 }
 
 export interface ITransMonad<F, T> extends IMonad<F> {
