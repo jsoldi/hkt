@@ -1,4 +1,4 @@
-import { KApp, KApp2, KType } from "./hkt.js";
+import { KApp2, KType } from "./hkt.js";
 
 export interface IMonadBase<F> {
     unit<A>(a: A): KApp2<F, A>
@@ -7,8 +7,8 @@ export interface IMonadBase<F> {
 
 export interface IMonad<F> extends IMonadBase<F> {
     map<A, B>(fa: KApp2<F, A>, f: (a: A) => B): KApp2<F, B>
-    join<A>(ffa: KApp<[F, KApp2<F, A>]>): KApp2<F, A>
-    sequence<A>(fas: KApp2<F, A>[]): KApp<[F, A[]]>
+    join<A>(ffa: KApp2<F, KApp2<F, A>>): KApp2<F, A>
+    sequence<A>(fas: KApp2<F, A>[]): KApp2<F, A[]>
     pipe: {
         <A>(a: KApp2<F, A>): KApp2<F, A>
         <A, B>(a: KApp2<F, A>, b:(...a: [A]) => KApp2<F, B>): KApp2<F, B>
@@ -40,12 +40,12 @@ export interface IMonad<F> extends IMonadBase<F> {
 
 export function monad<F extends KType>(base: IMonadBase<F>): IMonad<F> {
     const map = <A, B>(fa: KApp2<F, A>, f: (a: A) => B): KApp2<F, B> => base.bind(fa, a => base.unit(f(a)));
-    const join = <A>(ffa: KApp<[F, KApp2<F, A>]>): KApp2<F, A> => base.bind(ffa, fa => fa);
+    const join = <A>(ffa: KApp2<F, KApp2<F, A>>): KApp2<F, A> => base.bind(ffa, fa => fa);
 
     const chain = (...fs: ((...s: any[]) => KApp2<F, any>)[]) =>
         fs.reduceRight((acc, f) => (...args) => base.bind(f(...args), a => acc(...[a, ...args])));
 
-    const sequence = <A>(fas: KApp2<F, A>[]): KApp<[F, A[]]> => 
+    const sequence = <A>(fas: KApp2<F, A>[]): KApp2<F, A[]> => 
         fas.reduceRight((acc, fa) => base.bind(fa, a => map(acc, as => [a, ...as])), base.unit([] as A[]));
 
     const pipe = (head: KApp2<F, any>, ...tail: ((...s: any[]) => KApp2<F, any>)[]) => chain(...[() => head, ...tail])();
