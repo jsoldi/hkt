@@ -1,4 +1,4 @@
-import { ITypeClass, KApp, KType } from "./hkt.js";
+import { ITypeClass, KApp, KRoot } from "./hkt.js";
 
 export interface IMonadBase<F> extends ITypeClass<F> {
     unit<A>(a: A): KApp<F, A>
@@ -51,7 +51,7 @@ export interface IMonad<F> extends IMonadBase<F> {
     }
 }
 
-export function monad<F extends KType>(base: IMonadBase<F>): IMonad<F> {
+export function monad<F>(base: IMonadBase<F>): IMonad<F> {
     const map = <A, B>(fa: KApp<F, A>, f: (a: A) => B): KApp<F, B> => base.bind(fa, a => base.unit(f(a)));
     const join = <A>(ffa: KApp<F, KApp<F, A>>): KApp<F, A> => base.bind(ffa, fa => fa);
 

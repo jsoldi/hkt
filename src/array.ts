@@ -1,5 +1,5 @@
 import { KApp, KRoot } from "./hkt.js";
-import { IMonad, monad } from "./monad.js";
+import { IMonad, IMonadBase, monad } from "./monad.js";
 import { ITransMonad } from "./transform.js";
 
 export interface KArray extends KRoot {
@@ -14,9 +14,13 @@ export interface KArrayTransform extends KRoot {
 }
 
 export const array: ITransMonad<KArray, KArrayTransform> = (() => {
-    const m = monad<KArray>({ unit: a => [a], bind: (fa, f) => fa.flatMap(f) });
+    const m = monad<KArray>({ 
+        unit: a => [a], 
+        bind: (fa, f) => fa.flatMap(f) 
+    });
 
-    const transform = <F>(outer: IMonad<F>) => {
+    const transform = <F>(_outer: IMonadBase<F>) => {
+        const outer = monad(_outer);
         const lift = <A>(a: KApp<F, A>): KApp<F, Array<A>> => outer.map(a, m.unit);
 
         const mt = monad<KApp<KArrayTransform, F>>({

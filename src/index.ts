@@ -1,19 +1,18 @@
-import { KArray, array } from "./array.js";
-import { Cont, KCont, cont } from "./cont.js";
-import { trivial } from "./trivial.js";
-import { Either, IEither } from "./either.js";
-import { fail, maybe } from "./fail.js";
-import { chain, pipe } from "./pipe.js";
-import { ILeft, KLeft, left } from "./left.js";
-import { KApp } from "./hkt.js";
+type ID<F> = F
 
-async function main() {
-    const c = cont();
-
-    c.pipe(
-        c.unit(10),
-        a => c.unit(a + 1),
-    )
+interface IMono<F> {
+    // lulz?: F
+    a: F extends unknown 
+        ? ID<F & { 
+            [k in F extends never ? 'heya' : 'heya']: 'WHAT???' 
+        }> 
+        : unknown
 }
 
-main();
+interface IDerived extends IMono<{}> { }
+
+declare const fune: <F>(outer: IMono<F>) => F
+
+declare const monito: IDerived
+
+const what = fune(monito);

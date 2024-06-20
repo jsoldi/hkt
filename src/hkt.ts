@@ -1,44 +1,40 @@
-export interface KRoot<Body = unknown> {
-    readonly body: Body
+interface Args<out A> {
+    readonly args: A
 }
 
-type ObjectKeys<T> = keyof { [k in keyof Omit<T, symbol> as `${k}`]: T[k] }
+interface Body<out B> {
+    readonly body: B
+}
 
-type TupleKeys<T> = keyof Omit<T, keyof any[]>
+interface Root<out A, out B> extends Args<A>, Body<B> { }
 
-type Constrain<K> = 
-    Unwrap<K> extends readonly [infer R, ...infer T] 
-        ? T extends { [k in ObjectKeys<R> & TupleKeys<T>]: R[k] } 
-            ? unknown
-            : never
-        : never
+export interface KRoot extends Root<{}, unknown> { }
 
-export type KType = KRoot | readonly [KType, unknown]
+// type KTypeLength<K, T extends any[] = []> = T['length'] extends keyof K ? KTypeLength<K, [unknown, ...T]> : T['length']
 
-type Unwrap<K> = 
-    K extends readonly [infer A, infer B] 
-        ? readonly [...Unwrap<A>, B]
-        : readonly [K]
-        
-type Wrap<T> =
-    T extends readonly [infer A, infer B, ...infer C]
-        ? Wrap<readonly [readonly [A, B], ...C]>
-        : T extends readonly [infer A, ...unknown[]]
-            ? A
-            : never
+type KTypeLength<K> = 
+    0 extends keyof K ?
+    1 extends keyof K ?
+    2 extends keyof K ?
+    3 extends keyof K ?
+    4 extends keyof K ?
+    5 extends keyof K ?
+    6 : 5 : 4 : 3 : 2 : 1 : 0
 
-// export type KApps<K extends KType & Constrain<K>> =
-export type KApps<K> =
-    Unwrap<K> extends readonly [infer H, ...infer T] 
-        ? (T & KRoot<never>) extends H
-            ? H extends KRoot 
-                ? (H & T)['body']
-                : Wrap<[H, ...T]>
-            : Wrap<[H, ...T]>
-        : K
+type SetArgumentAt<K extends KRoot, I extends keyof any, T> = K & Args<{ readonly [k in I]: T }>
 
-export type KApp<A, B> = KApps<[A, B]>
+type GetParameterAt<K extends KRoot, I extends keyof any> = I extends keyof K ? K[I] : never
 
-export interface ITypeClass<F> {
-    readonly _args?: F
+export type SetNextArgument<K extends KRoot, T> = SetArgumentAt<K, KTypeLength<K['args']>, T>
+
+type GetNextParameter<K extends KRoot> = GetParameterAt<K, KTypeLength<K['args']>>
+
+export type TryResolve<K extends KRoot> = K['args'] & Root<never, never> extends K ? (K & K['args'])['body'] : K
+
+//export type Param<K> = K extends KRoot ? GetNextParameter<K> : unknown
+
+export type KApp<K, T> = K extends KRoot ? TryResolve<SetNextArgument<K, T>> : unknown
+
+export interface ITypeClass<in F> {
+    readonly _classParam?: (f: F) => void
 }
