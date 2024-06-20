@@ -27,7 +27,7 @@ type Wrap<T> =
             ? A
             : never
 
-// export type KApp<K extends KType & Constrain<K>> =
+// export type KApps<K extends KType & Constrain<K>> =
 export type KApps<K> =
     Unwrap<K> extends readonly [infer H, ...infer T] 
         ? (T & KRoot<never>) extends H

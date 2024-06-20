@@ -37,9 +37,7 @@ export function left<R = unknown>(): ILeft<R> {
     }
 
     const transform = <F>(outer: IMonad<F>) => {
-        const lift = <A>(a: KApp<F, A>): KApp<F, Either<A, R>> => {
-            return outer.map(a, either.left);
-        }
+        const lift = <A>(a: KApp<F, A>): KApp<F, Either<A, R>> => outer.map(a, either.left)
 
         const m = monad<KApp<KLeftTransform<R>, F>>({
             unit: <A>(a: A): KApp<F, Either<A, R>> => outer.unit(either.left(a)),

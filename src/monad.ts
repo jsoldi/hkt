@@ -69,6 +69,3 @@ export function monad<F extends KType>(base: IMonadBase<F>): IMonad<F> {
    
     return { ...base, map, join, chain, sequence, pipe, fmap };
 }
-
-// bind(A, a => bind(f(a), b => bind(g(b), c => unit(c))))
- 
