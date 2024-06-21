@@ -1,40 +1,41 @@
-interface Args<out A> {
+interface KArgs<A = {}> {
     readonly args: A
 }
 
-interface Body<out B> {
+export interface KRoot<A = {}, B = unknown> extends KArgs<A> {
     readonly body: B
 }
 
-interface Root<out A, out B> extends Args<A>, Body<B> { }
-
-export interface KRoot extends Root<{}, unknown> { }
-
 // type KTypeLength<K, T extends any[] = []> = T['length'] extends keyof K ? KTypeLength<K, [unknown, ...T]> : T['length']
 
-type KTypeLength<K extends {}> = 
-    K extends { readonly 0: unknown }  ?
-    K extends { readonly 1: unknown }  ?
-    K extends { readonly 2: unknown }  ?
-    K extends { readonly 3: unknown }  ?
-    K extends { readonly 4: unknown }  ?
-    K extends { readonly 5: unknown }  ?
-    unknown : 5 : 4 : 3 : 2 : 1 : 0
+type KTypeLength<K> = 
+    K extends KArgs<{ readonly 0: unknown }>  ?
+    K extends KArgs<{ readonly 1: unknown }>  ?
+    K extends KArgs<{ readonly 2: unknown }>  ?
+    K extends KArgs<{ readonly 3: unknown }>  ?
+    K extends KArgs<{ readonly 4: unknown }>  ?
+    K extends KArgs<{ readonly 5: unknown }>  ?
+    6 : 5 : 4 : 3 : 2 : 1 : 0
 
-type SetArgumentAt<K, I extends number, T> = K & Args<{ readonly [k in I]: T }>
+type SetArgumentAt<K, I extends number, T> = K & KArgs<{ readonly [k in I]: T }>
 
-type GetParameterAt<K extends KRoot, I extends keyof any> = I extends keyof K ? K[I] : never
+type GetParameterAt<K, I> = I extends keyof K ? K[I] : never
 
-export type SetNextArgument<K extends Args<{}>, T> = SetArgumentAt<K, KTypeLength<K['args']>, T>
+export type SetNextArgument<K, T> = SetArgumentAt<K, KTypeLength<K>, T>
 
-type GetNextParameter<K extends KRoot> = GetParameterAt<K, KTypeLength<K['args']>>
+type GetNextParameter<K> = GetParameterAt<K, KTypeLength<K>>
 
-export type TryResolve<K extends KRoot> = K['args'] & Root<never, never> extends K ? (K & K['args'])['body'] : K
+export type TryResolve<K> = 
+    K extends KRoot ?
+        K['args'] & KRoot<never, never> extends K 
+            ? (K & K['args'])['body'] 
+            : K
+        : K
 
 //export type Param<K> = K extends KRoot ? GetNextParameter<K> : unknown
 
-export type KApp<K, T> = K extends KRoot ? TryResolve<SetNextArgument<K, T>> : unknown
+export type KApp<K, T> = TryResolve<SetNextArgument<K extends KArgs ? K : K & KArgs, T>>
 
 export interface ITypeClass<F> {
-    readonly _classParam?: (f: F) => void
+    readonly _classParam?: (f: F) => F
 }
