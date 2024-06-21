@@ -34,7 +34,7 @@ export type TryResolve<K> =
 
 //export type Param<K> = K extends KRoot ? GetNextParameter<K> : unknown
 
-export type KApp<K, T> = TryResolve<SetNextArgument<K extends KArgs ? K : K & KArgs, T>>
+export type KApp<K, T> = TryResolve<SetNextArgument<K, T>>
 
 export interface ITypeClass<F> {
     readonly _classParam?: (f: F) => F
