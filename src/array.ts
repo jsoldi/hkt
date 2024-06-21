@@ -1,4 +1,4 @@
-import { KApp, KRoot } from "./hkt.js";
+import { KApp, KRoot, SetNextArgument } from "./hkt.js";
 import { IMonad, IMonadBase, monad } from "./monad.js";
 import { ITransMonad } from "./transform.js";
 
@@ -12,6 +12,10 @@ export interface KArrayTransform extends KRoot {
     readonly 1: unknown
     readonly body: KApp<this[0], Array<this[1]>>
 }
+
+type Inside = SetNextArgument<KArrayTransform, string>;
+
+type Hola = SetNextArgument<SetNextArgument<KArrayTransform, string>, number>;
 
 export const array: ITransMonad<KArray, KArrayTransform> = (() => {
     const m = monad<KArray>({ 
