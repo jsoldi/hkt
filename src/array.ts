@@ -23,8 +23,7 @@ export const array: ITransMonad<KArray, KArrayTransform> = (() => {
         bind: (fa, f) => fa.flatMap(f) 
     });
 
-    const transform = <F>(_outer: IMonadBase<F>) => {
-        const outer = monad(_outer);
+    const transform = <F>(outer: IMonad<F>) => {
         const lift = <A>(a: KApp<F, A>): KApp<F, Array<A>> => outer.map(a, m.unit);
 
         const mt = monad<KApp<KArrayTransform, F>>({

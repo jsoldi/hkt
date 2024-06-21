@@ -1,5 +1,3 @@
-import { KRoot } from "./hkt.js"
-
 export interface Left<out L> {
     readonly left: true
     readonly value: L

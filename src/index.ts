@@ -1,6 +1,14 @@
 import { array } from "./array.js";
 import { cont } from "./cont.js";
 import { KApp, KRoot } from "./hkt.js";
+import { IMonad } from "./monad.js";
+
+function plap<F>(monad: IMonad<F>) {
+    return monad.pipe(
+        monad.unit(123),
+        a => monad.unit(a.toString())
+    )
+}
 
 async function main() {
     var lel = cont();

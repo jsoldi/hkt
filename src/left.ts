@@ -1,7 +1,7 @@
-import { Either, either, Right } from "./either.js";
-import { KApp, KRoot } from "./hkt.js";
+import { Either, either, Left, Right } from "./either.js";
+import { KApp, KRoot, TryResolve } from "./hkt.js";
 import { IMonad, monad } from "./monad.js";
-import { ITransMonad } from "./transform.js";
+import { ITransform, ITransMonad } from "./transform.js";
 
 export interface KLeftTransform<R> extends KRoot {
     readonly 0: unknown // F
@@ -22,6 +22,11 @@ export interface ILeft<R = unknown> extends ITransMonad<KLeft<R>, KLeftTransform
     tryCatch: <A>(onTry: () => A, onCatch: (e: unknown) => R) => Either<A, R>
 }
 
+function veamos<F, G extends F>(a: TryResolve<G>, b: TryResolve<G>) {
+    b = a;
+}
+
+
 export function left<R = unknown>(): ILeft<R> {
     const failure = (b: R) => either.right(b);
     const orElse = <C>(f: (a: R) => C) => <A>(fa: Either<A, R>): A | C => !fa.left ? f(fa.value) : fa.value;
@@ -36,8 +41,13 @@ export function left<R = unknown>(): ILeft<R> {
         }
     }
 
-    const transform = <F>(outer: IMonad<F>) => {
-        const lift = <A>(a: KApp<F, A>): KApp<F, Either<A, R>> => outer.map(a, either.left)
+    const transform = <F>(outer: IMonad<F>): ITransform<F, KLeftTransform<R>> => {
+        const lift = <A>(a: KApp<F, A>): KApp<F, Either<A, R>> => outer.map(a, either.left);
+
+        const leftA: <A>(a: A) => Left<A> = null as any;
+        const eitherAR: <A>(e: Either<A, R>) => R= null as any;
+
+        eitherAR(leftA(1));
 
         const m = monad<KApp<KLeftTransform<R>, F>>({
             unit: <A>(a: A): KApp<F, Either<A, R>> => outer.unit(either.left(a)),

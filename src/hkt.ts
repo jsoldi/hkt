@@ -1,8 +1,8 @@
-interface KArgs<A = {}> {
+interface KArgs<out A = {}> {
     readonly args: A
 }
 
-export interface KRoot<A = {}, B = unknown> extends KArgs<A> {
+export interface KRoot<out A = {}, out B = unknown> extends KArgs<A> {
     readonly body: B
 }
 
@@ -34,8 +34,27 @@ export type TryResolve<K> =
 
 //export type Param<K> = K extends KRoot ? GetNextParameter<K> : unknown
 
+interface KLeftIdentity extends KRoot {
+    readonly 0: unknown
+    readonly body: this[0]
+}
+
 export type KApp<K, T> = TryResolve<SetNextArgument<K, T>>
+
+export type KApps<T> = T extends readonly [...infer L, infer R] ? KApp<KApps<L>, R> : KLeftIdentity
 
 export interface ITypeClass<F> {
     readonly _classParam?: (f: F) => F
+}
+
+type Clone<T> = { readonly [k in keyof T]: () => T[k] }
+
+export type TryResolve2<K extends KRoot & { readonly 0: unknown } & KArgs<{ readonly 0: unknown }>> = 
+    K[0] extends K['args'][0] 
+        ? never 
+        : unknown
+
+function veamos<G extends KRoot & { readonly 0: unknown } & KArgs<{ readonly 0: unknown }>, S extends G>(g: TryResolve2<G>, s: TryResolve2<S>) {
+    g = s;
+    s = g;
 }
