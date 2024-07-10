@@ -9,26 +9,21 @@ export interface KLeftTransform<R> extends KRoot {
     readonly body: KApp<this[0], Either<this[1], R>>
 }
 
-export interface KLeft<R = unknown> extends KRoot {
+export interface KLeft<R> extends KRoot {
     readonly 0: unknown
     readonly body: Either<this[0], R>
 }
 
 export interface ILeft<R = unknown> extends ITransMonad<KLeft<R>, KLeftTransform<R>> {
-    failure: (a: R) => Right<R>
+    alt: <A>(r: R) => Either<A, R>
     orElse: <C>(f: (a: R) => C) => <A>(fa: Either<A, R>) => A | C
     or: <A>(f: (b: R) => Either<A, R>) => <B>(fa: Either<B, R>) => Either<A | B, R>
     elseThrow: <A>(fa: Either<A, R>) => A
     tryCatch: <A>(onTry: () => A, onCatch: (e: unknown) => R) => Either<A, R>
 }
 
-function veamos<F, G extends F>(a: TryResolve<G>, b: TryResolve<G>) {
-    b = a;
-}
-
-
 export function left<R = unknown>(): ILeft<R> {
-    const failure = (b: R) => either.right(b);
+    const alt = <A>(r: R): Either<A, R> => either.right(r);
     const orElse = <C>(f: (a: R) => C) => <A>(fa: Either<A, R>): A | C => !fa.left ? f(fa.value) : fa.value;
     const or = <A>(f: (b: R) => Either<A, R>) => <B>(fa: Either<B, R>): Either<A | B, R> => orElse(f)(either.left(fa))
     const elseThrow = <A>(fa: Either<A, R>): A => orElse(e => { throw e })(fa)
@@ -37,22 +32,17 @@ export function left<R = unknown>(): ILeft<R> {
         try {
             return either.left(onTry());
         } catch (e) {
-            return failure(onCatch(e));
+            return either.right(onCatch(e));
         }
     }
 
     const transform = <F>(outer: IMonad<F>): ITransform<F, KLeftTransform<R>> => {
-        const lift = <A>(a: KApp<F, A>): KApp<F, Either<A, R>> => outer.map(a, either.left);
-
-        const leftA: <A>(a: A) => Left<A> = null as any;
-        const eitherAR: <A>(e: Either<A, R>) => R= null as any;
-
-        eitherAR(leftA(1));
+        const lift = <A>(a: KApp<F, A>): KApp<F, Either<A, R>> => outer.map(a, either.left<A, R>);
 
         const m = monad<KApp<KLeftTransform<R>, F>>({
-            unit: <A>(a: A): KApp<F, Either<A, R>> => outer.unit(either.left(a)),
+            unit: <A>(a: A): KApp<F, Either<A, R>> => outer.unit(either.left<A, R>(a)),
             bind: <A, B>(fa: KApp<F, Either<A, R>>, f: (a: A) => KApp<F, Either<B, R>>): KApp<F, Either<B, R>> =>
-                outer.bind(fa, ae => ae.left ? f(ae.value) : outer.unit(ae))
+                outer.bind(fa, either.match(f, r => outer.unit(either.right(r))))
         });
 
         return { ...m, lift };
@@ -63,5 +53,5 @@ export function left<R = unknown>(): ILeft<R> {
         bind: (fa, f) => fa.left ? f(fa.value) : fa
     });
 
-    return { failure, orElse, or, elseThrow, tryCatch, transform, ...m };
+    return { alt, orElse, or, elseThrow, tryCatch, transform, ...m };
 }

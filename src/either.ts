@@ -11,11 +11,11 @@ export interface Right<out R> {
 export type Either<L, R> = Left<L> | Right<R>
 
 export interface IEither {
-    left: <A>(a: A) => Left<A>
-    right: <B>(b: B) => Right<B>
+    left: <A, B = never>(a: A) => Either<A, B>
+    right: <B, A = never>(b: B) => Either<A, B>
     either: <A>(left: boolean, value: A) => Either<A, A>
     swap: <A, B>(fa: Either<A, B>) => Either<B, A>
-    match: <A, B, C, D>(onLeft: (a: A) => C, onRight: (b: B) => D) => (fa: Either<A, B>) => C | D
+    match: <A, R, AR, RR = AR>(onLeft: (a: A) => AR, onRight: (b: R) => RR) => (fa: Either<A, R>) => AR | RR
 }
 
 export const either: IEither = (() => {

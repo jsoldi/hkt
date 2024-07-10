@@ -26,7 +26,7 @@ export const maybe: IMaybe = (() => {
 
     return {
         ...leftVoid,
-        nothing: leftVoid.failure(undefined),
+        nothing: leftVoid.alt(undefined),
         tryIgnore: a => leftVoid.tryCatch(a, () => undefined)
     }
 })();
