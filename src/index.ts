@@ -1,19 +1,11 @@
-import { array } from "./array.js";
-import { cont } from "./cont.js";
-import { KApp, KRoot } from "./hkt.js";
-import { IMonad } from "./monad.js";
-
-function plap<F>(monad: IMonad<F>) {
-    return monad.pipe(
-        monad.unit(123),
-        a => monad.unit(a.toString())
-    )
-}
-
-async function main() {
-    var lel = cont();
-    var mt = array.transform(lel);
-    const dada = mt.bind(mt.unit(123), a => mt.unit(a.toString()));
-}
-
-main();
+export * from "./array.js";
+export * from "./cont.js";
+export * from "./either.js";
+export * from "./gen.js";
+export * from "./hkt.js";
+export * from "./left.js";
+export * from "./maybe.js";
+export * from "./monad.js";
+export * from "./pipe.js";
+export * from "./transform.js";
+export * from "./trivial.js";

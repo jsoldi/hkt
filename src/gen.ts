@@ -1,7 +1,7 @@
 import { KRoot } from "./hkt.js"
 import { IMonad, monad } from "./monad.js"
 
-type Gen<T> = AsyncGenerator<T, void, void>
+export type Gen<T> = AsyncGenerator<T, void, void>
 
 export interface KGen extends KRoot {
     readonly 0: unknown
