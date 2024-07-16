@@ -1,7 +1,3 @@
-# node-default-project
+# @jsoldi/hkt
 
-Clone like 
-
-```
-npx degit https://github.com/jsoldi/node-default-project
-```
+Higher kinded types for typescript and a few utility monads.
