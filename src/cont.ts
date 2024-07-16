@@ -10,14 +10,14 @@ export interface KCont extends KRoot {
 
 export interface ICont extends IMonad<KCont> {
     delay: (ms: number) => Cont<void>
-    await: <T>(f: () => T) => Cont<Awaited<T>>
+    from: <T>(f: () => T) => Cont<Awaited<T>>
 }
 
 export function cont(): ICont {
     const unit: <A>(a: A) => Cont<A> = a => handle => handle(a);
     const bind: <A, B>(fa: Cont<A>, f: (a: A) => Cont<B>) => Cont<B> = (fa, f) => handle => fa(a => f(a)(handle));
     const delay: (ms: number) => Cont<void> = ms => handle =>  setTimeout(handle, ms);
-    const await: <T>(f: () => T) => Cont<Awaited<T>> = f => handle => (async () => handle(await f()))();
+    const from: <T>(f: () => T) => Cont<Awaited<T>> = f => handle => (async () => handle(await f()))();
 
     const contMonad = monad<KCont>({ 
         unit,
@@ -26,7 +26,7 @@ export function cont(): ICont {
 
     return {
         delay,
-        await,
+        from,
         ...contMonad
     }
 }
