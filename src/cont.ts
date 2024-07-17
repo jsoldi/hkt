@@ -13,7 +13,7 @@ export interface ICont extends IMonad<KCont> {
     from: <T>(f: () => T) => Cont<Awaited<T>>
 }
 
-export function cont(): ICont {
+export const cont: ICont = (() => {
     const unit: <A>(a: A) => Cont<A> = a => handle => handle(a);
     const bind: <A, B>(fa: Cont<A>, f: (a: A) => Cont<B>) => Cont<B> = (fa, f) => handle => fa(a => f(a)(handle));
     const delay: (ms: number) => Cont<void> = ms => handle =>  setTimeout(handle, ms);
@@ -29,4 +29,4 @@ export function cont(): ICont {
         from,
         ...contMonad
     }
-}
+})();
