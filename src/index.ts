@@ -1,5 +1,4 @@
 export * from "./array.js";
-export * from "./cont.js";
 export * from "./either.js";
 export * from "./gen.js";
 export * from "./hkt.js";

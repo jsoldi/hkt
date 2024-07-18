@@ -9,7 +9,7 @@ export interface KGen extends KRoot {
 }
 
 export interface IGen extends IMonad<KGen> {
-    from: <T>(genlike: (() => Gen<T>) | T[] | Gen<T>) => Gen<T>
+    from: <T>(genlike: (() => Gen<T>) | T[] | Promise<T> | Gen<T>) => Gen<T>
     flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
     take: (n: number) => <T>(fa: Gen<T>) => Gen<T>
     forEach: <T>(f: (a: T) => void) => (fa: Gen<T>) => Gen<T>
@@ -20,6 +20,10 @@ export interface IGen extends IMonad<KGen> {
     }
     takeWhile: <T>(pred: (a: T) => unknown) => (fa: Gen<T>) => Gen<T>
     skipWhile: <T>(pred: (a: T) => unknown) => (fa: Gen<T>) => Gen<T>
+    distinctBy: <T, K>(key: (a: T) => K) => (fa: Gen<T>) => Gen<T>
+    distinct: <T>(fa: Gen<T>) => Gen<T>
+    chunks: <T>(size: number) => (fa: Gen<T>) => Gen<T[]>
+    reduce: <T, U>(acc: U, f: (acc: U, a: T) => U) => (fa: Gen<T>) => Promise<U>
 }
 
 export const gen: IGen = (() => {
@@ -33,12 +37,14 @@ export const gen: IGen = (() => {
         }
     }
 
-    async function* from<T>(genlike: (() => Gen<T>) | T[] | Gen<T>): Gen<T> {
+    async function* from<T>(genlike: (() => Gen<T>) | T[] | Promise<T> | Gen<T>): Gen<T> {
         if (genlike instanceof Function) {
             yield* genlike()
         } else if (genlike instanceof Array) {
             for (const a of genlike)
                 yield a
+        } else if (genlike instanceof Promise) {
+            yield await genlike
         } else {
             yield* genlike
         }
@@ -102,6 +108,44 @@ export const gen: IGen = (() => {
         }
     }
 
+    const distinctBy = <T, K>(key: (a: T) => K) => async function* (fa: Gen<T>): Gen<T> {
+        const keys = new Set<K>();
+
+        for await (const a of fa) {
+            const k = key(a);
+
+            if (!keys.has(k)) {
+                keys.add(k);
+                yield a;
+            }
+        }
+    }
+
+    const distinct = <T>(fa: Gen<T>): Gen<T> => distinctBy<T, T>(a => a)(fa);
+
+    const chunks = <T>(size: number) => async function* (fa: Gen<T>): Gen<T[]> {
+        let chunk: T[] = [];
+
+        for await (const a of fa) {
+            chunk.push(a);
+
+            if (chunk.length === size) {
+                yield chunk;
+                chunk = [];
+            }
+        }
+
+        if (chunk.length > 0)
+            yield chunk;
+    }
+
+    const reduce = <T, U>(acc: U, f: (acc: U, a: T) => U) => async function(fa: Gen<T>): Promise<U> {
+        for await (const a of fa)
+            acc = f(acc, a);
+
+        return acc;
+    }
+
     const m = monad<KGen>({
         unit,
         bind
@@ -116,6 +160,10 @@ export const gen: IGen = (() => {
         filter,
         takeWhile,
         skipWhile,
+        distinctBy,
+        distinct,
+        chunks,
+        reduce,
         ...m
     }
 })();

@@ -1,20 +1,15 @@
-import { Either, either, Left, Right } from "./either.js";
-import { KApp, KRoot, TryResolve } from "./hkt.js";
+import { array } from "./array.js";
+import { Either, either } from "./either.js";
+import { KApp, KRoot } from "./hkt.js";
 import { IMonad, monad } from "./monad.js";
-import { ITransform, ITransMonad } from "./transform.js";
-
-export interface KLeftTransform<R> extends KRoot {
-    readonly 0: unknown // F
-    readonly 1: unknown // L
-    readonly body: KApp<this[0], Either<this[1], R>>
-}
+import { ITransform, ITransMonad, KTransform } from "./transform.js";
 
 export interface KLeft<R> extends KRoot {
     readonly 0: unknown
     readonly body: Either<this[0], R>
 }
 
-export interface ILeft<R = unknown> extends ITransMonad<KLeft<R>, KLeftTransform<R>> {
+export interface ILeft<R = unknown> extends ITransMonad<KLeft<R>, KTransform<KLeft<R>>> {
     alt: <A>(r: R) => Either<A, R>
     orElse: <C>(f: (a: R) => C) => <A>(fa: Either<A, R>) => A | C
     or: <A>(f: (b: R) => Either<A, R>) => <B>(fa: Either<B, R>) => Either<A | B, R>
@@ -36,10 +31,10 @@ export function left<R = unknown>(): ILeft<R> {
         }
     }
 
-    const transform = <F>(outer: IMonad<F>): ITransform<F, KLeftTransform<R>> => {
+    const transform = <F>(outer: IMonad<F>): ITransform<F, KTransform<KLeft<R>>> => {
         const lift = <A>(a: KApp<F, A>): KApp<F, Either<A, R>> => outer.map(a, either.left<A, R>);
 
-        const m = monad<KApp<KLeftTransform<R>, F>>({
+        const m = monad<KApp<KTransform<KLeft<R>>, F>>({
             unit: <A>(a: A): KApp<F, Either<A, R>> => outer.unit(either.left<A, R>(a)),
             bind: <A, B>(fa: KApp<F, Either<A, R>>, f: (a: A) => KApp<F, Either<B, R>>): KApp<F, Either<B, R>> =>
                 outer.bind(fa, either.match(f, r => outer.unit(either.right(r))))
