@@ -12,6 +12,7 @@ export interface IPromise extends IMonad<KPromise> {
     race: <A>(fa: Promise<A>[]) => Promise<A>
     any: <A>(fa: Promise<A>[]) => Promise<A>
     timeout: (ms: number) => <A>(fa: Promise<A>) => Promise<A>
+    peek: <A>(f: (a: A) => unknown) => (fa: Promise<A>) => Promise<A>
 }
 
 export const promise: IPromise = (() => {
@@ -24,6 +25,12 @@ export const promise: IPromise = (() => {
     const all: <A>(fa: Promise<A>[]) => Promise<A[]> = fa => Promise.all(fa);
     const race: <A>(fa: Promise<A>[]) => Promise<A> = fa => Promise.race(fa);
     const any: <A>(fa: Promise<A>[]) => Promise<A> = fa => Promise.any(fa);
+
+    const peek: <A>(f: (a: A) => unknown) => (fa: Promise<A>) => Promise<A> = f => fa => 
+        fa.then(a => {
+            f(a);
+            return a;
+        });
 
     const timeout: (ms: number) => <A>(fa: Promise<A>) => Promise<A> = ms => fa => 
         new Promise((resolve, reject) => {
@@ -50,5 +57,6 @@ export const promise: IPromise = (() => {
         race,
         any,
         timeout,
+        peek,
     }
 })();
