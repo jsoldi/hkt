@@ -1,65 +1,54 @@
-// import { array as minArray } from "./array.js";
-// import { KRoot } from "./hkt.js";
-// import { IMonad, monad } from "./monad.js";
+import { KRoot } from "./hkt.js";
+import { IMonad, monad } from "./monad.js";
 
-// export interface KPromise extends KRoot {
-//     readonly 0: unknown
-//     readonly body: Promise<this[0]>
-// }
+export interface KPromise extends KRoot {
+    readonly 0: unknown
+    readonly body: Promise<this[0]>
+}
 
-// export interface IPromise extends IMonad<KPromise> {
-//     delay: (ms: number) => Promise<void>
-// }
+export interface IPromise extends IMonad<KPromise> {
+    delay: (ms: number) => Promise<void>
+    all: <A>(fa: Promise<A>[]) => Promise<A[]>
+    race: <A>(fa: Promise<A>[]) => Promise<A>
+    any: <A>(fa: Promise<A>[]) => Promise<A>
+    timeout: (ms: number) => <A>(fa: Promise<A>) => Promise<A>
+}
 
-// declare const trageto: Promise<Promise<number>>;
+export const promise: IPromise = (() => {
+    const unit: <A>(a: A) => Promise<A> = a => Promise.resolve(a);
 
-// trageto.then(a => a)
+    const bind: <A, B>(fa: Promise<A>, f: (a: A) => Promise<B>) => Promise<B> = (fa, f) => 
+        fa.then(f); // this will flatten the promise if nested so just avoid nesting promises
 
-// export const promise: IPromise = (() => {
-//     const unit: <A>(a: A) => Promise<A> = a => Promise.resolve(a);
+    const delay: (ms: number) => Promise<void> = ms => new Promise(resolve => setTimeout(resolve, ms));
+    const all: <A>(fa: Promise<A>[]) => Promise<A[]> = fa => Promise.all(fa);
+    const race: <A>(fa: Promise<A>[]) => Promise<A> = fa => Promise.race(fa);
+    const any: <A>(fa: Promise<A>[]) => Promise<A> = fa => Promise.any(fa);
 
-//     const bind: <A, B>(fa: Promise<A>, f: (a: A) => Promise<B>) => Promise<B> = (fa, f) => {
-//         return fa.then(f); 
-//     }
+    const timeout: (ms: number) => <A>(fa: Promise<A>) => Promise<A> = ms => fa => 
+        new Promise((resolve, reject) => {
+            const id = setTimeout(() => {
+                clearTimeout(id);
+                reject(new Error('Timeout'));
+            }, ms);
 
-//     const delay: (ms: number) => Promise<void> = ms => new Promise(resolve => setTimeout(resolve, ms));
+            fa.then(a => {
+                clearTimeout(id);
+                resolve(a);
+            }, reject);
+        });
 
-//     const m = monad<KPromise>({ 
-//         unit,
-//         bind,
-//     });
+    const m = monad<KPromise>({ 
+        unit,
+        bind,
+    });
 
-//     return {
-//         delay,
-//         ...m
-//     }
-// })();
-
-// export const array = (() => {
-//     const filter: {
-//         <T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[];
-//         <T>(predicate: (item: T) => boolean): (items: T[]) => T[];
-//     } = <T, S extends T>(predicate: (item: T) => any): (items: T[]) => T[] | S[] => {
-//         return (items: T[]) => items.filter(predicate);
-//     };
-    
-//     return {
-//         ...minArray,
-//         reverse: <T>(items: T[]) => {
-//             const result = [...items];
-//             result.reverse();
-//             return result;
-//         },
-//         filter,
-//     };    
-// })();
-
-
-// const tp = array.transform(promise);
-
-// const lala = tp.unit(123);
-
-// const lel = promise.pipe(
-//     Promise.resolve([123, 456]),
-//     rat => promise.unit(rat)
-// )
+    return {
+        ...m,
+        delay,
+        all,
+        race,
+        any,
+        timeout,
+    }
+})();

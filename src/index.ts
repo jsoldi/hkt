@@ -4,6 +4,7 @@ export * from "./gen.js";
 export * from "./hkt.js";
 export * from "./left.js";
 export * from "./maybe.js";
+export * from "./promise.js";
 export * from "./monad.js";
 export * from "./pipe.js";
 export * from "./transform.js";
