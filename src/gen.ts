@@ -1,5 +1,6 @@
 import { KRoot } from "./hkt.js"
 import { IMonad, monad } from "./monad.js"
+import { IMonadPlus, monadPlus } from "./monadPlus.js"
 
 export type Gen<T> = AsyncGenerator<T, void, void>
 
@@ -8,7 +9,7 @@ export interface KGen extends KRoot {
     readonly body: Gen<this[0]>
 }
 
-export interface IGen extends IMonad<KGen> {
+export interface IGen extends IMonadPlus<KGen> {
     from: <T>(genlike: (() => Gen<T>) | T[] | Promise<T> | Gen<T>) => Gen<T>
     flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
     take: (n: number) => <T>(fa: Gen<T>) => Gen<T>
@@ -146,9 +147,18 @@ export const gen: IGen = (() => {
         return acc;
     }
 
-    const m = monad<KGen>({
+    const empty = () => (async function*() {})();
+
+    const concat: <A>(fa: Gen<A>, fb: Gen<A>) => Gen<A> = async function*(fa, fb) {
+        yield* fa;
+        yield* fb;
+    }
+
+    const m = monadPlus<KGen>({
         unit,
-        bind
+        bind,
+        empty,
+        concat
     });
 
     return {
