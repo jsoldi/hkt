@@ -152,6 +152,7 @@ export const gen: IGen = (() => {
     });
 
     return {
+        ...m,
         from,
         take,
         flat,
@@ -163,7 +164,6 @@ export const gen: IGen = (() => {
         distinctBy,
         distinct,
         chunks,
-        reduce,
-        ...m
+        reduce
     }
 })();
