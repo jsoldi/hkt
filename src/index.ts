@@ -2,7 +2,7 @@ export * from "./pipe.js";
 export * from "./hkt.js";
 export * from "./monad.js";
 export * from "./trivial.js";
-export * from "./transform.js";
+export * from "./transformer.js";
 export * from "./array.js";
 export * from "./either.js";
 export * from "./maybe.js";

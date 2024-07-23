@@ -1,7 +1,6 @@
-import { array } from "./array.js"
 import { KApp, KRoot } from "./hkt.js"
 import { IMonad, monad } from "./monad.js"
-import { ITransform, ITransMonad, KTransform } from "./transform.js"
+import { ITransMonad, transformer } from "./transformer.js"
 
 export interface Left<out L> {
     readonly right: false
@@ -116,14 +115,11 @@ export const either: IEither = (() => {
 
             return {
                 ...m,
-                transform: <F>(outer: IMonad<F>): ITransform<F, KTransform<KApp<KEither, L>>> => ({ 
-                    lift: <A>(a: KApp<F, A>): KApp<F, Either<L, A>> => outer.map(a, m.unit),
-                    ...monad<KApp<KTransform<KApp<KEither, L>>, F>>({
-                        unit: <A>(a: A): KApp<F, Either<L, A>> => outer.unit(either.right<A>(a) as Either<L, A>),
-                        bind: <A, B>(fa: KApp<F, Either<L, A>>, f: (a: A) => KApp<F, Either<L, B>>): KApp<F, Either<L, B>> =>
-                            outer.bind<Either<L, A>, Either<L, B>>(fa, either.either(l => outer.unit(either.left(l) as Either<L, B>), f))
-                    })     
-                })
+                transform: transformer<KApp<KEither, L>>(m, 
+                    outer => (fa, f) => outer.bind(fa, a => 
+                        a.right ? f(a.value) : outer.unit(either.left(a.value) as Either<L, any>)
+                    )
+                )
             };
         },
     }

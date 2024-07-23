@@ -1,7 +1,7 @@
 import { Left, Right, either } from "./either.js";
 import { KRoot } from "./hkt.js";
 import { monad, IMonad } from "./monad.js";
-import { ITransMonad, ITransform, KTransform } from "./transform.js";
+import { ITransMonad } from "./transformer.js";
 
 export const unit = Symbol("unit");
 export type Unit = typeof unit;
@@ -39,7 +39,7 @@ export const maybe: IMaybe = (() => {
         bind: <A, B>(fa: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> => fa.right ? f(fa.value) : nothing
     });
     
-    const transform = <F>(outer: IMonad<F>): ITransform<F, KTransform<KMaybe>> => 
+    const transform = <F>(outer: IMonad<F>) => 
         either.monad<Unit>().transform(outer); // Not sure why this works
     
     return { 

@@ -8,7 +8,7 @@ export interface IFunctor<F> extends IFunctorBase<F> {
     fmap: <A, B>(f: (a: A) => B) => (fa: KApp<F, A>) => KApp<F, B>
 }
 
-export function functor<F>(base: IFunctorBase<F>) {
+export function functor<F>(base: IFunctorBase<F>): IFunctor<F> {
     const fmap = <A, B>(f: (a: A) => B) => (fa: KApp<F, A>) => base.map(fa, f);
     return { ...base, fmap };
 }

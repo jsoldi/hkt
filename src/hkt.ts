@@ -14,11 +14,11 @@ type SetArgumentAt<K, I extends number, T> = K & KArgs<{ readonly [k in I]: T }>
 
 type GetParameterAt<K, I> = I extends keyof K ? K[I] : never
 
-export type SetNextArgument<K, T> = SetArgumentAt<K, KArgLength<K>, T>
+type SetNextArgument<K, T> = SetArgumentAt<K, KArgLength<K>, T>
 
 type GetNextParameter<K> = GetParameterAt<K, KArgLength<K>>
 
-export type TryResolve<K> = 
+type TryResolve<K> = 
     K extends KRoot ?
         K['args'] & KRoot<never, never> extends K 
             ? (K & K['args'])['body'] 

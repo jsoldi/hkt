@@ -1,6 +1,6 @@
-import { KApp, KRoot } from "./hkt.js";
-import { IMonad, monad } from "./monad.js";
-import { ITransMonad, KTransform } from "./transform.js";
+import { KRoot } from "./hkt.js";
+import { monad } from "./monad.js";
+import { ITransMonad, transformer } from "./transformer.js";
 
 export interface KArray extends KRoot {
     readonly 0: unknown
@@ -27,17 +27,9 @@ export const array: IArray = (() => {
         return (items: T[]) => items.filter(predicate);
     };    
 
-    const transform = <F>(outer: IMonad<F>) => {
-        const lift = <A>(a: KApp<F, A>): KApp<F, Array<A>> => outer.map(a, m.unit);
-
-        const mt = monad<KApp<KTransform<KArray>, F>>({
-            unit: <A>(a: A): KApp<F, Array<A>> => outer.unit(m.unit(a)),
-            bind: <A, B>(fa: KApp<F, Array<A>>, f: (a: A) => KApp<F, Array<B>>): KApp<F, Array<B>> =>
-                outer.bind(fa, ae => outer.map(outer.sequence(ae.map(f)), a => a.flat()))
-        }); 
-
-        return { ...mt, lift };
-    }
+    const transform = transformer<KArray>(m, outer => (fa, f) => 
+        outer.bind(fa, ae => outer.map(outer.sequence(ae.map(f)), a => a.flat()))
+    );
 
     return { ...m, filter, transform };
 })();
