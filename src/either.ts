@@ -1,29 +1,130 @@
+import { array } from "./array.js"
+import { KApp, KRoot } from "./hkt.js"
+import { IMonad, monad } from "./monad.js"
+import { ITransform, ITransMonad, KTransform } from "./transform.js"
+
 export interface Left<out L> {
-    readonly left: true
+    readonly right: false
     readonly value: L
 }
 
 export interface Right<out R> {
-    readonly left: false
+    readonly right: true
     readonly value: R
 }
 
 export type Either<L, R> = Left<L> | Right<R>
 
+export interface KEither extends KRoot {
+    readonly 0: unknown
+    readonly 1: unknown
+    readonly body: Either<this[0], this[1]>
+}
+
 export interface IEither {
-    left: <A, B = never>(a: A) => Either<A, B>
-    right: <B, A = never>(b: B) => Either<A, B>
-    either: <A>(left: boolean, value: A) => Either<A, A>
-    swap: <A, B>(fa: Either<A, B>) => Either<B, A>
-    match: <A, R, AR, RR = AR>(onLeft: (a: A) => AR, onRight: (b: R) => RR) => (fa: Either<A, R>) => AR | RR
+    right<B>(b: B): Right<B>;
+    left<A>(a: A): Left<A>;
+    either<A, B, C, D = C>(onLeft: (a: A) => C, onRight: (b: B) => D): (fa: Either<A, B>) => C | D;
+    lefts<A, B>(fa: Either<A, B>[]): A[];
+    rights<A, B>(fa: Either<A, B>[]): B[];
+    isLeft<A, B>(fa: Either<A, B>): fa is Left<A>;
+    isRight<A, B>(fa: Either<A, B>): fa is Right<B>;
+    fromLeft<C>(a: C): <A, B>(fa: Either<A, B>) => A | C;
+    fromRight<C>(b: C): <A, B>(fa: Either<A, B>) => B | C;
+    partitionEithers<A, B>(fa: Either<A, B>[]): { lefts: A[], rights: B[] };
+    try<T, E>(onTry: () => T, onCatch: (e: unknown) => E): Either<E, T>;
+    try<T>(onTry: () => T): Either<unknown, T>;
+    tryAsync<T, E>(onTry: () => T, onCatch: (e: unknown) => E): Promise<Either<Awaited<E>, Awaited<T>>>;
+    tryAsync<T>(onTry: () => T): Promise<Either<unknown, Awaited<T>>>;
+    throwLeft<B>(fa: Either<unknown, B>): B;
+    throwRight<A>(fa: Either<A, unknown>): A;
+    monad<L>(): ITransMonad<KApp<KEither, L>>;
 }
 
 export const either: IEither = (() => {
     return {
-        left: <A>(a: A): Left<A> => ({ left: true, value: a }),
-        right: <B>(b: B): Right<B> => ({ left: false, value: b }),
-        either: <A>(left: boolean, value: A): Either<A, A> => ({ left, value }),
-        swap: <A, B>(fa: Either<A, B>): Either<B, A> => ({ left: !fa.left, value: fa.value }) as Either<B, A>,
-        match: <A, B, C, D>(onLeft: (a: A) => C, onRight: (b: B) => D) => (fa: Either<A, B>) => fa.left ? onLeft(fa.value) : onRight(fa.value)
+        right: (b) => ({ right: true, value: b }),
+        left: (a) => ({ right: false, value: a }),
+        either: (onLeft, onRight) => (fa) => fa.right ? onRight(fa.value) : onLeft(fa.value),
+        lefts: <A, B>(fa: Either<A, B>[]) => {
+            const result = [] as A[];
+
+            for (const a of fa) {
+                if (!a.right)
+                    result.push(a.value);
+            }
+
+            return result;
+        },
+        rights: <A, B>(fa: Either<A, B>[]) => {
+            const result = [] as B[];
+
+            for (const a of fa) {
+                if (a.right)
+                    result.push(a.value);
+            }
+
+            return result;
+        },
+        isLeft: <A, B>(fa: Either<A, B>): fa is Left<A> => !fa.right,
+        isRight: <A, B>(fa: Either<A, B>): fa is Right<B> => fa.right,
+        fromLeft: <C>(a: C) => <A, B>(fa: Either<A, B>) => fa.right ? a : fa.value,
+        fromRight: (b) => (fa) => fa.right ? fa.value : b,
+        partitionEithers: <A, B>(fa: Either<A, B>[]) => {
+            const result = { lefts: [] as A[], rights: [] as B[] };
+
+            for (const a of fa) {
+                if (a.right)
+                    result.rights.push(a.value);
+                else
+                    result.lefts.push(a.value);
+            }
+
+            return result;
+        },
+        try: <T, E>(onTry: () => T, onCatch?: (e: unknown) => E) => {
+            try {
+                return either.right(onTry());
+            } catch (e) {
+                return either.left(onCatch?.(e) ?? e);
+            }
+        },
+        tryAsync: async <T, E>(onTry: () => T, onCatch?: (e: unknown) => E) => {
+            try {
+                return either.right(await onTry());
+            } catch (e) {
+                return either.left(await onCatch?.(e) ?? e);
+            }
+        },
+        throwLeft: <B>(fa: Either<unknown, B>) => {
+            if (!fa.right)
+                throw fa.value;
+
+            return fa.value;
+        },
+        throwRight: <A>(fa: Either<A, unknown>) => {
+            if (fa.right)
+                throw fa.value;
+
+            return fa.value;
+        },
+        monad: <L>() => {
+            const m = monad<KApp<KEither, L>>({
+                unit: either.right,
+                bind: (fa, f) => fa.right ? f(fa.value) : fa
+            });
+
+            return {
+                ...m,
+                transform: <F>(outer: IMonad<F>): ITransform<F, KTransform<KApp<KEither, L>>> => ({ 
+                    lift: <A>(a: KApp<F, A>): KApp<F, Either<L, A>> => outer.map(a, m.unit),
+                    ...monad<KApp<KTransform<KApp<KEither, L>>, F>>({
+                        unit: <A>(a: A): KApp<F, Either<L, A>> => outer.unit(either.right<A>(a) as Either<L, A>),
+                        bind: <A, B>(fa: KApp<F, Either<L, A>>, f: (a: A) => KApp<F, Either<L, B>>): KApp<F, Either<L, B>> =>
+                            outer.bind<Either<L, A>, Either<L, B>>(fa, either.either(l => outer.unit(either.left(l) as Either<L, B>), f))
+                    })     
+                })
+            };
+        },
     }
 })();

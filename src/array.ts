@@ -7,7 +7,7 @@ export interface KArray extends KRoot {
     readonly body: Array<this[0]>
 }
 
-interface IArray extends ITransMonad<KArray, KTransform<KArray>> {
+interface IArray extends ITransMonad<KArray> {
     filter: {
         <T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[];
         <T>(predicate: (item: T) => boolean): (items: T[]) => T[];

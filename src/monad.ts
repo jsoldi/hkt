@@ -1,11 +1,12 @@
-import { ITypeClass, KApp } from "./hkt.js";
+import { functor, IFunctor } from "./functor.js";
+import { ITypeClass, KApp, KRoot } from "./hkt.js";
 
 export interface IMonadBase<F> extends ITypeClass<F> {
     unit<A>(a: A): KApp<F, A>
     bind<A, B>(fa: KApp<F, A>, f: (a: A) => KApp<F, B>): KApp<F, B>
 }
 
-export interface IMonad<F> extends IMonadBase<F> {
+export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
     map<A, B>(fa: KApp<F, A>, f: (a: A) => B): KApp<F, B>
     join<A>(ffa: KApp<F, KApp<F, A>>): KApp<F, A>
     sequence<A>(fas: KApp<F, A>[]): KApp<F, A[]>
@@ -35,19 +36,6 @@ export interface IMonad<F> extends IMonadBase<F> {
         <A, B, C, D, E, G, H, I, J, K>(f: (...a: [A]) => KApp<F, B>, g: (...b: [B, A]) => KApp<F, C>, h: (...c: [C, B, A]) => KApp<F, D>, i: (...d: [D, C, B, A]) => KApp<F, E>, j: (...e: [E, D, C, B, A]) => KApp<F, G>, k: (...f: [G, E, D, C, B, A]) => KApp<F, H>, l: (...g: [H, G, E, D, C, B, A]) => KApp<F, I>, m: (...h: [I, H, G, E, D, C, B, A]) => KApp<F, J>, n: (...i: [J, I, H, G, E, D, C, B, A]) => KApp<F, K>): (fa: KApp<F, A>) => KApp<F, K>
         <A, B, C, D, E, G, H, I, J, K, L>(f: (...a: [A]) => KApp<F, B>, g: (...b: [B, A]) => KApp<F, C>, h: (...c: [C, B, A]) => KApp<F, D>, i: (...d: [D, C, B, A]) => KApp<F, E>, j: (...e: [E, D, C, B, A]) => KApp<F, G>, k: (...f: [G, E, D, C, B, A]) => KApp<F, H>, l: (...g: [H, G, E, D, C, B, A]) => KApp<F, I>, m: (...h: [I, H, G, E, D, C, B, A]) => KApp<F, J>, n: (...i: [J, I, H, G, E, D, C, B, A]) => KApp<F, K>, o: (...j: [K, J, I, H, G, E, D, C, B, A]) => KApp<F, L>): (fa: KApp<F, A>) => KApp<F, L>
         <A, B, C, D, E, G, H, I, J, K, L, M>(f: (...a: [A]) => KApp<F, B>, g: (...b: [B, A]) => KApp<F, C>, h: (...c: [C, B, A]) => KApp<F, D>, i: (...d: [D, C, B, A]) => KApp<F, E>, j: (...e: [E, D, C, B, A]) => KApp<F, G>, k: (...f: [G, E, D, C, B, A]) => KApp<F, H>, l: (...g: [H, G, E, D, C, B, A]) => KApp<F, I>, m: (...h: [I, H, G, E, D, C, B, A]) => KApp<F, J>, n: (...i: [J, I, H, G, E, D, C, B, A]) => KApp<F, K>, o: (...j: [K, J, I, H, G, E, D, C, B, A]) => KApp<F, L>, p: (...k: [L, K, J, I, H, G, E, D, C, B, A]) => KApp<F, M>): (fa: KApp<F, A>) => KApp<F, M>
-    }    
-    fmap: {
-        <A, B>(f: (...a: [A]) => B): (fa: KApp<F, A>) => KApp<F, B>
-        <A, B, C>(f: (...a: [A]) => B, g: (...b: [B, A]) => C): (fa: KApp<F, A>) => KApp<F, C>
-        <A, B, C, D>(f: (...a: [A]) => B, g: (...b: [B, A]) => C, h: (...c: [C, B, A]) => D): (fa: KApp<F, A>) => KApp<F, D>
-        <A, B, C, D, E>(f: (...a: [A]) => B, g: (...b: [B, A]) => C, h: (...c: [C, B, A]) => D, i: (...d: [D, C, B, A]) => E): (fa: KApp<F, A>) => KApp<F, E>
-        <A, B, C, D, E, G>(f: (...a: [A]) => B, g: (...b: [B, A]) => C, h: (...c: [C, B, A]) => D, i: (...d: [D, C, B, A]) => E, j: (...e: [E, D, C, B, A]) => G): (fa: KApp<F, A>) => KApp<F, G>
-        <A, B, C, D, E, G, H>(f: (...a: [A]) => B, g: (...b: [B, A]) => C, h: (...c: [C, B, A]) => D, i: (...d: [D, C, B, A]) => E, j: (...e: [E, D, C, B, A]) => G, k: (...f: [G, E, D, C, B, A]) => H): (fa: KApp<F, A>) => KApp<F, H>
-        <A, B, C, D, E, G, H, I>(f: (...a: [A]) => B, g: (...b: [B, A]) => C, h: (...c: [C, B, A]) => D, i: (...d: [D, C, B, A]) => E, j: (...e: [E, D, C, B, A]) => G, k: (...f: [G, E, D, C, B, A]) => H, l: (...g: [H, G, E, D, C, B, A]) => I): (fa: KApp<F, A>) => KApp<F, I>
-        <A, B, C, D, E, G, H, I, J>(f: (...a: [A]) => B, g: (...b: [B, A]) => C, h: (...c: [C, B, A]) => D, i: (...d: [D, C, B, A]) => E, j: (...e: [E, D, C, B, A]) => G, k: (...f: [G, E, D, C, B, A]) => H, l: (...g: [H, G, E, D, C, B, A]) => I, m: (...h: [I, H, G, E, D, C, B, A]) => J): (fa: KApp<F, A>) => KApp<F, J>
-        <A, B, C, D, E, G, H, I, J, K>(f: (...a: [A]) => B, g: (...b: [B, A]) => C, h: (...c: [C, B, A]) => D, i: (...d: [D, C, B, A]) => E, j: (...e: [E, D, C, B, A]) => G, k: (...f: [G, E, D, C, B, A]) => H, l: (...g: [H, G, E, D, C, B, A]) => I, m: (...h: [I, H, G, E, D, C, B, A]) => J, n: (...i: [J, I, H, G, E, D, C, B, A]) => K): (fa: KApp<F, A>) => KApp<F, K>
-        <A, B, C, D, E, G, H, I, J, K, L>(f: (...a: [A]) => B, g: (...b: [B, A]) => C, h: (...c: [C, B, A]) => D, i: (...d: [D, C, B, A]) => E, j: (...e: [E, D, C, B, A]) => G, k: (...f: [G, E, D, C, B, A]) => H, l: (...g: [H, G, E, D, C, B, A]) => I, m: (...h: [I, H, G, E, D, C, B, A]) => J, n: (...i: [J, I, H, G, E, D, C, B, A]) => K, o: (...j: [K, J, I, H, G, E, D, C, B, A]) => L): (fa: KApp<F, A>) => KApp<F, L>
-        <A, B, C, D, E, G, H, I, J, K, L, M>(f: (...a: [A]) => B, g: (...b: [B, A]) => C, h: (...c: [C, B, A]) => D, i: (...d: [D, C, B, A]) => E, j: (...e: [E, D, C, B, A]) => G, k: (...f: [G, E, D, C, B, A]) => H, l: (...g: [H, G, E, D, C, B, A]) => I, m: (...h: [I, H, G, E, D, C, B, A]) => J, n: (...i: [J, I, H, G, E, D, C, B, A]) => K, o: (...j: [K, J, I, H, G, E, D, C, B, A]) => L, p: (...k: [L, K, J, I, H, G, E, D, C, B, A]) => M): (fa: KApp<F, A>) => KApp<F, M>
     }
 }
 
@@ -55,17 +43,21 @@ export function monad<F>(base: IMonadBase<F>): IMonad<F> {
     const map = <A, B>(fa: KApp<F, A>, f: (a: A) => B): KApp<F, B> => base.bind(fa, a => base.unit(f(a)));
     const join = <A>(ffa: KApp<F, KApp<F, A>>): KApp<F, A> => base.bind(ffa, fa => fa);
 
-    const chain = (...fs: ((...s: any[]) => KApp<F, any>)[]) =>
-        (m: KApp<F, any>) => pipe(m, ...fs);
-
     const sequence = <A>(fas: KApp<F, A>[]): KApp<F, A[]> => 
         fas.reduceRight((acc, fa) => base.bind(fa, a => map(acc, as => [a, ...as])), base.unit([] as A[]));
 
-    const fmap = (...fs: ((...s: any[]) => any)[]) =>
-        chain(...fs.map(f => (...args: any[]) => base.unit(f(...args))));
-
     const pipe = (head: KApp<F, any>, ...tail: ((...s: any[]) => KApp<F, any>)[]) => 
         base.bind(head, tail.reduceRight((acc, f) => (...arg) => base.bind(f(...arg), a => acc(...[a, ...arg])), base.unit));
-   
-    return { ...base, map, join, chain, sequence, pipe, fmap };
+
+    const chain = (...fs: ((...s: any[]) => KApp<F, any>)[]) =>
+        (m: KApp<F, any>) => pipe(m, ...fs);
+
+    return { 
+        ...base, 
+        ...functor({ map }), 
+        join, 
+        chain, 
+        sequence, 
+        pipe 
+    };
 }

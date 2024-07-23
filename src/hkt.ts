@@ -31,8 +31,9 @@ interface KLeftIdentity extends KRoot {
 }
 
 export type KApp<K, T> = TryResolve<SetNextArgument<K, T>>
-
-export type KApps<T> = T extends readonly [...infer L, infer R] ? KApp<KApps<L>, R> : KLeftIdentity
+export type KApp3<K, A, B> = KApp<KApp<K, A>, B>
+export type KApp4<K, A, B, C> = KApp<KApp<KApp<K, A>, B>, C>
+export type KAppN<T> = T extends readonly [...infer L, infer R] ? KApp<KAppN<L>, R> : KLeftIdentity
 
 export interface ITypeClass<F> {
     readonly _classParam?: (f: F) => F

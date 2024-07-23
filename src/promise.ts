@@ -12,7 +12,8 @@ export interface IPromise extends IMonad<KPromise> {
     race: <A>(fa: Promise<A>[]) => Promise<A>
     any: <A>(fa: Promise<A>[]) => Promise<A>
     timeout: (ms: number) => <A>(fa: Promise<A>) => Promise<A>
-    peek: <A>(f: (a: A) => unknown) => (fa: Promise<A>) => Promise<A>
+    catch: <A, B>(f: (e: unknown) => Promise<B>) => (fa: Promise<A>) => Promise<A | B>
+    finally: <A>(f: () => unknown) => (fa: Promise<A>) => Promise<A>
 }
 
 export const promise: IPromise = (() => {
@@ -25,12 +26,6 @@ export const promise: IPromise = (() => {
     const all: <A>(fa: Promise<A>[]) => Promise<A[]> = fa => Promise.all(fa);
     const race: <A>(fa: Promise<A>[]) => Promise<A> = fa => Promise.race(fa);
     const any: <A>(fa: Promise<A>[]) => Promise<A> = fa => Promise.any(fa);
-
-    const peek: <A>(f: (a: A) => unknown) => (fa: Promise<A>) => Promise<A> = f => fa => 
-        fa.then(a => {
-            f(a);
-            return a;
-        });
 
     const timeout: (ms: number) => <A>(fa: Promise<A>) => Promise<A> = ms => fa => 
         new Promise((resolve, reject) => {
@@ -45,6 +40,12 @@ export const promise: IPromise = (() => {
             }, reject);
         });
 
+    const _catch: <A, B>(f: (e: unknown) => Promise<B>) => (fa: Promise<A>) => Promise<A | B> = 
+        f => fa => fa.catch(f);
+
+    const _finally: <A>(f: () => unknown) => (fa: Promise<A>) => Promise<A> =
+        f => fa => fa.finally(f);
+
     const m = monad<KPromise>({ 
         unit,
         bind,
@@ -57,6 +58,7 @@ export const promise: IPromise = (() => {
         race,
         any,
         timeout,
-        peek,
+        catch: _catch,
+        finally: _finally,
     }
 })();
