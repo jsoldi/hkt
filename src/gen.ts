@@ -1,5 +1,4 @@
 import { KRoot } from "./hkt.js"
-import { IMonad, monad } from "./monad.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
 
 export type Gen<T> = AsyncGenerator<T, void, void>

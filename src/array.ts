@@ -1,5 +1,4 @@
 import { KRoot } from "./hkt.js";
-import { monad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
 import { ITransformer, transformer } from "./transformer.js";
 

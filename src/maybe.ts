@@ -1,6 +1,6 @@
 import { Left, Right, either } from "./either.js";
 import { KRoot } from "./hkt.js";
-import { monad, IMonad } from "./monad.js";
+import { IMonad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
 import { ITransformer } from "./transformer.js";
 
