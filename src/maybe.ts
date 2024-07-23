@@ -1,7 +1,8 @@
 import { Left, Right, either } from "./either.js";
 import { KRoot } from "./hkt.js";
 import { monad, IMonad } from "./monad.js";
-import { ITransMonad } from "./transformer.js";
+import { IMonadPlus, monadPlus } from "./monadPlus.js";
+import { ITransformer } from "./transformer.js";
 
 export const unit = Symbol("unit");
 export type Unit = typeof unit;
@@ -14,7 +15,7 @@ export interface KMaybe extends KRoot {
     readonly body: Maybe<this[0]>
 }
 
-export interface IMaybe extends ITransMonad<KMaybe> {
+export interface IMaybe extends IMonadPlus<KMaybe>, ITransformer<KMaybe> {
     just<A>(a: A): Just<A>
     readonly nothing: Nothing
     isJust<A>(fa: Maybe<A>): fa is Just<A>
@@ -34,9 +35,11 @@ export const maybe: IMaybe = (() => {
     const listToMaybe = <A>(fa: A[]): Maybe<A> => fa.length > 0 ? just(fa[0]) : nothing;
     const maybeToList = <A>(fa: Maybe<A>): [] | [A] => fa.right ? [fa.value] : [];
 
-    const m = monad<KMaybe>({
+    const m = monadPlus<KMaybe>({
         unit: just,
-        bind: <A, B>(fa: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> => fa.right ? f(fa.value) : nothing
+        bind: <A, B>(fa: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> => fa.right ? f(fa.value) : nothing,
+        empty: () => nothing,
+        concat: (fa, fb) => fa.right && fb.right ? just(fb.value) : nothing
     });
     
     const transform = <F>(outer: IMonad<F>) => 

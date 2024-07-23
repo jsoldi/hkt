@@ -1,6 +1,6 @@
 import { KApp, KRoot } from "./hkt.js"
 import { IMonad, monad } from "./monad.js"
-import { ITransMonad, transformer } from "./transformer.js"
+import { ITransformer, transformer } from "./transformer.js"
 
 export interface Left<out L> {
     readonly right: false
@@ -37,7 +37,7 @@ export interface IEither {
     tryAsync<T>(onTry: () => T): Promise<Either<unknown, Awaited<T>>>;
     throwLeft<B>(fa: Either<unknown, B>): B;
     throwRight<A>(fa: Either<A, unknown>): A;
-    monad<L>(): ITransMonad<KApp<KEither, L>>;
+    monad<L>(): IMonad<KApp<KEither, L>> & ITransformer<KApp<KEither, L>>;
 }
 
 export const either: IEither = (() => {

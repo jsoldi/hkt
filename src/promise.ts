@@ -11,9 +11,17 @@ export interface IPromise extends IMonad<KPromise> {
     all: <A>(fa: Promise<A>[]) => Promise<A[]>
     race: <A>(fa: Promise<A>[]) => Promise<A>
     any: <A>(fa: Promise<A>[]) => Promise<A>
+    abort: (signal: AbortSignal) => <A>(fa: Promise<A>) => Promise<A>
     timeout: (ms: number) => <A>(fa: Promise<A>) => Promise<A>
     catch: <A, B>(f: (e: unknown) => Promise<B>) => (fa: Promise<A>) => Promise<A | B>
     finally: <A>(f: () => unknown) => (fa: Promise<A>) => Promise<A>
+}
+
+export class AbortError extends Error {
+    constructor(msg?: string) {
+        super(msg ?? 'Promise was aborted');
+        this.name = 'AbortError';
+    }
 }
 
 export const promise: IPromise = (() => {
@@ -27,18 +35,22 @@ export const promise: IPromise = (() => {
     const race: <A>(fa: Promise<A>[]) => Promise<A> = fa => Promise.race(fa);
     const any: <A>(fa: Promise<A>[]) => Promise<A> = fa => Promise.any(fa);
 
-    const timeout: (ms: number) => <A>(fa: Promise<A>) => Promise<A> = ms => fa => 
+    const abort: (signal: AbortSignal) => <A>(fa: Promise<A>) => Promise<A> = signal => fa =>
         new Promise((resolve, reject) => {
-            const id = setTimeout(() => {
-                clearTimeout(id);
-                reject(new Error('Timeout'));
-            }, ms);
+            const doAbort = () => reject(new AbortError());
 
-            fa.then(a => {
-                clearTimeout(id);
-                resolve(a);
-            }, reject);
+            if (signal.aborted)
+                return doAbort();
+
+            signal.addEventListener('abort', doAbort);
+            fa.then(resolve, reject).finally(() => signal.removeEventListener('abort', doAbort));
         });
+
+    const timeout: (ms: number) => <A>(fa: Promise<A>) => Promise<A> = ms => {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), ms);
+        return fa => abort(controller.signal)(fa).finally(() => clearTimeout(id));
+    }
 
     const _catch: <A, B>(f: (e: unknown) => Promise<B>) => (fa: Promise<A>) => Promise<A | B> = 
         f => fa => fa.catch(f);
@@ -57,6 +69,7 @@ export const promise: IPromise = (() => {
         all,
         race,
         any,
+        abort,
         timeout,
         catch: _catch,
         finally: _finally,

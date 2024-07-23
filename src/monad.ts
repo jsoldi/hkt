@@ -1,5 +1,5 @@
 import { functor, IFunctor } from "./functor.js";
-import { ITypeClass, KApp, KRoot } from "./hkt.js";
+import { ITypeClass, KApp } from "./hkt.js";
 
 export interface IMonadBase<F> extends ITypeClass<F> {
     unit<A>(a: A): KApp<F, A>

@@ -1,5 +1,6 @@
 export * from "./pipe.js";
 export * from "./hkt.js";
+export * from "./functor.js";
 export * from "./monad.js";
 export * from "./trivial.js";
 export * from "./transformer.js";

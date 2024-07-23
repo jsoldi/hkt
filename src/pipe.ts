@@ -36,3 +36,15 @@ export function chain<A, B, C, D, E, G, H, I, J, K, L, M>(f: (...a: [A]) => B, g
 export function chain(...fs: ((...a: any[]) => any)[]): (a: any) => any {
     return _chain(...fs);
 }
+
+export function curry<A, B, C>(f: (a: A, b: B) => C): (a: A) => (b: B) => C {
+    return a => b => f(a, b);
+}
+
+export function uncurry<A, B, C>(f: (a: A) => (b: B) => C): (a: A, b: B) => C {
+    return (a, b) => f(a)(b);
+}
+
+export function flip<A, B, C>(f: (a: A, b: B) => C): (b: B, a: A) => C {
+    return (b, a) => f(a, b);
+}

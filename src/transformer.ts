@@ -6,7 +6,7 @@ export interface ITransform<F, G> extends IMonad<KTransform<F, G>> {
     flatten<A>(fa: KApp<F, KApp<G, KApp<F, A>>>): KApp<G, KApp<F, A>>
 }
 
-export interface ITransMonad<F> extends IMonad<F> {
+export interface ITransformer<F> {
     readonly transform: <G>(outer: IMonad<G>) => ITransform<F, G>
 }
 
