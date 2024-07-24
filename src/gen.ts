@@ -1,5 +1,8 @@
+import { functor } from "./functor.js"
 import { KRoot } from "./hkt.js"
+import { monad } from "./monad.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
+import { monoid } from "./monoid.js"
 
 export type Gen<T> = AsyncGenerator<T, void, void>
 
@@ -34,6 +37,12 @@ export const gen: IGen = (() => {
     async function* bind<T, U>(fa: Gen<T>, f: (a: T) => Gen<U>): Gen<U> {
         for await (const a of fa) {
             yield* f(a)
+        }
+    }
+
+    async function* map<T, U>(fa: Gen<T>, f: (a: T) => U): Gen<U> {
+        for await (const a of fa) {
+            yield f(a)
         }
     }
 
@@ -148,21 +157,26 @@ export const gen: IGen = (() => {
 
     const empty = () => (async function*() {})();
 
-    const concat: <A>(fa: Gen<A>, fb: Gen<A>) => Gen<A> = async function*(fa, fb) {
+    const append: <A>(fa: Gen<A>, fb: Gen<A>) => Gen<A> = async function*(fa, fb) {
         yield* fa;
         yield* fb;
     }
 
-    const m = monadPlus<KGen>({
-        unit,
-        bind,
-        empty,
-        concat
+    const _monadPlus = monadPlus<KGen>({
+        ...monad<KGen>({
+            ...functor<KGen>({ map }),
+            unit,
+            bind,
+        }),
+        ...monoid<KGen>({
+            empty,
+            append
+        })
     });
 
     return {
-        ...m,
-        from,
+        ..._monadPlus,
+        from, // override MonadPlus implementation
         take,
         flat,
         forEach,

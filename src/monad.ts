@@ -1,14 +1,16 @@
 import { functor, IFunctor } from "./functor.js";
-import { ITypeClass, KApp } from "./hkt.js";
+import { KApp, KRoot } from "./hkt.js";
+import { monoid } from "./monoid.js";
+import { ITransformer, KTransOut, monadTrans } from "./transformer.js";
+import { id } from "./utils.js";
 
-export interface IMonadBase<F> extends ITypeClass<F> {
+export interface IMonadBase<F> extends IFunctor<F> {
     unit<A>(a: A): KApp<F, A>
     bind<A, B>(fa: KApp<F, A>, f: (a: A) => KApp<F, B>): KApp<F, B>
 }
 
-export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
-    map<A, B>(fa: KApp<F, A>, f: (a: A) => B): KApp<F, B>
-    join<A>(ffa: KApp<F, KApp<F, A>>): KApp<F, A>
+export interface IMonad<F> extends IMonadBase<F> {
+    flat<A>(ffa: KApp<F, KApp<F, A>>): KApp<F, A>
     sequence<A>(fas: KApp<F, A>[]): KApp<F, A[]>
     pipe: {
         <A>(a: KApp<F, A>): KApp<F, A>
@@ -40,11 +42,10 @@ export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
 }
 
 export function monad<F>(base: IMonadBase<F>): IMonad<F> {
-    const map = <A, B>(fa: KApp<F, A>, f: (a: A) => B): KApp<F, B> => base.bind(fa, a => base.unit(f(a)));
-    const join = <A>(ffa: KApp<F, KApp<F, A>>): KApp<F, A> => base.bind(ffa, fa => fa);
+    const flat = <A>(ffa: KApp<F, KApp<F, A>>): KApp<F, A> => base.bind(ffa, id);
 
     const sequence = <A>(fas: KApp<F, A>[]): KApp<F, A[]> => 
-        fas.reduceRight((acc, fa) => base.bind(fa, a => map(acc, as => [a, ...as])), base.unit([] as A[]));
+        fas.reduceRight((acc, fa) => base.bind(fa, a => base.map(acc, as => [a, ...as])), base.unit([] as A[]));
 
     const pipe = (head: KApp<F, any>, ...tail: ((...s: any[]) => KApp<F, any>)[]) => 
         base.bind(head, tail.reduceRight((acc, f) => (...arg) => base.bind(f(...arg), a => acc(...[a, ...arg])), base.unit));
@@ -53,9 +54,8 @@ export function monad<F>(base: IMonadBase<F>): IMonad<F> {
         (m: KApp<F, any>) => pipe(m, ...fs);
 
     return { 
-        ...base, 
-        ...functor({ map }), 
-        join, 
+        ...base,
+        flat, 
         chain, 
         sequence, 
         pipe 

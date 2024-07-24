@@ -8,5 +8,5 @@ export interface KString extends KRoot {
 
 export const string = monoid<KString>({
     empty: () => "",
-    concat: (a, b) => a + b
+    append: (a, b) => a + b
 });

@@ -1,3 +1,4 @@
+import { functor } from "./functor.js";
 import { KRoot } from "./hkt.js";
 import { IMonad, monad } from "./monad.js";
 
@@ -58,13 +59,16 @@ export const promise: IPromise = (() => {
     const _finally: <A>(f: () => unknown) => (fa: Promise<A>) => Promise<A> =
         f => fa => fa.finally(f);
 
-    const m = monad<KPromise>({ 
+    const _monad = monad<KPromise>({ 
+        ...functor<KPromise>({
+            map: (fa, f) => fa.then(f)
+        }),
         unit,
         bind,
     });
 
     return {
-        ...m,
+        ..._monad,
         delay,
         all,
         race,

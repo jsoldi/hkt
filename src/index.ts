@@ -9,3 +9,4 @@ export * from "./either.js";
 export * from "./maybe.js";
 export * from "./gen.js";
 export * from "./promise.js";
+export * from "./reader.js";

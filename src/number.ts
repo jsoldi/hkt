@@ -8,5 +8,5 @@ export interface KNumber extends KRoot {
 
 export const number = monoid<KNumber>({
     empty: () => 0,
-    concat: (a, b) => a + b
+    append: (a, b) => a + b
 });
