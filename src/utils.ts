@@ -52,3 +52,7 @@ export function flip<A, B, C>(f: (a: A, b: B) => C): (b: B, a: A) => C {
 export function id<A>(a: A): A {
     return a;
 }
+
+export function not<A>(f: (a: A) => boolean): (a: A) => boolean {
+    return a => !f(a);
+}

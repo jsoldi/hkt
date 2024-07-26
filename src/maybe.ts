@@ -1,10 +1,10 @@
 import { Left, Right, either } from "./either.js";
 import { functor } from "./functor.js";
-import { KApp, KRoot } from "./hkt.js";
-import { IMonad, monad } from "./monad.js";
+import { KRoot } from "./hkt.js";
+import { monad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
 import { monoid } from "./monoid.js";
-import { IMonadTrans, ITransformer, KTransIn } from "./transformer.js";
+import { ITransformer, KTransIn } from "./transformer.js";
 
 export type Nothing = Left<null>
 export type Just<T> = Right<T>
@@ -22,8 +22,9 @@ export interface IMaybe extends IMonadPlus<KMaybe>, ITransformer<KTransIn<KMaybe
     isNothing<A>(fa: Maybe<A>): fa is Nothing
     maybe<B, A, C>(b: B, map: (a: A) => C): (fa: Maybe<A>) => C | B
     maybe<B>(b: B): <A>(fa: Maybe<A>) => A | B
-    listToMaybe<A>(fa: A[]): Maybe<A>
-    maybeToList<A>(fa: Maybe<A>): [] | [A]
+    fromList<A>(fa: A[]): Maybe<A>
+    toList<A>(fa: Maybe<A>): [] | [A]
+    fromNullable<A>(a: A): Maybe<NonNullable<A>>
 }
 
 export const maybe: IMaybe = (() => {
@@ -32,10 +33,11 @@ export const maybe: IMaybe = (() => {
     const isJust = <A>(fa: Maybe<A>): fa is Just<A> => fa.right;
     const isNothing = <A>(fa: Maybe<A>): fa is Nothing => !fa.right;
     const maybe = <B, A, C>(b: B, map?: (a: A) => C) => (fa: Maybe<A>) => fa.right ? map?.(fa.value) ?? fa.value : b;
-    const listToMaybe = <A>(fa: A[]): Maybe<A> => fa.length > 0 ? just(fa[0]) : nothing;
-    const maybeToList = <A>(fa: Maybe<A>): [] | [A] => fa.right ? [fa.value] : [];
+    const fromList = <A>(fa: A[]): Maybe<A> => fa.length > 0 ? just(fa[0]) : nothing;
+    const toList = <A>(fa: Maybe<A>): [] | [A] => fa.right ? [fa.value] : [];
     const map = <A, B>(fa: Maybe<A>, f: (a: A) => B): Maybe<B> => fa.right ? just(f(fa.value)) : nothing;
     const bind = <A, B>(fa: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> => fa.right ? f(fa.value) : nothing;
+    const fromNullable = <A>(a: A): Maybe<NonNullable<A>> => a == null ? nothing : just<NonNullable<A>>(a);
 
     const _monadPlus = monadPlus<KMaybe>({
         ...monad<KMaybe>({
@@ -56,8 +58,9 @@ export const maybe: IMaybe = (() => {
         isJust,
         isNothing,
         maybe,
-        listToMaybe,
-        maybeToList,  
+        fromList,
+        toList,  
+        fromNullable,
         transform: either.monad<null>().transform
     };
 })();

@@ -1,5 +1,5 @@
 import { functor } from "./functor.js"
-import { KApp, KApp3, KRoot } from "./hkt.js"
+import { KApp, KRoot } from "./hkt.js"
 import { IMonad, monad } from "./monad.js"
 import { ITransformer, KTransIn, monadTrans } from "./transformer.js"
 

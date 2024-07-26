@@ -1,7 +1,5 @@
-import { functor, IFunctor } from "./functor.js";
-import { KApp, KRoot } from "./hkt.js";
-import { monoid } from "./monoid.js";
-import { ITransformer, KTransOut, monadTrans } from "./transformer.js";
+import { IFunctor } from "./functor.js";
+import { KApp } from "./hkt.js";
 import { id } from "./utils.js";
 
 export interface IMonadBase<F> extends IFunctor<F> {
