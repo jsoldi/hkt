@@ -13,6 +13,8 @@ export interface KArray extends KRoot {
 type KArrayTrans = KTransIn<KArray>
 
 interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans> {
+    foldl<B>(b: B): <A>(f: (b: B, a: A) => B) => (fa: Array<A>) => B
+    foldr<B>(b: B): <A>(f: (a: A, b: B) => B) => (fa: Array<A>) => B
     filter: {
         <T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[];
         <T>(predicate: (item: T) => boolean): (items: T[]) => T[];
@@ -41,6 +43,9 @@ export const array: IArray = (() => {
         return (items: T[]) => items.filter(predicate);
     };    
 
+    const foldl = <B>(b: B) => <A>(f: (b: B, a: A) => B) => (fa: A[]) => fa.reduce(f, b);
+    const foldr = <B>(b: B) => <A>(f: (a: A, b: B) => B) => (fa: A[]) => fa.reduceRight((a, b) => f(b, a), b);
+
     const transform = <M>(outer: IMonad<M>) => {
         return monadTrans<KArrayTrans, M>({ 
             ...monad<KApp<KArrayTrans, M>>({ 
@@ -58,5 +63,7 @@ export const array: IArray = (() => {
         ..._monadPlus, 
         filter, // override MonadPlus implementation
         transform,
+        foldl,
+        foldr
     };
 })();

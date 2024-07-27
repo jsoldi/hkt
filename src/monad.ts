@@ -10,6 +10,9 @@ export interface IMonadBase<F> extends IFunctor<F> {
 export interface IMonad<F> extends IMonadBase<F> {
     flat<A>(ffa: KApp<F, KApp<F, A>>): KApp<F, A>
     sequence<A>(fas: KApp<F, A>[]): KApp<F, A[]>
+    // lift1<A, B>(f: (a: A) => B): (fa: KApp<F, A>) => KApp<F, B> // Already defined as fmap
+    lift2<A, B, C>(f: (a: A, b: B) => C): (fa: KApp<F, A>, fb: KApp<F, B>) => KApp<F, C>
+    lift3<A, B, C, D>(f: (a: A, b: B, c: C) => D): (fa: KApp<F, A>, fb: KApp<F, B>, fc: KApp<F, C>) => KApp<F, D>
     pipe: {
         <A>(a: KApp<F, A>): KApp<F, A>
         <A, B>(a: KApp<F, A>, b:(...a: [A]) => KApp<F, B>): KApp<F, B>
@@ -51,11 +54,16 @@ export function monad<F>(base: IMonadBase<F>): IMonad<F> {
     const chain = (...fs: ((...s: any[]) => KApp<F, any>)[]) =>
         (m: KApp<F, any>) => pipe(m, ...fs);
 
+    const lift2 = <A, B, C>(f: (a: A, b: B) => C) => (fa: KApp<F, A>, fb: KApp<F, B>) => base.bind(fa, a => base.map(fb, b => f(a, b)));
+    const lift3 = <A, B, C, D>(f: (a: A, b: B, c: C) => D) => (fa: KApp<F, A>, fb: KApp<F, B>, fc: KApp<F, C>) => base.bind(fa, a => base.bind(fb, b => base.map(fc, c => f(a, b, c))));
+
     return { 
         ...base,
         flat, 
         chain, 
         sequence, 
+        lift2,
+        lift3,
         pipe 
     };
 }

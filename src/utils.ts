@@ -56,3 +56,11 @@ export function id<A>(a: A): A {
 export function not<A>(f: (a: A) => boolean): (a: A) => boolean {
     return a => !f(a);
 }
+
+export function spread<A, B>(f: (a: A[]) => B): (...a: A[]) => B {
+    return (...a) => f(a);
+}
+
+export function unspread<A, B>(f: (...a: A[]) => B): (a: A[]) => B {
+    return a => f(...a);
+}
