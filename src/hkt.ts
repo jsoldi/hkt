@@ -47,6 +47,7 @@ export interface $F extends KRoot {
     readonly body: $<this[1], $<this[0], this[2]>>
 }
 
+/* Apply */
 export type $<K, T> = TryResolve<SetNextArgument<K, T>>
 export type $3<K, A, B> = $<$<K, A>, B>
 export type $4<K, A, B, C> = $<$<$<K, A>, B>, C>
@@ -54,5 +55,5 @@ export type $5<K, A, B, C, D> = $<$<$<$<K, A>, B>, C>, D>
 export type $N<T> = T extends readonly [...infer L, infer R] ? $<$N<L>, R> : $I
 
 export interface ITypeClass<F> {
-    // readonly _classParam?: (f: F) => F
+    readonly _classParam?: (f: F) => F
 }

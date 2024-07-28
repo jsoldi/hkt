@@ -2,7 +2,8 @@ import { Left, Right, either } from "./either.js";
 import { $, $F, KRoot } from "./hkt.js";
 import { IMonad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
-import { IMonadTrans, ITransformer } from "./transformer.js";
+import { IMonadTrans, ITransformer, monadTrans } from "./transformer.js";
+import { pipe } from "./utils.js";
 
 export type Nothing = Left<null>
 export type Just<T> = Right<T>
@@ -13,7 +14,9 @@ export interface KMaybe extends KRoot {
     readonly body: Maybe<this[0]>
 }
 
-export interface IMaybe extends IMonadPlus<KMaybe>, ITransformer<$<$F, KMaybe>> {
+export type KMaybeTrans = $<$F, KMaybe>
+
+export interface IMaybe extends IMonadPlus<KMaybe>, ITransformer<KMaybeTrans> {
     just<A>(a: A): Just<A>
     readonly nothing: Nothing
     isJust<A>(fa: Maybe<A>): fa is Just<A>
@@ -36,7 +39,17 @@ export const maybe: IMaybe = (() => {
     const map = <A, B>(fa: Maybe<A>, f: (a: A) => B): Maybe<B> => fa.right ? just(f(fa.value)) : nothing;
     const bind = <A, B>(fa: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> => fa.right ? f(fa.value) : nothing;
     const fromNullable = <A>(a: A): Maybe<NonNullable<A>> => a == null ? nothing : just<NonNullable<A>>(a);
-    const transform: <M>(outer: IMonad<M>) => IMonadTrans<$<$F, KMaybe>, M> = either.monad<null>().transform;
+
+    const transform = <M>(outer: IMonad<M>) => {
+        const et = either.monad<null>().transform(outer);
+        
+        return monadTrans<KMaybeTrans, M>({ 
+            map: et.map,
+            unit: et.unit,
+            bind: et.bind,
+            lift: et.lift
+        });
+    };
 
     return { 
         ...monadPlus<KMaybe>({
