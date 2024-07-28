@@ -10,7 +10,7 @@ export interface KArray extends KRoot {
     readonly body: Array<this[0]>
 }
 
-type KArrayTrans = KTransIn<KArray>
+type KArrayTrans = $<KTransIn, KArray>
 
 interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans> {
     foldl<B>(b: B): <A>(f: (b: B, a: A) => B) => (fa: Array<A>) => B

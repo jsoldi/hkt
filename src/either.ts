@@ -22,7 +22,7 @@ export interface KEither extends KRoot {
     readonly body: Either<this[0], this[1]>
 }
 
-export type KEitherTrans<L> = KTransIn<$<KEither, L>>
+export type KEitherTrans<L> = $<KTransIn, $<KEither, L>>
 
 export type IEitherMonad<L> = IMonad<$<KEither, L>> & ITransformer<KEitherTrans<L>>;
 

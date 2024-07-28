@@ -12,7 +12,7 @@ export interface KReader extends KRoot {
     readonly body: Reader<this[0], this[1]>
 }
 
-export type KReaderTrans<E> = KTransOut<$<KReader, E>>
+export type KReaderTrans<E> = $<KTransOut, $<KReader, E>>
 
 export interface IReader<E> extends IMonad<$<KReader, E>>, ITransformer<KReaderTrans<E>> {
     ask: Reader<E, E>

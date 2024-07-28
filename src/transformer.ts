@@ -16,16 +16,20 @@ export interface ITransformer<T> {
 
 // TODO: I think you can define these two using $$, and maybe a `flip` type function
 
-export interface KTransIn<F> extends KRoot {
-    readonly 0: unknown // M
-    readonly 1: unknown // A
-    readonly body: $<this[0], $<F, this[1]>> // M<F<A>>
+// f => m => a => m(f(a))
+
+export interface KTransIn extends KRoot {
+    readonly 0: unknown // F
+    readonly 1: unknown // M
+    readonly 2: unknown // A
+    readonly body: $<this[1], $<this[0], this[2]>> // M<F<A>>
 }
 
-export interface KTransOut<F> extends KRoot {
-    readonly 0: unknown // M
-    readonly 1: unknown // A
-    readonly body: $<F, $<this[0], this[1]>> // F<M<A>>
+export interface KTransOut extends KRoot {
+    readonly 0: unknown // F
+    readonly 1: unknown // M
+    readonly 2: unknown // A
+    readonly body: $<this[0], $<this[1], this[2]>> // F<M<A>>
 }
 
 export function monadTrans<T, M>(base: IMonadTransBase<T, M> & Partial<IMonadTrans<T, M>>): IMonadTrans<T, M> {
