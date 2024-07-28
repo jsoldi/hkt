@@ -1,16 +1,14 @@
-import { functor } from "./functor.js";
-import { $, KRoot } from "./hkt.js";
-import { IMonad, monad } from "./monad.js";
+import { $, $F, KRoot } from "./hkt.js";
+import { IMonad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
-import { monoid } from "./monoid.js";
-import { ITransformer, KTransIn, monadTrans } from "./transformer.js";
+import { ITransformer, monadTrans } from "./transformer.js";
 
 export interface KArray extends KRoot {
     readonly 0: unknown
     readonly body: Array<this[0]>
 }
 
-type KArrayTrans = $<KTransIn, KArray>
+type KArrayTrans = $<$F, KArray>
 
 interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans> {
     foldl<B>(b: B): <A>(f: (b: B, a: A) => B) => (fa: Array<A>) => B

@@ -25,16 +25,26 @@ type TryResolve<K> =
             : K
         : K
 
+/* Identity */
 export interface $I extends KRoot {
     readonly 0: unknown
     readonly body: this[0]
 }
 
+/* Composition */
 export interface $$ extends KRoot {
     readonly 0: unknown
     readonly 1: unknown
     readonly 2: unknown
     readonly body: $<this[0], $<this[1], this[2]>>
+}
+
+/* Flip */
+export interface $F extends KRoot {
+    readonly 0: unknown
+    readonly 1: unknown
+    readonly 2: unknown
+    readonly body: $<this[1], $<this[0], this[2]>>
 }
 
 export type $<K, T> = TryResolve<SetNextArgument<K, T>>

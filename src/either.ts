@@ -1,7 +1,6 @@
-import { functor } from "./functor.js"
-import { $, KRoot } from "./hkt.js"
+import { $, $F, KRoot } from "./hkt.js"
 import { IMonad, monad } from "./monad.js"
-import { ITransformer, KTransIn, monadTrans } from "./transformer.js"
+import { ITransformer, monadTrans } from "./transformer.js"
 import { pipe } from "./utils.js"
 
 export interface Left<out L> {
@@ -22,7 +21,7 @@ export interface KEither extends KRoot {
     readonly body: Either<this[0], this[1]>
 }
 
-export type KEitherTrans<L> = $<KTransIn, $<KEither, L>>
+export type KEitherTrans<L> = $<$F, $<KEither, L>>
 
 export type IEitherMonad<L> = IMonad<$<KEither, L>> & ITransformer<KEitherTrans<L>>;
 
