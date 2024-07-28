@@ -1,5 +1,5 @@
 import { array } from "./array.js";
-import { number } from "./number.js";
+import { sum } from "./sum.js";
 import { chain, pipe } from "./utils.js";
 
 export * from "./hkt.js";
