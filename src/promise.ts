@@ -59,16 +59,12 @@ export const promise: IPromise = (() => {
     const _finally: <A>(f: () => unknown) => (fa: Promise<A>) => Promise<A> =
         f => fa => fa.finally(f);
 
-    const _monad = monad<KPromise>({ 
-        ...functor<KPromise>({
-            map: (fa, f) => fa.then(f)
-        }),
-        unit,
-        bind,
-    });
-
     return {
-        ..._monad,
+        ...monad<KPromise>({ 
+            map: (fa, f) => fa.then(f),
+            unit,
+            bind,
+        }),
         delay,
         all,
         race,

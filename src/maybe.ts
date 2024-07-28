@@ -39,20 +39,14 @@ export const maybe: IMaybe = (() => {
     const bind = <A, B>(fa: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> => fa.right ? f(fa.value) : nothing;
     const fromNullable = <A>(a: A): Maybe<NonNullable<A>> => a == null ? nothing : just<NonNullable<A>>(a);
 
-    const _monadPlus = monadPlus<KMaybe>({
-        ...monad<KMaybe>({
-            ...functor<KMaybe>({ map }),
+    return { 
+        ...monadPlus<KMaybe>({
+            map,
             unit: just,
             bind,
-        }),
-        ...monoid<KMaybe>({
             empty: () => nothing,
             append: (fa, fb) => fa.right && fb.right ? just(fb.value) : nothing
-        })
-    });
-
-    return { 
-        ..._monadPlus, 
+        }), 
         just, 
         nothing,
         isJust,

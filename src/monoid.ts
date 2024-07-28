@@ -1,38 +1,67 @@
-import { array } from "./array.js";
-import { ITypeClass, KApp } from "./hkt.js";
+import { ITypeClass, $, $$, $N } from "./hkt.js";
+import { IMonad } from "./monad.js";
+import { curry, flip, pipe } from "./utils.js";
 
 export interface IMonoidBase<F> extends ITypeClass<F> {
-    empty: <A>() => KApp<F, A>
-    append: <A>(fa: KApp<F, A>, fb: KApp<F, A>) => KApp<F, A>
+    empty: <A>() => $<F, A>
+    append: <A>(fa: $<F, A>, fb: $<F, A>) => $<F, A>
 }
 
 export interface IMonoid<F> extends IMonoidBase<F> {
-    foldMap<A, B>(as: A[], f: (a: A) => KApp<F, B>): KApp<F, B>
-    concat<A>(fas: KApp<F, A>[]): KApp<F, A>
-    join<A>(separator: KApp<F, A>): (fas: KApp<F, A>[]) => KApp<F, A>
-    product<A>(as: KApp<F, A>[][]): KApp<F, A>[]
+    mappend<A>(fa: $<F, A>): (fb: $<F, A>) => $<F, A>
+    concat<A>(fas: $<F, A>[]): $<F, A>
+    when(b: boolean): <A>(fa: $<F, A>) => $<F, A>
+    foldMap<A>(as: A[]): <B>(f: (a: A) => $<F, B>) => $<F, B>
+    join<A>(separator: $<F, A>): (fas: $<F, A>[]) => $<F, A>
+    dual(): IMonoid<F>
+    product<M>(mult: IMonad<M>): IMonoid<$N<[$$, M, F]>>
 }
 
-export function monoid<F>(base: IMonoidBase<F>): IMonoid<F> {
-    const concat = <A>(fas: KApp<F, A>[]) => fas.reduce(base.append, base.empty<A>());
-    const foldMap = <A, B>(as: A[], f: (a: A) => KApp<F, B>) => concat(as.map(f));
+export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F> {
+    return pipe(
+        base,
+        base => {
+            const mappend = curry(base.append);
+            const concat = <A>(fas: $<F, A>[]) => fas.reduce(base.append, base.empty<A>());
 
-    const join = <A>(separator: KApp<F, A>) => (fas: KApp<F, A>[]) => {
-        if (fas.length === 0)
-            return base.empty<A>();
+            return {
+                mappend,
+                concat,
+                ...base
+            }
+        },
+        base => {
+            const when = (b: boolean) => <A>(fa: $<F, A>) => b ? fa : base.empty<A>();
 
-        const [head, ...tail] = fas;
-        return tail.reduce((acc, a) => base.append(base.append(acc, separator), a), head);
-    }
+            const foldMap = <A>(as: A[]) => <B>(f: (a: A) => $<F, B>) => base.concat(as.map(f));
 
-    const product = <A>(as: KApp<F, A>[][]): KApp<F, A>[] => as.reduce(array.lift2(base.append), array.unit(base.empty<A>()));
+            const join = <A>(separator: $<F, A>) => (fas: $<F, A>[]) => {
+                if (fas.length === 0)
+                    return base.empty<A>();
+        
+                const [head, ...tail] = fas;
+                return tail.reduce((acc, a) => base.append(base.append(acc, separator), a), head);
+            };
+        
+            const product = <M>(multiplier: IMonad<M>): IMonoid<$N<[$$, M, F]>> => {
+                const empty = <A>(): $N<[$$, M, F, A]> => multiplier.unit(base.empty<A>());
+                const append = multiplier.lift2(base.append);
+                return monoid<$N<[$$, M, F]>>({ empty, append });
+            };
 
-    return {
-        empty: base.empty,        
-        append: base.append,
-        concat,
-        foldMap,
-        join,
-        product
-    }
+            const dual = () => monoid({
+                empty: base.empty,
+                append: flip(base.append)
+            });
+        
+            return {
+                when,
+                foldMap,
+                join,
+                dual,
+                product,
+                ...base,
+            }
+        }
+    );
 }

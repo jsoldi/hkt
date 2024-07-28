@@ -164,7 +164,7 @@ export const gen: IGen = (() => {
 
     const _monadPlus = monadPlus<KGen>({
         ...monad<KGen>({
-            ...functor<KGen>({ map }),
+            map,
             unit,
             bind,
         }),

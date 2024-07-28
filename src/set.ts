@@ -17,7 +17,7 @@ interface ISet extends IMonoid<KSet>, IFunctor<KSet> {
     isDisjointFrom: <A>(fa: Set<A>) => (fb: Set<A>) => boolean
 }
 
-const set: ISet = (() => {
+export const set: ISet = (() => {
     const union = <A>(fa: Set<A>) => (fb: Set<A>): Set<A> => fa.union(fb);
     const intersection = <A>(fa: Set<A>) => (fb: Set<A>): Set<A> => fa.intersection(fb);
     const difference = <A>(fa: Set<A>) => (fb: Set<A>): Set<A> => fa.difference(fb);
@@ -26,18 +26,14 @@ const set: ISet = (() => {
     const isSupersetOf = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isSupersetOf(fb);
     const isDisjointFrom = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isDisjointFrom(fb);
 
-    const f = functor<KSet>({
-        map: (fa, f) => new Set([...fa].map(f))
-    });
-    
-    const m = monoid<KSet>({
-        empty: () => new Set(),
-        append: (fa, fb) => fa.union(fb)
-    });
-
     return {
-        ...f,
-        ...m,
+        ...functor<KSet>({
+            map: (fa, f) => new Set([...fa].map(f))
+        }),
+        ...monoid<KSet>({
+            empty: () => new Set(),
+            append: (fa, fb) => fa.union(fb)
+        }),
         union,
         intersection,
         difference,

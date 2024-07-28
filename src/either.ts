@@ -1,7 +1,8 @@
 import { functor } from "./functor.js"
-import { KApp, KRoot } from "./hkt.js"
+import { $, KRoot } from "./hkt.js"
 import { IMonad, monad } from "./monad.js"
 import { ITransformer, KTransIn, monadTrans } from "./transformer.js"
+import { pipe } from "./utils.js"
 
 export interface Left<out L> {
     readonly right: false
@@ -21,9 +22,9 @@ export interface KEither extends KRoot {
     readonly body: Either<this[0], this[1]>
 }
 
-export type KEitherTrans<L> = KTransIn<KApp<KEither, L>>
+export type KEitherTrans<L> = KTransIn<$<KEither, L>>
 
-export type IEitherMonad<L> = IMonad<KApp<KEither, L>> & ITransformer<KEitherTrans<L>>;
+export type IEitherMonad<L> = IMonad<$<KEither, L>> & ITransformer<KEitherTrans<L>>;
 
 export interface IEither {
     right<B>(b: B): Right<B>;
@@ -46,34 +47,30 @@ export interface IEither {
 }
 
 function eitherMonad<L>(): IEitherMonad<L> {    
-    const map = <A, B>(fa: Either<L, A>, f: (a: A) => B): Either<L, B> => fa.right ? either.right(f(fa.value)) : fa;
+    return pipe(
+        monad<$<KEither, L>>({
+            unit: either.right,
+            bind: (fa, f) => fa.right ? f(fa.value) : fa,
+        }),
+        base => {
+            const transform = <M>(outer: IMonad<M>) => {
+                type KType = $<KEitherTrans<L>, M>;
+                
+                return monadTrans<KEitherTrans<L>, M>({ 
+                    map: (fa, f) => outer.map(fa, a => base.map(a, f)),
+                    unit: <A>(a: A) => outer.unit<Either<L, A>>(either.right(a)), 
+                    bind: <A, B>(fa: $<KType, A>, f: (a: A) => $<KType, B>): $<KType, B> =>
+                        outer.bind(fa, a => a.right ? f(a.value) : outer.unit<Either<L, B>>(either.left(a.value))),
+                    lift: <A>(a: $<M, A>) => outer.map<A, Either<L, A>>(a, either.right)
+                });
+            };
 
-    const _monad = monad<KApp<KEither, L>>({
-        ...functor<KApp<KEither, L>>({ map }),
-        unit: either.right,
-        bind: (fa, f) => fa.right ? f(fa.value) : fa,
-    });
-
-    const transform = <M>(outer: IMonad<M>) => {
-        type KType = KApp<KEitherTrans<L>, M>;
-        
-        return monadTrans<KEitherTrans<L>, M>({ 
-            ...monad<KType>({ 
-                ...functor<KType>({
-                    map: (fa, f) => outer.map(fa, a => map(a, f))
-                }),
-                unit: <A>(a: A) => outer.unit<Either<L, A>>(either.right(a)), 
-                bind: <A, B>(fa: KApp<KType, A>, f: (a: A) => KApp<KType, B>): KApp<KType, B> =>
-                    outer.bind(fa, a => a.right ? f(a.value) : outer.unit<Either<L, B>>(either.left(a.value)))
-            }), 
-            lift: <A>(a: KApp<M, A>) => outer.map<A, Either<L, A>>(a, either.right)
-        });
-    }
-
-    return {
-        ..._monad,
-        transform
-    };
+            return {
+                transform,
+                ...base
+            }
+        }
+    )
 }
 
 export const either: IEither = (() => {

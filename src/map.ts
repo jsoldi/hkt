@@ -1,4 +1,4 @@
-import { KApp, KRoot } from "./hkt.js";
+import { $, KRoot } from "./hkt.js";
 import { functor, IFunctor } from "./functor.js";
 import { IMonoid, monoid } from "./monoid.js";
 import { Maybe, maybe } from "./maybe.js";
@@ -9,7 +9,7 @@ interface KMap extends KRoot {
     readonly body: Map<this[0], this[1]>
 }
 
-interface IMap<I> extends IMonoid<KApp<KMap, I>>, IFunctor<KApp<KMap, I>> {
+interface IMap<I> extends IMonoid<$<KMap, I>>, IFunctor<$<KMap, I>> {
     delete: <K, V>(key: K) => (m: Map<K, V>) => Map<K, V>
     get: <K, V>(key: K) => (m: Map<K, V>) => V | undefined
     getMaybe: <K, V>(key: K) => (m: Map<K, V>) => Maybe<V>
@@ -19,14 +19,9 @@ interface IMap<I> extends IMonoid<KApp<KMap, I>>, IFunctor<KApp<KMap, I>> {
 }
 
 export function map<I>(): IMap<I> {
-     const f = functor<KApp<KMap, I>>({
-        map: (fa, f) => new Map([...fa].map(([k, v]) => [k, f(v)]))
-    });
-    
-    const m = monoid<KApp<KMap, I>>({
-        empty: () => new Map(),
-        append: (fa, fb) => new Map([...fa, ...fb])
-    });
+    const map = <A, B>(fa: Map<I, A>, f: (a: A) => B) => new Map([...fa].map(([k, v]) => [k, f(v)]))
+    const empty = <A>() => new Map<I, A>();
+    const append = <A>(fa: Map<I, A>, fb: Map<I, A>) => new Map([...fa, ...fb]);
 
     const _delete = <K, V>(key: K) => (m: Map<K, V>) => {
         const copy = new Map(m);
@@ -46,8 +41,8 @@ export function map<I>(): IMap<I> {
     }
 
     return {
-        ...f,
-        ...m,
+        ...functor<$<KMap, I>>({ map }),
+        ...monoid<$<KMap, I>>({ empty, append }),
         delete: _delete,
         get,
         getMaybe,
