@@ -1,4 +1,5 @@
 import { $, $F, KRoot } from "./hkt.js";
+import { Maybe } from "./maybe.js";
 import { IMonad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
 import { ITransformer, monadTrans } from "./transformer.js";
@@ -11,8 +12,9 @@ export interface KArray extends KRoot {
 type KArrayTrans = $<$F, KArray>
 
 interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans> {
-    foldl<B>(b: B): <A>(f: (b: B, a: A) => B) => (fa: Array<A>) => B
-    foldr<B>(b: B): <A>(f: (a: A, b: B) => B) => (fa: Array<A>) => B
+    foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: A[]) => B
+    foldr<A, B>(f: (a: A, b: B) => B): (b: B) => (fa: A[]) => B
+    unfoldr<A, B>(f: (b: B) => Maybe<[A, B]>): (b: B) => A[]
     filter: {
         <T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[];
         <T>(predicate: (item: T) => boolean): (items: T[]) => T[];
@@ -27,8 +29,22 @@ export const array: IArray = (() => {
         return (items: T[]) => items.filter(predicate);
     };    
 
-    const foldl = <B>(b: B) => <A>(f: (b: B, a: A) => B) => (fa: A[]) => fa.reduce(f, b);
-    const foldr = <B>(b: B) => <A>(f: (a: A, b: B) => B) => (fa: A[]) => fa.reduceRight((a, b) => f(b, a), b);
+    const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => (fa: A[]) => fa.reduce(f, b);
+    const foldr = <A, B>(f: (a: A, b: B) => B) => (b: B) => (fa: A[]) => fa.reduceRight((a, b) => f(b, a), b);
+        
+    const unfoldr = <A, B>(f: (b: B) => Maybe<[A, B]>) => (b: B): A[] => {
+        const result: A[] = [];
+        let next = f(b);
+
+        while (next.right) {
+            let a: A;
+            [a, b] = next.value;
+            result.push(a);
+            next = f(b);
+        }
+
+        return result;
+    };
 
     const transform = <M>(outer: IMonad<M>) => {
         return monadTrans<KArrayTrans, M>({ 
@@ -47,9 +63,10 @@ export const array: IArray = (() => {
             empty: <A>() => [] as A[],
             append: <A>(fa: A[], fb: A[]): A[] => fa.concat(fb)
         }), 
-        filter, // override MonadPlus implementation
+        filter,
         transform,
         foldl,
-        foldr
+        foldr,
+        unfoldr
     };
 })();

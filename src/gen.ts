@@ -1,5 +1,5 @@
-import { functor } from "./functor.js"
 import { KRoot } from "./hkt.js"
+import { Maybe } from "./maybe.js"
 import { monad } from "./monad.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
 import { monoid } from "./monoid.js"
@@ -10,6 +10,8 @@ export interface KGen extends KRoot {
     readonly 0: unknown
     readonly body: Gen<this[0]>
 }
+
+type Awaitable<T> = T | Promise<T>
 
 export interface IGen extends IMonadPlus<KGen> {
     from: <T>(genlike: (() => Gen<T>) | T[] | Promise<T> | Gen<T>) => Gen<T>
@@ -27,6 +29,7 @@ export interface IGen extends IMonadPlus<KGen> {
     distinct: <T>(fa: Gen<T>) => Gen<T>
     chunks: <T>(size: number) => (fa: Gen<T>) => Gen<T[]>
     reduce: <T, U>(acc: U, f: (acc: U, a: T) => U) => (fa: Gen<T>) => Promise<U>
+    unfoldr: <A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>) => (b: B) => Gen<A>
 }
 
 export const gen: IGen = (() => {
@@ -161,7 +164,18 @@ export const gen: IGen = (() => {
         yield* fa;
         yield* fb;
     }
+        
+    const unfoldr = <A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>) => async function*(b: B): Gen<A> {
+        let next = await f(b);
 
+        while (next.right) {
+            let a: A;
+            [a, b] = next.value;
+            yield a;
+            next = await f(b);
+        }
+    };
+    
     const _monadPlus = monadPlus<KGen>({
         ...monad<KGen>({
             map,
@@ -187,6 +201,7 @@ export const gen: IGen = (() => {
         distinctBy,
         distinct,
         chunks,
-        reduce
+        reduce,
+        unfoldr
     }
 })();
