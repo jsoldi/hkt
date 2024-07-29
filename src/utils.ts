@@ -38,46 +38,18 @@ export function pipe(a: any, ...fs: ((...a: any[]) => any)[]): any {
     return _pipe(a, ...fs);
 }
 
-export function curry<A, B, C>(f: (a: A, b: B) => C): (a: A) => (b: B) => C {
-    return a => b => f(a, b);
-}
+export const curry = <A, B, C>(f: (a: A, b: B) => C) => (a: A) => (b: B): C => f(a, b);
+export const curry3 = <A, B, C, D>(f: (a: A, b: B, c: C) => D) => (a: A) => (b: B) => (c: C): D => f(a, b, c);
+export const curry4 = <A, B, C, D, E>(f: (a: A, b: B, c: C, d: D) => E) => (a: A) => (b: B) => (c: C) => (d: D): E => f(a, b, c, d);
+export const curry5 = <A, B, C, D, E, F>(f: (a: A, b: B, c: C, d: D, e: E) => F) => (a: A) => (b: B) => (c: C) => (d: D) => (e: E): F => f(a, b, c, d, e);
 
-export function curry3<A, B, C, D>(f: (a: A, b: B, c: C) => D): (a: A) => (b: B) => (c: C) => D {
-    return a => b => c => f(a, b, c);
-}
+export const uncurry = <A, B, C>(f: (a: A) => (b: B) => C) => (a: A, b: B): C => f(a)(b);
+export const uncurry3 = <A, B, C, D>(f: (a: A) => (b: B) => (c: C) => D) => (a: A, b: B, c: C): D => f(a)(b)(c);
+export const uncurry4 = <A, B, C, D, E>(f: (a: A) => (b: B) => (c: C) => (d: D) => E) => (a: A, b: B, c: C, d: D): E => f(a)(b)(c)(d);
+export const uncurry5 = <A, B, C, D, E, F>(f: (a: A) => (b: B) => (c: C) => (d: D) => (e: E) => F) => (a: A, b: B, c: C, d: D, e: E): F => f(a)(b)(c)(d)(e);
 
-export function curry4<A, B, C, D, E>(f: (a: A, b: B, c: C, d: D) => E): (a: A) => (b: B) => (c: C) => (d: D) => E {
-    return a => b => c => d => f(a, b, c, d);
-}
-
-export function uncurry<A, B, C>(f: (a: A) => (b: B) => C): (a: A, b: B) => C {
-    return (a, b) => f(a)(b);
-}
-
-export function uncurry3<A, B, C, D>(f: (a: A) => (b: B) => (c: C) => D): (a: A, b: B, c: C) => D {
-    return (a, b, c) => f(a)(b)(c);
-}
-
-export function uncurry4<A, B, C, D, E>(f: (a: A) => (b: B) => (c: C) => (d: D) => E): (a: A, b: B, c: C, d: D) => E {
-    return (a, b, c, d) => f(a)(b)(c)(d);
-}
-
-export function flip<A, B, C>(f: (a: A, b: B) => C): (b: B, a: A) => C {
-    return (b, a) => f(a, b);
-}
-
-export function id<A>(a: A): A {
-    return a;
-}
-
-export function not<A>(f: (a: A) => boolean): (a: A) => boolean {
-    return a => !f(a);
-}
-
-export function spread<A, B>(f: (a: A[]) => B): (...a: A[]) => B {
-    return (...a) => f(a);
-}
-
-export function unspread<A, B>(f: (...a: A[]) => B): (a: A[]) => B {
-    return a => f(...a);
-}
+export const id = <A>(a: A): A => a;
+export const not = <A>(f: (a: A) => boolean) => (a: A): boolean => !f(a);
+export const flip = <A, B, C>(f: (a: A, b: B) => C) => (b: B, a: A): C => f(a, b);
+export const spread = <A, B>(f: (a: A[]) => B) => (...a: A[]): B => f(a);
+export const unspread = <A, B>(f: (...a: A[]) => B) => (a: A[]): B => f(...a);

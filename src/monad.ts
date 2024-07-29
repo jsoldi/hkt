@@ -11,7 +11,7 @@ export interface IMonadBase<F> {
 export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
     flat<A>(ffa: $<F, $<F, A>>): $<F, A>
     sequence<A>(fas: $<F, A>[]): $<F, A[]>
-    // lift1<A, B>(f: (a: A) => B): (fa: $<F, A>) => $<F, B> // Already defined in IFunctor as fmap
+    lift1<A, B>(f: (a: A) => B): (fa: $<F, A>) => $<F, B>
     lift2<A, B, C>(f: (a: A, b: B) => C): (fa: $<F, A>, fb: $<F, B>) => $<F, C>
     lift3<A, B, C, D>(f: (a: A, b: B, c: C) => D): (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>) => $<F, D>
     pipe: {
@@ -29,6 +29,7 @@ export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
         <A, B, C, D, E, G, H, I, J, K, L, M>(a: $<F, A>, b:(...a: [A]) => $<F, B>, c:(...a: [B, A]) => $<F, C>, d:(...a: [C, B, A]) => $<F, D>, e:(...a: [D, C, B, A]) => $<F, E>, f:(...a: [E, D, C, B, A]) => $<F, G>, g:(...a: [G, E, D, C, B, A]) => $<F, H>, h:(...a: [H, G, E, D, C, B, A]) => $<F, I>, i:(...a: [I, H, G, E, D, C, B, A]) => $<F, J>, j:(...a: [J, I, H, G, E, D, C, B, A]) => $<F, K>, k:(...a: [K, J, I, H, G, E, D, C, B, A]) => $<F, L>, l:(...a: [L, K, J, I, H, G, E, D, C, B, A]) => $<F, M>): $<F, M>
     }
     chain: {
+        <A>(): (fa: $<F, A>) => $<F, A>
         <A, B>(f: (...a: [A]) => $<F, B>): (fa: $<F, A>) => $<F, B>
         <A, B, C>(f: (...a: [A]) => $<F, B>, g: (...b: [B, A]) => $<F, C>): (fa: $<F, A>) => $<F, C>
         <A, B, C, D>(f: (...a: [A]) => $<F, B>, g: (...b: [B, A]) => $<F, C>, h: (...c: [C, B, A]) => $<F, D>): (fa: $<F, A>) => $<F, D>
@@ -69,7 +70,8 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
         
             const chain = (...fs: ((...s: any[]) => $<F, any>)[]) =>
                 (m: $<F, any>) => pipe(m, ...fs);
-        
+
+            const lift1 = base.fmap;
             const lift2 = <A, B, C>(f: (a: A, b: B) => C) => (fa: $<F, A>, fb: $<F, B>) => base.bind(fa, a => base.map(fb, b => f(a, b)));
             const lift3 = <A, B, C, D>(f: (a: A, b: B, c: C) => D) => (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>) => base.bind(fa, a => base.bind(fb, b => base.map(fc, c => f(a, b, c))));
 
@@ -77,6 +79,7 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
                 flat,
                 chain,
                 sequence,
+                lift1,
                 lift2,
                 lift3,
                 pipe,
