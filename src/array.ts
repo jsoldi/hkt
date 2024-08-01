@@ -1,4 +1,4 @@
-import { $, $F, KRoot } from "./hkt.js";
+import { $, $Q, KRoot } from "./hkt.js";
 import { Maybe } from "./maybe.js";
 import { IMonad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
@@ -9,7 +9,7 @@ export interface KArray extends KRoot {
     readonly body: Array<this[0]>
 }
 
-type KArrayTrans = $<$F, KArray>
+type KArrayTrans = $<$Q, KArray>
 
 interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans> {
     foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: A[]) => B

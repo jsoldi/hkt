@@ -1,5 +1,5 @@
 import { Left, Right, either } from "./either.js";
-import { $, $F, KRoot } from "./hkt.js";
+import { $, $Q, KRoot } from "./hkt.js";
 import { IMonad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
 import { ITransformer, monadTrans } from "./transformer.js";
@@ -13,7 +13,7 @@ export interface KMaybe extends KRoot {
     readonly body: Maybe<this[0]>
 }
 
-export interface IMaybe extends IMonadPlus<KMaybe>, ITransformer<$<$F, KMaybe>> {
+export interface IMaybe extends IMonadPlus<KMaybe>, ITransformer<$<$Q, KMaybe>> {
     just<A>(a: A): Just<A>
     readonly nothing: Nothing
     isJust<A>(fa: Maybe<A>): fa is Just<A>
@@ -40,7 +40,7 @@ export const maybe: IMaybe = (() => {
     const transform = <M>(outer: IMonad<M>) => {
         const et = either.monad<null>().transform(outer);
         
-        return monadTrans<$<$F, KMaybe>, M>({ 
+        return monadTrans<$<$Q, KMaybe>, M>({ 
             map: et.map,
             unit: et.unit,
             bind: et.bind,
