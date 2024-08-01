@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@jsoldi/hkt",
-  "version": "1.1.16",
+  "version": "1.1.17",
   "description": "Higher kinded types for typescript and a few utility monads.",
   "main": "./dist/index.js",
   "repository": {
@@ -22,7 +22,7 @@
   ],
   "author": "Juan Soldi",
   "license": "ISC",
-  "dependencies": {
+  "devDependencies": {
     "typescript": "^5.5.3"
   }
 }
