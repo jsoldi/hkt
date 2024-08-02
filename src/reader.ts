@@ -3,7 +3,7 @@ import { IMonad, monad } from "./monad.js"
 import { ITransformer, monadTrans } from "./transformer.js"
 import { id } from "./utils.js"
 
-export type Reader<E, R> = (a: E) => R
+export type Reader<in E, out R> = (a: E) => R
 
 export interface KReader extends KRoot {
     readonly 0: unknown

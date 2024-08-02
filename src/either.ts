@@ -23,8 +23,6 @@ export interface KEither extends KRoot {
 
 export type KEitherTrans<L> = $<$Q, $<KEither, L>>
 
-export type IEitherMonad<L> = IMonad<$<KEither, L>> & ITransformer<KEitherTrans<L>>;
-
 export interface IEither {
     right<B>(b: B): Right<B>;
     left<A>(a: A): Left<A>;
@@ -35,7 +33,7 @@ export interface IEither {
     isRight<A, B>(fa: Either<A, B>): fa is Right<B>;
     fromLeft<C>(a: C): <A, B>(fa: Either<A, B>) => A | C;
     fromRight<C>(b: C): <A, B>(fa: Either<A, B>) => B | C;
-    partitionEithers<A, B>(fa: Either<A, B>[]): { lefts: A[], rights: B[] };
+    partition<A, B>(fa: Either<A, B>[]): { lefts: A[], rights: B[] };
     try<T, E>(onTry: () => T, onCatch: (e: unknown) => E): Either<E, T>;
     try<T>(onTry: () => T): Either<unknown, T>;
     tryAsync<T, E>(onTry: () => T, onCatch: (e: unknown) => E): Promise<Either<Awaited<E>, Awaited<T>>>;
@@ -43,6 +41,24 @@ export interface IEither {
     throwLeft<B>(fa: Either<unknown, B>): B;
     throwRight<A>(fa: Either<A, unknown>): A;
     monad<L>(): IEitherMonad<L>
+}
+
+// Same as IEither but with fixed left type set to L
+export interface IEitherMonad<L> extends IMonad<$<KEither, L>>, ITransformer<KEitherTrans<L>> {
+    right<R>(a: R): Right<R>
+    left(l: L): Left<L>
+    either<R, C, D = C>(onLeft: (a: L) => C, onRight: (b: R) => D): (fa: Either<L, R>) => C | D
+    lefts<R>(fa: Either<L, R>[]): L[]
+    rights<R>(fa: Either<L, R>[]): R[]
+    isLeft<R>(fa: Either<L, R>): fa is Left<L>
+    isRight<R>(fa: Either<L, R>): fa is Right<R>
+    fromLeft<C>(a: C): <R>(fa: Either<L, R>) => L | C
+    fromRight<C>(b: C): <R>(fa: Either<L, R>) => R | C
+    partition<R>(fa: Either<L, R>[]): { lefts: L[], rights: R[] }
+    try<R>(onTry: () => R, onCatch: (e: unknown) => L): Either<L, R>
+    tryAsync<R>(onTry: () => R, onCatch: (e: unknown) => L): Promise<Either<L, R>>
+    throwLeft<R>(fa: Either<L, R>): R
+    throwRight<R>(fa: Either<L, R>): L
 }
 
 function eitherMonad<L>(): IEitherMonad<L> {    
@@ -68,6 +84,12 @@ function eitherMonad<L>(): IEitherMonad<L> {
                 transform,
                 ...base
             }
+        },
+        base => {
+            return {
+                ...base,
+                ...either
+            };
         }
     )
 }
@@ -101,7 +123,7 @@ export const either: IEither = (() => {
         isRight: <A, B>(fa: Either<A, B>): fa is Right<B> => fa.right,
         fromLeft: <C>(a: C) => <A, B>(fa: Either<A, B>) => fa.right ? a : fa.value,
         fromRight: (b) => (fa) => fa.right ? fa.value : b,
-        partitionEithers: <A, B>(fa: Either<A, B>[]) => {
+        partition: <A, B>(fa: Either<A, B>[]) => {
             const result = { lefts: [] as A[], rights: [] as B[] };
 
             for (const a of fa) {
