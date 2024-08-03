@@ -50,6 +50,6 @@ export const uncurry5 = <A, B, C, D, E, F>(f: (a: A) => (b: B) => (c: C) => (d: 
 
 export const id = <A>(a: A): A => a;
 export const not = <A>(f: (a: A) => boolean) => (a: A): boolean => !f(a);
-export const flip = <A, B, C>(f: (a: A, b: B) => C) => (b: B, a: A): C => f(a, b);
+export const flip = <A, B, C>(f: (a: A) =>(b: B) => C) => (b: B) => (a: A): C => f(a)(b);
 export const spread = <A, B>(f: (a: A[]) => B) => (...a: A[]): B => f(a);
 export const unspread = <A, B>(f: (...a: A[]) => B) => (a: A[]): B => f(...a);

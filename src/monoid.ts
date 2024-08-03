@@ -51,7 +51,7 @@ export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F
 
             const dual = () => monoid({
                 empty: base.empty,
-                append: flip(base.append)
+                append: (a, b) => base.append(b, a),
             });
         
             return {

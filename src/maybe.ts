@@ -54,7 +54,7 @@ export const maybe: IMaybe = (() => {
             unit: just,
             bind,
             empty: () => nothing,
-            append: (fa, fb) => fa.right && fb.right ? just(fb.value) : nothing
+            append: (fa, fb) => fa.right ? just(fa.value) : fb
         }), 
         just, 
         nothing,
