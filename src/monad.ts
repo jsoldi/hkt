@@ -15,19 +15,19 @@ export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
     lift1<A, B>(f: (a: A) => B): (fa: $<F, A>) => $<F, B>
     lift2<A, B, C>(f: (a: A, b: B) => C): (fa: $<F, A>, fb: $<F, B>) => $<F, C>
     lift3<A, B, C, D>(f: (a: A, b: B, c: C) => D): (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>) => $<F, D>
-    kleisli<A>(): (a: A) => $<F, A>
-    kleisli<A, B>(f: (a: A) => $<F, B>): (a: A) => $<F, B>
-    kleisli<A, B, C>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>): (a: A) => $<F, C>
-    kleisli<A, B, C, D>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>): (a: A) => $<F, D>
-    kleisli<A, B, C, D, E>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>): (a: A) => $<F, E>
-    kleisli<A, B, C, D, E, G>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>): (a: A) => $<F, G>
-    kleisli<A, B, C, D, E, G, H>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>): (a: A) => $<F, H>
-    kleisli<A, B, C, D, E, G, H, I>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>, l: (g: H) => $<F, I>): (a: A) => $<F, I>
-    kleisli<A, B, C, D, E, G, H, I, J>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>, l: (g: H) => $<F, I>, m: (h: I) => $<F, J>): (a: A) => $<F, J>
-    kleisli<A, B, C, D, E, G, H, I, J, K>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>, l: (g: H) => $<F, I>, m: (h: I) => $<F, J>, n: (i: J) => $<F, K>): (a: A) => $<F, K>
-    kleisli<A, B, C, D, E, G, H, I, J, K, L>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>, l: (g: H) => $<F, I>, m: (h: I) => $<F, J>, n: (i: J) => $<F, K>, o: (j: K) => $<F, L>): (a: A) => $<F, L>
-    kleisli<A, B, C, D, E, G, H, I, J, K, L, M>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>, l: (g: H) => $<F, I>, m: (h: I) => $<F, J>, n: (i: J) => $<F, K>, o: (j: K) => $<F, L>, p: (k: L) => $<F, M>): (a: A) => $<F, M>
-    _kleisli(...b: ((...a: any[]) => $<F, any>)[]): (...s: any[]) => $<F, any>
+    fish<A>(): (a: A) => $<F, A>
+    fish<A, B>(f: (a: A) => $<F, B>): (a: A) => $<F, B>
+    fish<A, B, C>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>): (a: A) => $<F, C>
+    fish<A, B, C, D>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>): (a: A) => $<F, D>
+    fish<A, B, C, D, E>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>): (a: A) => $<F, E>
+    fish<A, B, C, D, E, G>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>): (a: A) => $<F, G>
+    fish<A, B, C, D, E, G, H>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>): (a: A) => $<F, H>
+    fish<A, B, C, D, E, G, H, I>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>, l: (g: H) => $<F, I>): (a: A) => $<F, I>
+    fish<A, B, C, D, E, G, H, I, J>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>, l: (g: H) => $<F, I>, m: (h: I) => $<F, J>): (a: A) => $<F, J>
+    fish<A, B, C, D, E, G, H, I, J, K>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>, l: (g: H) => $<F, I>, m: (h: I) => $<F, J>, n: (i: J) => $<F, K>): (a: A) => $<F, K>
+    fish<A, B, C, D, E, G, H, I, J, K, L>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>, l: (g: H) => $<F, I>, m: (h: I) => $<F, J>, n: (i: J) => $<F, K>, o: (j: K) => $<F, L>): (a: A) => $<F, L>
+    fish<A, B, C, D, E, G, H, I, J, K, L, M>(f: (a: A) => $<F, B>, g: (b: B) => $<F, C>, h: (c: C) => $<F, D>, i: (d: D) => $<F, E>, j: (e: E) => $<F, G>, k: (f: G) => $<F, H>, l: (g: H) => $<F, I>, m: (h: I) => $<F, J>, n: (i: J) => $<F, K>, o: (j: K) => $<F, L>, p: (k: L) => $<F, M>): (a: A) => $<F, M>
+    _fish(...b: ((...a: any[]) => $<F, any>)[]): (...s: any[]) => $<F, any>
     pipe<A>(a: $<F, A>): $<F, A>
     pipe<A, B>(a: $<F, A>, b:(...a: [A]) => $<F, B>): $<F, B>
     pipe<A, B, C>(a: $<F, A>, b:(...a: [A]) => $<F, B>, c:(...a: [B, A]) => $<F, C>): $<F, C>
@@ -93,8 +93,8 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
             return {
                 bnid,
                 flat,
-                _kleisli,
-                kleisli: _kleisli,
+                _fish: _kleisli,
+                fish: _kleisli,
                 _chain,
                 chain: _chain,
                 sequence,

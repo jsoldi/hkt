@@ -6,7 +6,6 @@ export * from './monadPlus.js';
 export * from './monoid.js';
 export * from './array.js';
 export * from './either.js';
-export * from './endo.js';
 export * from './gen.js';
 export * from './map.js';
 export * from './maybe.js';
