@@ -29,7 +29,6 @@ export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
     sequence<A, B, C, D, E, G, H, I, J, K, L>(fas: readonly [$<F, A>, $<F, B>, $<F, C>, $<F, D>, $<F, E>, $<F, G>, $<F, H>, $<F, I>, $<F, J>, $<F, K>, $<F, L>]): $<F, [A, B, C, D, E, G, H, I, J, K, L]>
     sequence<A, B, C, D, E, G, H, I, J, K, L, M>(fas: readonly [$<F, A>, $<F, B>, $<F, C>, $<F, D>, $<F, E>, $<F, G>, $<F, H>, $<F, I>, $<F, J>, $<F, K>, $<F, L>, $<F, M>]): $<F, [A, B, C, D, E, G, H, I, J, K, L, M]>
     sequence<A>(fas: $<F, A>[]): $<F, A[]>
-    destruct<T extends Struct<F>>(t: T): Destruct<F, T>
     lift1<A, B>(f: (a: A) => B): (fa: $<F, A>) => $<F, B>
     lift2<A, B, C>(f: (a: A, b: B) => C): (fa: $<F, A>, fb: $<F, B>) => $<F, C>
     lift3<A, B, C, D>(f: (a: A, b: B, c: C) => D): (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>) => $<F, D>
@@ -108,14 +107,6 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
             const lift2 = <A, B, C>(f: (a: A, b: B) => C) => (fa: $<F, A>, fb: $<F, B>) => base.bind(fa, a => base.map(fb, b => f(a, b)));
             const lift3 = <A, B, C, D>(f: (a: A, b: B, c: C) => D) => (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>) => base.bind(fa, a => base.bind(fb, b => base.map(fc, c => f(a, b, c))));
 
-            const destruct = <T extends Struct<F>>(t: T): Destruct<F, T> => {
-                const entries = Object.entries(t) as [keyof T, $<F, any>][];
-                
-                return base.map(sequence(entries.map(([, v]) => v)), values => 
-                    Object.fromEntries(entries.map(([k], i) => [k, values[i]]))
-                ) as Destruct<F, T>;
-            }
-
             return {
                 bnid,
                 flat,
@@ -124,7 +115,6 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
                 _chain,
                 chain: _chain,
                 sequence,
-                destruct,
                 lift1,
                 lift2,
                 lift3,
