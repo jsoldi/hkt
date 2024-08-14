@@ -11,6 +11,19 @@ export interface IMonadBase<F> {
 export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
     bnid<A, B>(f: (a: A) => $<F, B>): (fa: $<F, A>) => $<F, B>
     flat<A>(ffa: $<F, $<F, A>>): $<F, A>
+    sequence(fas: []): $<F, []>
+    sequence<A>(fas: [$<F, A>]): $<F, [A]>
+    sequence<A, B>(fas: [$<F, A>, $<F, B>]): $<F, [A, B]>
+    sequence<A, B, C>(fas: [$<F, A>, $<F, B>, $<F, C>]): $<F, [A, B, C]>
+    sequence<A, B, C, D>(fas: [$<F, A>, $<F, B>, $<F, C>, $<F, D>]): $<F, [A, B, C, D]>
+    sequence<A, B, C, D, E>(fas: [$<F, A>, $<F, B>, $<F, C>, $<F, D>, $<F, E>]): $<F, [A, B, C, D, E]>
+    sequence<A, B, C, D, E, G>(fas: [$<F, A>, $<F, B>, $<F, C>, $<F, D>, $<F, E>, $<F, G>]): $<F, [A, B, C, D, E, G]>
+    sequence<A, B, C, D, E, G, H>(fas: [$<F, A>, $<F, B>, $<F, C>, $<F, D>, $<F, E>, $<F, G>, $<F, H>]): $<F, [A, B, C, D, E, G, H]>
+    sequence<A, B, C, D, E, G, H, I>(fas: [$<F, A>, $<F, B>, $<F, C>, $<F, D>, $<F, E>, $<F, G>, $<F, H>, $<F, I>]): $<F, [A, B, C, D, E, G, H, I]>
+    sequence<A, B, C, D, E, G, H, I, J>(fas: [$<F, A>, $<F, B>, $<F, C>, $<F, D>, $<F, E>, $<F, G>, $<F, H>, $<F, I>, $<F, J>]): $<F, [A, B, C, D, E, G, H, I, J]>
+    sequence<A, B, C, D, E, G, H, I, J, K>(fas: [$<F, A>, $<F, B>, $<F, C>, $<F, D>, $<F, E>, $<F, G>, $<F, H>, $<F, I>, $<F, J>, $<F, K>]): $<F, [A, B, C, D, E, G, H, I, J, K]>
+    sequence<A, B, C, D, E, G, H, I, J, K, L>(fas: [$<F, A>, $<F, B>, $<F, C>, $<F, D>, $<F, E>, $<F, G>, $<F, H>, $<F, I>, $<F, J>, $<F, K>, $<F, L>]): $<F, [A, B, C, D, E, G, H, I, J, K, L]>
+    sequence<A, B, C, D, E, G, H, I, J, K, L, M>(fas: [$<F, A>, $<F, B>, $<F, C>, $<F, D>, $<F, E>, $<F, G>, $<F, H>, $<F, I>, $<F, J>, $<F, K>, $<F, L>, $<F, M>]): $<F, [A, B, C, D, E, G, H, I, J, K, L, M]>
     sequence<A>(fas: $<F, A>[]): $<F, A[]>
     lift1<A, B>(f: (a: A) => B): (fa: $<F, A>) => $<F, B>
     lift2<A, B, C>(f: (a: A, b: B) => C): (fa: $<F, A>, fb: $<F, B>) => $<F, C>
@@ -75,7 +88,7 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
             const bnid = <A, B>(f: (a: A) => $<F, B>) => (fa: $<F, A>) => base.bind(fa, f);
             const flat = <A>(ffa: $<F, $<F, A>>): $<F, A> => base.bind(ffa, id);
 
-            const sequence = <A>(fas: $<F, A>[]): $<F, A[]> => 
+            const sequence = <A>(fas: $<F, A>[]): any => 
                 fas.reduceRight((acc, fa) => base.bind(fa, a => base.map(acc, as => [a, ...as])), base.unit([] as A[]));
         
             const _kleisli = (...fs: ((...s: any[]) => $<F, any>)[]) => 
