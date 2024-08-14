@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@jsoldi/hkt",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Higher kinded types for typescript and a few utility monads.",
   "main": "./dist/index.js",
   "repository": {
