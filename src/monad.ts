@@ -58,6 +58,19 @@ export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
     pipe<A, B, C, D, E, G, H, I, J, K, L>(a: $<F, A>, b:(...a: [A]) => $<F, B>, c:(...a: [B, A]) => $<F, C>, d:(...a: [C, B, A]) => $<F, D>, e:(...a: [D, C, B, A]) => $<F, E>, f:(...a: [E, D, C, B, A]) => $<F, G>, g:(...a: [G, E, D, C, B, A]) => $<F, H>, h:(...a: [H, G, E, D, C, B, A]) => $<F, I>, i:(...a: [I, H, G, E, D, C, B, A]) => $<F, J>, j:(...a: [J, I, H, G, E, D, C, B, A]) => $<F, K>, k:(...a: [K, J, I, H, G, E, D, C, B, A]) => $<F, L>): $<F, L>
     pipe<A, B, C, D, E, G, H, I, J, K, L, M>(a: $<F, A>, b:(...a: [A]) => $<F, B>, c:(...a: [B, A]) => $<F, C>, d:(...a: [C, B, A]) => $<F, D>, e:(...a: [D, C, B, A]) => $<F, E>, f:(...a: [E, D, C, B, A]) => $<F, G>, g:(...a: [G, E, D, C, B, A]) => $<F, H>, h:(...a: [H, G, E, D, C, B, A]) => $<F, I>, i:(...a: [I, H, G, E, D, C, B, A]) => $<F, J>, j:(...a: [J, I, H, G, E, D, C, B, A]) => $<F, K>, k:(...a: [K, J, I, H, G, E, D, C, B, A]) => $<F, L>, l:(...a: [L, K, J, I, H, G, E, D, C, B, A]) => $<F, M>): $<F, M>        
     _pipe(a: $<F, any>, ...b: ((...a: any[]) => $<F, any>)[]): $<F, any>
+    do<A>(a: $<F, A>): $<F, A>
+    do<A, B>(a: $<F, A>, b:$<F, B>): $<F, B>
+    do<A, B, C>(a: $<F, A>, b:$<F, B>, c:$<F, C>): $<F, C>
+    do<A, B, C, D>(a: $<F, A>, b:$<F, B>, c:$<F, C>, d:$<F, D>): $<F, D>
+    do<A, B, C, D, E>(a: $<F, A>, b:$<F, B>, c:$<F, C>, d:$<F, D>, e:$<F, E>): $<F, E>
+    do<A, B, C, D, E, G>(a: $<F, A>, b:$<F, B>, c:$<F, C>, d:$<F, D>, e:$<F, E>, f:$<F, G>): $<F, G>
+    do<A, B, C, D, E, G, H>(a: $<F, A>, b:$<F, B>, c:$<F, C>, d:$<F, D>, e:$<F, E>, f:$<F, G>, g:$<F, H>): $<F, H>
+    do<A, B, C, D, E, G, H, I>(a: $<F, A>, b:$<F, B>, c:$<F, C>, d:$<F, D>, e:$<F, E>, f:$<F, G>, g:$<F, H>, h:$<F, I>): $<F, I>
+    do<A, B, C, D, E, G, H, I, J>(a: $<F, A>, b:$<F, B>, c:$<F, C>, d:$<F, D>, e:$<F, E>, f:$<F, G>, g:$<F, H>, h:$<F, I>, i:$<F, J>): $<F, J>
+    do<A, B, C, D, E, G, H, I, J, K>(a: $<F, A>, b:$<F, B>, c:$<F, C>, d:$<F, D>, e:$<F, E>, f:$<F, G>, g:$<F, H>, h:$<F, I>, i:$<F, J>, j:$<F, K>): $<F, K>
+    do<A, B, C, D, E, G, H, I, J, K, L>(a: $<F, A>, b:$<F, B>, c:$<F, C>, d:$<F, D>, e:$<F, E>, f:$<F, G>, g:$<F, H>, h:$<F, I>, i:$<F, J>, j:$<F, K>, k:$<F, L>): $<F, L>
+    do<A, B, C, D, E, G, H, I, J, K, L, M>(a: $<F, A>, b:$<F, B>, c:$<F, C>, d:$<F, D>, e:$<F, E>, f:$<F, G>, g:$<F, H>, h:$<F, I>, i:$<F, J>, j:$<F, K>, k:$<F, L>, l:$<F, M>): $<F, M>
+    _do(...as: $<F, any>[]): $<F, any>
     chain<A>(): (fa: $<F, A>) => $<F, A>
     chain<A, B>(f: (...a: [A]) => $<F, B>): (fa: $<F, A>) => $<F, B>
     chain<A, B, C>(f: (...a: [A]) => $<F, B>, g: (...b: [B, A]) => $<F, C>): (fa: $<F, A>) => $<F, C>
@@ -103,6 +116,8 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
 
             const _chain = (...fs: ((...s: any[]) => $<F, any>)[]) => bnid(_kleisli(...fs));
 
+            const _do = (head: $<F, any>, ...tail: $<F, any>[]) => _pipe(head, ...tail.map(v => (_: any) => v));
+
             const lift1 = base.fmap;
             const lift2 = <A, B, C>(f: (a: A, b: B) => C) => (fa: $<F, A>, fb: $<F, B>) => base.bind(fa, a => base.map(fb, b => f(a, b)));
             const lift3 = <A, B, C, D>(f: (a: A, b: B, c: C) => D) => (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>) => base.bind(fa, a => base.bind(fb, b => base.map(fc, c => f(a, b, c))));
@@ -120,6 +135,8 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
                 lift3,
                 _pipe,
                 pipe: _pipe,
+                _do,
+                do: _do,
                 ...base
             };
         }
