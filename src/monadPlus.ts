@@ -4,6 +4,7 @@ import { IMonoid, IMonoidBase, monoid } from "./monoid.js";
 import { pipe } from "./utils.js";
 
 export interface IMonadPlus<F> extends IMonad<F>, IMonoid<F> {
+    filter<A, B extends A>(f: (a: A) => a is B): (fa: $<F, A>) => $<F, B>
     filter<A>(f: (a: A) => boolean): (fa: $<F, A>) => $<F, A>
     guard(b: boolean): $<F, null>
     from<A>(as: A[]): $<F, A>
