@@ -1,4 +1,4 @@
-interface KArgs<A = {}> {
+export interface KArgs<A = {}> {
     readonly args: A
 }
 
@@ -32,7 +32,7 @@ export interface $I extends KRoot {
 }
 
 /* B :: (b -> c) -> (a -> b) -> a -> c */
-export interface $$ extends KRoot {
+export interface $B extends KRoot {
     readonly 0: unknown
     readonly 1: unknown
     readonly 2: unknown
@@ -45,6 +45,13 @@ export interface $Q extends KRoot {
     readonly 1: unknown
     readonly 2: unknown
     readonly body: $<this[1], $<this[0], this[2]>>
+}
+
+/* K :: a -> (b -> a) */
+export interface $K extends KRoot {
+    readonly 0: unknown
+    readonly 1: unknown
+    readonly body: this[0]
 }
 
 /* A :: (a -> b) -> a -> b */

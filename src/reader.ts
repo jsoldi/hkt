@@ -1,4 +1,4 @@
-import { KRoot, $, $$ } from "./hkt.js"
+import { KRoot, $, $B } from "./hkt.js"
 import { IMonad, monad } from "./monad.js"
 import { ITransformer, monadTrans } from "./transformer.js"
 import { id } from "./utils.js"
@@ -11,7 +11,7 @@ export interface KReader extends KRoot {
     readonly body: Reader<this[0], this[1]>
 }
 
-export type KReaderTrans<E> = $<$$, $<KReader, E>>
+export type KReaderTrans<E> = $<$B, $<KReader, E>>
 
 export interface IReader<E> extends IMonad<$<KReader, E>>, ITransformer<KReaderTrans<E>> {
     ask: Reader<E, E>

@@ -1,6 +1,6 @@
-import { ITypeClass, $, $$, $N } from "./hkt.js";
+import { ITypeClass, $, $B, $N } from "./hkt.js";
 import { IMonad } from "./monad.js";
-import { curry, flip, pipe } from "./utils.js";
+import { curry, pipe } from "./utils.js";
 
 export interface IMonoidBase<F> extends ITypeClass<F> {
     empty: <A>() => $<F, A>
@@ -14,7 +14,7 @@ export interface IMonoid<F> extends IMonoidBase<F> {
     foldMap<A>(as: A[]): <B>(f: (a: A) => $<F, B>) => $<F, B>
     join<A>(separator: $<F, A>): (fas: $<F, A>[]) => $<F, A>
     dual(): IMonoid<F>
-    product<M>(mult: IMonad<M>): IMonoid<$N<[$$, M, F]>>
+    product<M>(mult: IMonad<M>): IMonoid<$N<[$B, M, F]>>
 }
 
 export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F> {
@@ -43,10 +43,10 @@ export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F
                 return tail.reduce((acc, a) => base.append(base.append(acc, separator), a), head);
             };
         
-            const product = <M>(multiplier: IMonad<M>): IMonoid<$N<[$$, M, F]>> => {
-                const empty = <A>(): $N<[$$, M, F, A]> => multiplier.unit(base.empty<A>());
+            const product = <M>(multiplier: IMonad<M>): IMonoid<$N<[$B, M, F]>> => {
+                const empty = <A>(): $N<[$B, M, F, A]> => multiplier.unit(base.empty<A>());
                 const append = multiplier.lift2(base.append);
-                return monoid<$N<[$$, M, F]>>({ empty, append });
+                return monoid<$N<[$B, M, F]>>({ empty, append });
             };
 
             const dual = () => monoid({
