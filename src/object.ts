@@ -11,11 +11,16 @@ interface IObject extends IFunctor<KObject>, IMonoid<KObject> {
     entries<A>(fa: Record<string, A>): [string, A][]
     keys<A>(fa: Record<string, A>): string[]
     values<A>(fa: Record<string, A>): A[]
-    rebuild<A, B>(fa: Record<string, A>, f: (a: A, k: string) => [B, string]): Record<string, B>
+    rebuild<T extends Record<string, any>, B>(fa: T, f: (a: T[keyof T], k: string) => [B, string]): { [K in keyof T]: B }
+    map<T extends Record<string, any>, R>(obj: T, f: (a: T[keyof T]) => R): { [K in keyof T]: R }
+    map<A, B>(fa: Record<string, A>, f: (a: A) => B): Record<string, B>
+    fmap<T extends Record<string, any>, B>(f: (a: T[keyof T]) => B): (fa: T) => { [K in keyof T]: B }
+    fmap<T extends Record<string, any>, B, C>(f: (a: T[keyof T]) => B, g: (b: B) => C): (fa: T) => { [K in keyof T]: C }
+    fmap<T extends Record<string, any>, B, C, D>(f: (a: T[keyof T]) => B, g: (b: B) => C, h: (c: C) => D): (fa: T) => { [K in keyof T]: D }
 }
 
 export const object: IObject = (() => {
-    const rebuild = <A, B>(fa: Record<string, A>, f: (a: A, k: string) => [B, string]): Record<string, B> => {
+    const rebuild = <T extends Record<string, any>, B>(fa: T, f: (a: T[keyof T], k: string) => [B, string]): { [K in keyof T]: B } => {
         const result: Record<string, B> = {};
 
         for (const key in fa) {
@@ -23,10 +28,14 @@ export const object: IObject = (() => {
             result[newKey] = value;
         }
 
-        return result;
+        return result as { [K in keyof T]: B };
     };
 
-    const map = <A, B>(fa: Record<string, A>, f: (a: A) => B): Record<string, B> => rebuild(fa, (a, k) => [f(a), k]);
+    const map: {
+        <T extends Record<string, any>, R>(obj: T, f: (a: T[keyof T]) => R): { [K in keyof T]: R }
+        <A, B>(fa: Record<string, A>, f: (a: A) => B): Record<string, B>
+    } = <A, B>(fa: Record<string, A>, f: (a: A) => B): Record<string, B> => rebuild(fa, (a, k) => [f(a), k]);
+
     const empty = <A>(): Record<string, A> => ({} as Record<string, A>);
     const append = <A>(fa: Record<string, A>, fb: Record<string, A>): Record<string, A> => ({ ...fa, ...fb });
     const entries = <A>(fa: Record<string, A>): [string, A][] => Object.entries(fa);
