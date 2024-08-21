@@ -12,6 +12,7 @@ export interface KArray extends KRoot {
 type KArrayTrans = $<$Q, KArray>
 
 interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans> {
+    first<A>(fa: A[]): A | undefined
     foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: A[]) => B
     foldr<A, B>(f: (a: A, b: B) => B): (b: B) => (fa: A[]) => B
     unfoldr<A, B>(f: (b: B) => Maybe<[A, B]>): (b: B) => A[]
@@ -29,6 +30,7 @@ export const array: IArray = (() => {
         return (items: T[]) => items.filter(predicate);
     };    
 
+    const first = <A>(fa: A[]): A | undefined => fa[0];
     const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => (fa: A[]) => fa.reduce(f, b);
     const foldr = <A, B>(f: (a: A, b: B) => B) => (b: B) => (fa: A[]) => fa.reduceRight((a, b) => f(b, a), b);
         
@@ -63,6 +65,7 @@ export const array: IArray = (() => {
             empty: <A>() => [] as A[],
             append: <A>(fa: A[], fb: A[]): A[] => fa.concat(fb)
         }), 
+        first,
         filter,
         transform,
         foldl,
