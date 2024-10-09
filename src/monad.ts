@@ -9,9 +9,6 @@ export interface IMonadBase<F> {
     bind<A, B>(fa: $<F, A>, f: (a: A) => $<F, B>): $<F, B>
 }
 
-type Struct<F> = { readonly [K in keyof any]: $<F, any> };
-type Destruct<F, T extends Struct<F>> = $<F, { [K in keyof T]: T[K] extends $<F, infer A> ? A : never }>;
-
 export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
     bnid<A, B>(f: (a: A) => $<F, B>): (fa: $<F, A>) => $<F, B>
     flat<A>(ffa: $<F, $<F, A>>): $<F, A>

@@ -19,7 +19,10 @@ interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans> {
     filter: {
         <T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[];
         <T>(predicate: (item: T) => boolean): (items: T[]) => T[];
-    }
+    },
+    chunk: (size: number) => <A>(fa: A[]) => A[][]
+    distinctBy<A, B>(f: (a: A) => B): (fa: A[]) => A[]
+    mapAsync: <A, B>(f: (a: A) => Promise<B>) => (fa: A[]) => Promise<B[]>
 }
 
 export const array: IArray = (() => {
@@ -57,6 +60,44 @@ export const array: IArray = (() => {
         });
     }
 
+    const chunk = (size: number) => <A>(fa: A[]): A[][] => {
+        if (size < 1)
+            throw new Error('Invalid chunk size');
+
+        const result: A[][] = [];
+
+        for (let i = 0; i < fa.length; i += size)
+            result.push(fa.slice(i, i + size));
+
+        return result;
+    }
+
+    const distinctBy = <A, B>(f: (a: A) => B) => (fa: A[]): A[] => {
+        const result: A[] = [];
+        const keys = new Set<B>();
+
+        for (const a of fa) {
+            const b = f(a);
+
+            if (!keys.has(b)) {
+                keys.add(b);
+                result.push(a);
+            }
+        }
+
+        return result;
+    }
+
+    // Promises run one by one, not in parallel
+    const mapAsync = <A, B>(f: (a: A) => Promise<B>) => async (fa: A[]): Promise<B[]> => {
+        const result: B[] = [];
+ 
+        for (const a of fa)
+            result.push(await f(a));
+
+        return result;
+    }
+
     return { 
         ...monadPlus<KArray>({ 
             map: (fa, f) => fa.map(f),
@@ -70,6 +111,9 @@ export const array: IArray = (() => {
         transform,
         foldl,
         foldr,
-        unfoldr
+        unfoldr,
+        chunk,
+        distinctBy,
+        mapAsync
     };
 })();
