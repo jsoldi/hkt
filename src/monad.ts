@@ -10,7 +10,7 @@ export interface IMonadBase<F> {
 }
 
 export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
-    bnid<A, B>(f: (a: A) => $<F, B>): (fa: $<F, A>) => $<F, B>
+    flatMap<A, B>(f: (a: A) => $<F, B>): (fa: $<F, A>) => $<F, B>
     flat<A>(ffa: $<F, $<F, A>>): $<F, A>
     sequence(fas: readonly []): $<F, []>
     sequence<A>(fas: readonly [$<F, A>]): $<F, [A]>
@@ -99,7 +99,7 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
             };
         },
         base => {
-            const bnid = <A, B>(f: (a: A) => $<F, B>) => (fa: $<F, A>) => base.bind(fa, f);
+            const flatMap = <A, B>(f: (a: A) => $<F, B>) => (fa: $<F, A>) => base.bind(fa, f);
             const flat = <A>(ffa: $<F, $<F, A>>): $<F, A> => base.bind(ffa, id);
 
             const sequence = (fas: readonly $<F, any>[]): any => 
@@ -111,7 +111,7 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
             const _pipe = (head: $<F, any>, ...tail: ((...s: any[]) => $<F, any>)[]) => 
                 base.bind(head, _kleisli(...tail));
 
-            const _chain = (...fs: ((...s: any[]) => $<F, any>)[]) => bnid(_kleisli(...fs));
+            const _chain = (...fs: ((...s: any[]) => $<F, any>)[]) => flatMap(_kleisli(...fs));
 
             const _do = (head: $<F, any>, ...tail: $<F, any>[]) => _pipe(head, ...tail.map(v => (_: any) => v));
 
@@ -120,7 +120,7 @@ export function monad<F>(base: IMonadBase<F> & Partial<IMonad<F>>): IMonad<F> {
             const lift3 = <A, B, C, D>(f: (a: A, b: B, c: C) => D) => (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>) => base.bind(fa, a => base.bind(fb, b => base.map(fc, c => f(a, b, c))));
 
             return {
-                bnid,
+                flatMap,
                 flat,
                 _fish: _kleisli,
                 fish: _kleisli,
