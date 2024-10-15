@@ -23,6 +23,8 @@ interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans> {
     chunk: (size: number) => <A>(fa: A[]) => A[][]
     distinctBy<A, B>(f: (a: A) => B): (fa: A[]) => A[]
     mapAsync: <A, B>(f: (a: A) => Promise<B>) => (fa: A[]) => Promise<B[]>
+    take<A>(n: number): (fa: A[]) => A[]
+    skip<A>(n: number): (fa: A[]) => A[]
 }
 
 export const array: IArray = (() => {
@@ -98,6 +100,9 @@ export const array: IArray = (() => {
         return result;
     }
 
+    const take = <A>(n: number) => (fa: A[]): A[] => n >= 0 ? fa.slice(0, n) : fa.slice(Math.max(fa.length + n, 0));
+    const skip = <A>(n: number) => (fa: A[]): A[] => n >= 0 ? fa.slice(n) : fa.slice(0, Math.max(fa.length + n, 0));
+
     return { 
         ...monadPlus<KArray>({ 
             map: (fa, f) => fa.map(f),
@@ -114,6 +119,8 @@ export const array: IArray = (() => {
         unfoldr,
         chunk,
         distinctBy,
-        mapAsync
+        mapAsync,
+        take,
+        skip
     };
 })();
