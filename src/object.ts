@@ -12,8 +12,8 @@ interface IObject extends IFunctor<KObject>, IMonoid<KObject> {
     keys<A>(fa: Record<string, A>): string[]
     values<A>(fa: Record<string, A>): A[]
     rebuild<T extends Record<string, any>, B>(fa: T, f: (a: T[keyof T], k: string) => [B, string]): { [K in keyof T]: B }
-    map<T extends Record<string, any>, R>(obj: T, f: (a: T[keyof T]) => R): { [K in keyof T]: R }
-    map<A, B>(fa: Record<string, A>, f: (a: A) => B): Record<string, B>
+    map<T extends Record<string, any>, R>(obj: T, f: (a: T[keyof T], k: string) => R): { [K in keyof T]: R }
+    map<A, B>(fa: Record<string, A>, f: (a: A, k: string) => B): Record<string, B>
     fmap<T extends Record<string, any>, B>(f: (a: T[keyof T]) => B): (fa: T) => { [K in keyof T]: B }
     fmap<T extends Record<string, any>, B, C>(f: (a: T[keyof T]) => B, g: (b: B) => C): (fa: T) => { [K in keyof T]: C }
     fmap<T extends Record<string, any>, B, C, D>(f: (a: T[keyof T]) => B, g: (b: B) => C, h: (c: C) => D): (fa: T) => { [K in keyof T]: D }
@@ -32,9 +32,9 @@ export const object: IObject = (() => {
     };
 
     const map: {
-        <T extends Record<string, any>, R>(obj: T, f: (a: T[keyof T]) => R): { [K in keyof T]: R }
-        <A, B>(fa: Record<string, A>, f: (a: A) => B): Record<string, B>
-    } = <A, B>(fa: Record<string, A>, f: (a: A) => B): Record<string, B> => rebuild(fa, (a, k) => [f(a), k]);
+        <T extends Record<string, any>, R>(obj: T, f: (a: T[keyof T], k: string) => R): { [K in keyof T]: R }
+        <A, B>(fa: Record<string, A>, f: (a: A, k: string) => B): Record<string, B>
+    } = <A, B>(fa: Record<string, A>, f: (a: A, k: string) => B): Record<string, B> => rebuild(fa, (a, k) => [f(a, k), k] as const);
 
     const empty = <A>(): Record<string, A> => ({} as Record<string, A>);
     const append = <A>(fa: Record<string, A>, fb: Record<string, A>): Record<string, A> => ({ ...fa, ...fb });
@@ -48,6 +48,7 @@ export const object: IObject = (() => {
         values,
         rebuild,
         ...functor<KObject>({ map }),
-        ...monoid<KObject>({ empty, append })
+        ...monoid<KObject>({ empty, append }),
+        map
     };
 })();
