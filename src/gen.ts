@@ -12,9 +12,10 @@ export interface KGen extends KRoot {
 }
 
 type Awaitable<T> = T | Promise<T>
+type GenLike<T> = T[] | Promise<T> | (() => GenLike<T>)
 
 export interface IGen extends IMonadPlus<KGen> {
-    from: <T>(genlike: (() => Gen<T>) | T[] | Promise<T> | Gen<T>) => Gen<T>
+    from: <T>(genlike: GenLike<T>) => Gen<T>
     flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
     take: (n: number) => <T>(fa: Gen<T>) => Gen<T>
     forEach: <T>(f: (a: T) => void) => (fa: Gen<T>) => Gen<T>
@@ -49,16 +50,14 @@ export const gen: IGen = (() => {
         }
     }
 
-    async function* from<T>(genlike: (() => Gen<T>) | T[] | Promise<T> | Gen<T>): Gen<T> {
+    async function* from<T>(genlike: GenLike<T>): Gen<T> {
         if (genlike instanceof Function) {
-            yield* genlike()
+            yield* from(genlike());
         } else if (genlike instanceof Array) {
             for (const a of genlike)
                 yield a
-        } else if (genlike instanceof Promise) {
-            yield await genlike
         } else {
-            yield* genlike
+            yield await genlike
         }
     }
 
