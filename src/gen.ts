@@ -31,6 +31,7 @@ export interface IGen extends IMonadPlus<KGen> {
     chunks: <T>(size: number) => (fa: Gen<T>) => Gen<T[]>
     reduce: <T, U>(acc: U, f: (acc: U, a: T) => U) => (fa: Gen<T>) => Promise<U>
     unfoldr: <A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>) => (b: B) => Gen<A>
+    flatMapFrom: <A, B>(f: (a: A) => GenLike<B>) => (fa: Gen<A>) => Gen<B>
 }
 
 export const gen: IGen = (() => {
@@ -174,6 +175,8 @@ export const gen: IGen = (() => {
             next = await f(b);
         }
     };
+
+    const flatMapFrom = <A, B>(f: (a: A) => GenLike<B>) => (gen: Gen<A>): Gen<B> => bind(gen, a => from(f(a)));
     
     const _monadPlus = monadPlus<KGen>({
         ...monad<KGen>({
@@ -201,6 +204,7 @@ export const gen: IGen = (() => {
         distinct,
         chunks,
         reduce,
-        unfoldr
+        unfoldr,
+        flatMapFrom
     }
 })();
