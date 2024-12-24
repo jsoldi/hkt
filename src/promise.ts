@@ -1,4 +1,3 @@
-import { functor } from "./functor.js";
 import { KRoot } from "./hkt.js";
 import { IMonad, monad } from "./monad.js";
 

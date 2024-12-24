@@ -1,5 +1,5 @@
 import { $, $K } from "./hkt.js";
-import { monoid } from "./monoid.js";
+import { monoid, monoidFor } from "./monoid.js";
 
 export const string = monoid<$<$K, string>>({
     empty: () => "",
@@ -7,23 +7,11 @@ export const string = monoid<$<$K, string>>({
 });
 
 export const num = {
-    sum: monoid<$<$K, number>>({
-        empty: () => 0,
-        append: (a, b) => a + b
-    }),
-    mult: monoid<$<$K, number>>({
-        empty: () => 1,
-        append: (a, b) => a * b
-    })
+    sum: monoidFor(0, (a, b) => a + b),
+    mult: monoidFor(1, (a, b) => a * b)
 };
 
 export const bool = {
-    or: monoid<$<$K, boolean>>({
-        empty: () => false,
-        append: (a, b) => a || b
-    }),
-    and: monoid<$<$K, boolean>>({
-        empty: () => true,
-        append: (a, b) => a && b
-    })
+    or: monoidFor(false, (a, b) => a || b),
+    and: monoidFor(true, (a, b) => a && b)
 };

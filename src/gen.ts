@@ -12,7 +12,7 @@ export interface KGen extends KRoot {
 }
 
 type Awaitable<T> = T | Promise<T>
-type GenLike<T> = T[] | Promise<T> | (() => GenLike<T>)
+type GenLike<T> = (() => GenLike<T>) | T[] | Promise<T>
 
 export interface IGen extends IMonadPlus<KGen> {
     from: <T>(genlike: GenLike<T>) => Gen<T>

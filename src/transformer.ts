@@ -11,7 +11,7 @@ export interface IMonadTrans<T, M> extends IMonadTransBase<T, M>, IMonad<$<T, M>
 }
 
 export interface ITransformer<T> {
-    readonly transform: <M>(outer: IMonad<M>) => IMonadTrans<T, M>
+    readonly transform: <M>(base: IMonad<M>) => IMonadTrans<T, M>
 }
 
 export function monadTrans<T, M>(base: IMonadTransBase<T, M> & Partial<IMonadTrans<T, M>>): IMonadTrans<T, M> {

@@ -1,4 +1,4 @@
-import { ITypeClass, $, $B, $N } from "./hkt.js";
+import { ITypeClass, $, $B, $N, $K } from "./hkt.js";
 import { IMonad } from "./monad.js";
 import { curry, pipe } from "./utils.js";
 
@@ -15,6 +15,13 @@ export interface IMonoid<F> extends IMonoidBase<F> {
     join<A>(separator: $<F, A>): (fas: $<F, A>[]) => $<F, A>
     dual(): IMonoid<F>
     product<M>(mult: IMonad<M>): IMonoid<$N<[$B, M, F]>>
+}
+
+export function monoidFor<T>(empty: T, append: (a: T, b: T) => T) {
+    return monoid<$<$K, T>>({
+        empty: () => empty,
+        append: (a, b) => append(a, b)
+    });
 }
 
 export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F> {
