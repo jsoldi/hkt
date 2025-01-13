@@ -151,7 +151,10 @@ export const gen: IGen = (() => {
             yield chunk;
     }
 
-    const reduce = <T, U>(acc: U, f: (acc: U, a: T) => U) => async function(fa: Gen<T>): Promise<U> {
+    const reduce = <T, U>(init: U, f: (acc: U, a: T) => U) => async function(fa: Gen<T>): Promise<U> {
+        // Can't directly modify init because it'd modify it for all passed generators
+        let acc = init; 
+
         for await (const a of fa)
             acc = f(acc, a);
 
