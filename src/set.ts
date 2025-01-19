@@ -1,13 +1,14 @@
-import { KRoot } from "./hkt.js";
+import { $, $K, KRoot } from "./hkt.js";
 import { functor, IFunctor } from "./functor.js";
 import { IMonoid, monoid } from "./monoid.js";
+import { ICollapsible } from "./collapsible.js";
 
 interface KSet extends KRoot {
     readonly 0: unknown
     readonly body: Set<this[0]>
 }
 
-interface ISet extends IMonoid<KSet>, IFunctor<KSet> {
+interface ISet extends IMonoid<KSet>, IFunctor<KSet>, ICollapsible<KSet> {
     union: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     intersection: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     difference: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
@@ -25,6 +26,7 @@ export const set: ISet = (() => {
     const isSubsetOf = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isSubsetOf(fb);
     const isSupersetOf = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isSupersetOf(fb);
     const isDisjointFrom = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isDisjointFrom(fb);
+    const collapse = <A>(monoid: IMonoid<$<$K, A>>) => (fa: Set<A>): Set<A> => new Set<A>([[...fa].reduce(monoid.append, monoid.empty())]);
 
     return {
         ...functor<KSet>({
@@ -40,6 +42,7 @@ export const set: ISet = (() => {
         symmetricDifference,
         isSubsetOf,
         isSupersetOf,
-        isDisjointFrom
+        isDisjointFrom,
+        collapse
     };
 })();

@@ -1,8 +1,9 @@
-import { KRoot } from "./hkt.js"
+import { ICollapsible } from "./collapsible.js"
+import { $, $K, KRoot } from "./hkt.js"
 import { Maybe } from "./maybe.js"
 import { monad } from "./monad.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
-import { monoid } from "./monoid.js"
+import { IMonoid, monoid } from "./monoid.js"
 
 export type Gen<T> = AsyncGenerator<T, void, void>
 
@@ -14,7 +15,7 @@ export interface KGen extends KRoot {
 type Awaitable<T> = T | Promise<T>
 type GenLike<T> = (() => GenLike<T>) | T[] | Promise<T>
 
-export interface IGen extends IMonadPlus<KGen> {
+export interface IGen extends IMonadPlus<KGen>, ICollapsible<KGen> {
     from: <T>(genlike: GenLike<T>) => Gen<T>
     flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
     take: (n: number) => <T>(fa: Gen<T>) => Gen<T>
@@ -151,9 +152,9 @@ export const gen: IGen = (() => {
             yield chunk;
     }
 
-    const reduce = <T, U>(init: U, f: (acc: U, a: T) => U) => async function(fa: Gen<T>): Promise<U> {
+    const reduce = <T, U>(init: U, f: (acc: U, a: T) => U) => async function (fa: Gen<T>): Promise<U> {
         // Can't directly modify init because it'd modify it for all passed generators
-        let acc = init; 
+        let acc = init;
 
         for await (const a of fa)
             acc = f(acc, a);
@@ -161,14 +162,18 @@ export const gen: IGen = (() => {
         return acc;
     }
 
-    const empty = () => (async function*() {})();
+    const collapse = <A>(monoid: IMonoid<$<$K, A>>) => async function* (fa: Gen<A>) {
+        yield await reduce<A, A>(monoid.empty(), monoid.append)(fa);
+    }
 
-    const append: <A>(fa: Gen<A>, fb: Gen<A>) => Gen<A> = async function*(fa, fb) {
+    const empty = () => (async function* () { })();
+
+    const append: <A>(fa: Gen<A>, fb: Gen<A>) => Gen<A> = async function* (fa, fb) {
         yield* fa;
         yield* fb;
     }
-        
-    const unfoldr = <A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>) => async function*(b: B): Gen<A> {
+
+    const unfoldr = <A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>) => async function* (b: B): Gen<A> {
         let next = await f(b);
 
         while (next.right) {
@@ -180,7 +185,7 @@ export const gen: IGen = (() => {
     };
 
     const flatMapFrom = <A, B>(f: (a: A) => GenLike<B>) => (gen: Gen<A>): Gen<B> => bind(gen, a => from(f(a)));
-    
+
     const _monadPlus = monadPlus<KGen>({
         ...monad<KGen>({
             map,
@@ -208,6 +213,7 @@ export const gen: IGen = (() => {
         chunks,
         reduce,
         unfoldr,
-        flatMapFrom
+        flatMapFrom,
+        collapse
     }
 })();
