@@ -4,6 +4,7 @@ import { Maybe } from "./maybe.js"
 import { monad } from "./monad.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
 import { IMonoid, monoid } from "./monoid.js"
+import { KPromise } from "./promise.js"
 
 export type Gen<T> = AsyncGenerator<T, void, void>
 
@@ -15,7 +16,7 @@ export interface KGen extends KRoot {
 type Awaitable<T> = T | Promise<T>
 type GenLike<T> = (() => GenLike<T>) | T[] | Promise<T>
 
-export interface IGen extends IMonadPlus<KGen>, ICollapsible<KGen> {
+export interface IGen extends IMonadPlus<KGen>, ICollapsible<KGen, KPromise> {
     from: <T>(genlike: GenLike<T>) => Gen<T>
     flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
     take: (n: number) => <T>(fa: Gen<T>) => Gen<T>
@@ -162,8 +163,8 @@ export const gen: IGen = (() => {
         return acc;
     }
 
-    const collapse = <A>(monoid: IMonoid<$<$K, A>>) => async function* (fa: Gen<A>) {
-        yield await reduce<A, A>(monoid.empty(), monoid.append)(fa);
+    const collapse = <A>(monoid: IMonoid<$<$K, A>>) => async function (fa: Gen<A>) {
+        return await reduce<A, A>(monoid.empty(), monoid.append)(fa);
     }
 
     const empty = () => (async function* () { })();

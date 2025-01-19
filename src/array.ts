@@ -1,5 +1,5 @@
 import { ICollapsible } from "./collapsible.js";
-import { $, $K, $Q, KRoot } from "./hkt.js";
+import { $, $I, $K, $Q, KRoot } from "./hkt.js";
 import { Maybe } from "./maybe.js";
 import { IMonad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
@@ -13,7 +13,7 @@ export interface KArray extends KRoot {
 
 type KArrayTrans = $<$Q, KArray>
 
-interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans>, ICollapsible<KArray> {
+interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans>, ICollapsible<KArray, $I> {
     first<A>(fa: A[]): A | undefined
     foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: A[]) => B
     foldr<A, B>(f: (a: A, b: B) => B): (b: B) => (fa: A[]) => B
@@ -104,7 +104,7 @@ export const array: IArray = (() => {
 
     const take = <A>(n: number) => (fa: A[]): A[] => n >= 0 ? fa.slice(0, n) : fa.slice(Math.max(fa.length + n, 0));
     const skip = <A>(n: number) => (fa: A[]): A[] => n >= 0 ? fa.slice(n) : fa.slice(0, Math.max(fa.length + n, 0));
-    const collapse = <A>(monoid: IMonoid<$<$K, A>>) => (fa: A[]): A[] => [fa.reduce(monoid.append, monoid.empty())];
+    const collapse = <A>(monoid: IMonoid<$<$K, A>>) => (fa: A[]): A => fa.reduce(monoid.append, monoid.empty());
 
     return { 
         ...monadPlus<KArray>({ 
