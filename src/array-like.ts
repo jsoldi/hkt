@@ -1,4 +1,3 @@
-import { array } from "./array.js";
 import { IFunctor } from "./functor.js";
 import { $, $K } from "./hkt.js";
 import { IMonoid } from "./monoid.js";
@@ -22,17 +21,17 @@ export function arrayLike<F, G>(base: IArrayLikeBase<F, G>): IArrayLike<F, G> {
 
     const collapse: I['collapse'] = monoid => chain(
         base.toArray,
-        base.scalar.fmap(array.foldl(monoid.append)(monoid.empty())),
+        base.scalar.fmap(a => a.reduce(monoid.append, monoid.empty())),
     );
 
     const expand: I['expand'] = chain(
-        base.scalar.fmap(array.unit),
+        base.scalar.fmap(a => [a]),
         base.fromArray,
     );
 
     const filter: I['filter'] = <A>(p: (a: A) => unknown) => chain(
         base.toArray<A>,
-        base.scalar.fmap(array.filter(p)),
+        base.scalar.fmap(a => a.filter(p)),
         base.fromArray,
     );
 
