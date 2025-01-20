@@ -1,7 +1,9 @@
 import { $I } from "./hkt.js";
 import { IMonad, monad } from "./monad.js";
 
-export const trivial: IMonad<$I> = (() => {
+export type ITrivial = IMonad<$I>;
+
+export const trivial: ITrivial = (() => {
     return {
         ...monad<$I>({
             unit: a => a,

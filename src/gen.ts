@@ -4,7 +4,7 @@ import { Maybe } from "./maybe.js"
 import { monad } from "./monad.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
 import { monoid } from "./monoid.js"
-import { KPromise, promise } from "./promise.js"
+import { IPromise, KPromise, promise } from "./promise.js"
 
 export type Gen<T> = AsyncGenerator<T, void, void>
 
@@ -17,6 +17,7 @@ type Awaitable<T> = T | Promise<T>
 type GenLike<T> = (() => GenLike<T>) | T[] | Promise<T>
 
 export interface IGen extends IMonadPlus<KGen>, IArrayLike<KGen, KPromise> {
+    readonly scalar: IPromise
     from: <T>(genlike: GenLike<T>) => Gen<T>
     fromArray<A>(as: A[] | Promise<A[]>): Gen<A>
     flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
@@ -201,13 +202,16 @@ export const gen: IGen = (() => {
         })
     });
 
+    const scalar = promise;
+
     return {
         ..._monadPlus,
         ...arrayLike<KGen, KPromise>({
             toArray,
             fromArray,
-            scalar: promise,
+            scalar,
         }),
+        scalar,
         from, // override MonadPlus implementation
         take,
         flat,

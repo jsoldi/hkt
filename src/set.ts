@@ -2,7 +2,7 @@ import { $I, KRoot } from "./hkt.js";
 import { functor, IFunctor } from "./functor.js";
 import { IMonoid, monoid } from "./monoid.js";
 import { arrayLike, IArrayLike } from "./array-like.js";
-import { trivial } from "./trivial.js";
+import { ITrivial, trivial } from "./trivial.js";
 
 interface KSet extends KRoot {
     readonly 0: unknown
@@ -10,6 +10,7 @@ interface KSet extends KRoot {
 }
 
 interface ISet extends IMonoid<KSet>, IFunctor<KSet>, IArrayLike<KSet, $I> {
+    readonly scalar: ITrivial
     union: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     intersection: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     difference: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
@@ -30,6 +31,7 @@ export const set: ISet = (() => {
     const toArray = <A>(fa: Set<A>): A[] => [...fa];
     const fromArray = <A>(as: A[]): Set<A> => new Set(as);
     const filter = <A>(p: (a: A) => boolean) => (fa: Set<A>): Set<A> => new Set([...fa].filter(p));
+    const scalar = trivial;
 
     return {
         ...functor<KSet>({
@@ -42,8 +44,9 @@ export const set: ISet = (() => {
         ...arrayLike<KSet, $I>({
             toArray,
             fromArray,
-            scalar: trivial
+            scalar
         }),
+        scalar,
         union,
         intersection,
         difference,
