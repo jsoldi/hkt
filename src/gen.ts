@@ -1,9 +1,9 @@
-import { ICollapsible } from "./collapsible.js"
-import { $, $K, KRoot } from "./hkt.js"
+import { IArrayLike } from "./array-like.js"
+import { KRoot } from "./hkt.js"
 import { Maybe } from "./maybe.js"
 import { monad } from "./monad.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
-import { IMonoid, monoid } from "./monoid.js"
+import { monoid } from "./monoid.js"
 import { KPromise } from "./promise.js"
 
 export type Gen<T> = AsyncGenerator<T, void, void>
@@ -16,8 +16,9 @@ export interface KGen extends KRoot {
 type Awaitable<T> = T | Promise<T>
 type GenLike<T> = (() => GenLike<T>) | T[] | Promise<T>
 
-export interface IGen extends IMonadPlus<KGen>, ICollapsible<KGen, KPromise> {
+export interface IGen extends IMonadPlus<KGen>, IArrayLike<KGen, KPromise> {
     from: <T>(genlike: GenLike<T>) => Gen<T>
+    fromArray<A>(as: A[] | Promise<A[]>): Gen<A>
     flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
     take: (n: number) => <T>(fa: Gen<T>) => Gen<T>
     forEach: <T>(f: (a: T) => void) => (fa: Gen<T>) => Gen<T>
@@ -62,6 +63,11 @@ export const gen: IGen = (() => {
         } else {
             yield await genlike
         }
+    }
+
+    const fromArray: IGen["fromArray"] = async function* (array) {
+        for (const a of await array)
+            yield a;
     }
 
     const flat = <T>(gen: Gen<Gen<T>>): Gen<T> => bind(gen, a => a);
@@ -163,10 +169,6 @@ export const gen: IGen = (() => {
         return acc;
     }
 
-    const collapse = <A>(monoid: IMonoid<$<$K, A>>) => async function (fa: Gen<A>) {
-        return await reduce<A, A>(monoid.empty(), monoid.append)(fa);
-    }
-
     const empty = () => (async function* () { })();
 
     const append: <A>(fa: Gen<A>, fb: Gen<A>) => Gen<A> = async function* (fa, fb) {
@@ -206,6 +208,7 @@ export const gen: IGen = (() => {
         flat,
         forEach,
         toArray,
+        fromArray,
         filter,
         takeWhile,
         skipWhile,
@@ -214,7 +217,6 @@ export const gen: IGen = (() => {
         chunks,
         reduce,
         unfoldr,
-        flatMapFrom,
-        collapse
+        flatMapFrom
     }
 })();

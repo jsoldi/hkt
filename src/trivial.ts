@@ -1,15 +1,11 @@
-import { ICollapsible } from "./collapsible.js";
 import { $I } from "./hkt.js";
 import { IMonad, monad } from "./monad.js";
 
-export type ITrivial = IMonad<$I> & ICollapsible<$I, $I>;
-
-export const trivial: ITrivial = (() => {
+export const trivial: IMonad<$I> = (() => {
     return {
         ...monad<$I>({
             unit: a => a,
             bind: (a, f) => f(a)
-        }),
-        collapse: _ => a => a
+        })
     }
 })();

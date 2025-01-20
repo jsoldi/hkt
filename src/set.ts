@@ -1,15 +1,14 @@
-import { $, $I, $K, KRoot } from "./hkt.js";
+import { $I, KRoot } from "./hkt.js";
 import { functor, IFunctor } from "./functor.js";
 import { IMonoid, monoid } from "./monoid.js";
-import { ICollapsible } from "./collapsible.js";
-import { array } from "./array.js";
+import { IArrayLike } from "./array-like.js";
 
 interface KSet extends KRoot {
     readonly 0: unknown
     readonly body: Set<this[0]>
 }
 
-interface ISet extends IMonoid<KSet>, IFunctor<KSet>, ICollapsible<KSet, $I> {
+interface ISet extends IMonoid<KSet>, IFunctor<KSet>, IArrayLike<KSet, $I> {
     union: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     intersection: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     difference: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
@@ -27,7 +26,8 @@ export const set: ISet = (() => {
     const isSubsetOf = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isSubsetOf(fb);
     const isSupersetOf = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isSupersetOf(fb);
     const isDisjointFrom = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isDisjointFrom(fb);
-    const collapse = <A>(monoid: IMonoid<$<$K, A>>) => (fa: Set<A>): A => array.collapse(monoid)([...fa]);
+    const toArray = <A>(fa: Set<A>): A[] => [...fa];
+    const fromArray = <A>(as: A[]): Set<A> => new Set(as);
 
     return {
         ...functor<KSet>({
@@ -44,6 +44,7 @@ export const set: ISet = (() => {
         isSubsetOf,
         isSupersetOf,
         isDisjointFrom,
-        collapse
+        toArray,
+        fromArray
     };
 })();
