@@ -1,10 +1,10 @@
-import { IArrayLike } from "./array-like.js"
+import { arrayLike, IArrayLike } from "./array-like.js"
 import { KRoot } from "./hkt.js"
 import { Maybe } from "./maybe.js"
 import { monad } from "./monad.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
 import { monoid } from "./monoid.js"
-import { KPromise } from "./promise.js"
+import { KPromise, promise } from "./promise.js"
 
 export type Gen<T> = AsyncGenerator<T, void, void>
 
@@ -203,6 +203,11 @@ export const gen: IGen = (() => {
 
     return {
         ..._monadPlus,
+        ...arrayLike<KGen, KPromise>({
+            toArray,
+            fromArray,
+            scalar: promise,
+        }),
         from, // override MonadPlus implementation
         take,
         flat,

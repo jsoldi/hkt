@@ -1,7 +1,8 @@
 import { $I, KRoot } from "./hkt.js";
 import { functor, IFunctor } from "./functor.js";
 import { IMonoid, monoid } from "./monoid.js";
-import { IArrayLike } from "./array-like.js";
+import { arrayLike, IArrayLike } from "./array-like.js";
+import { trivial } from "./trivial.js";
 
 interface KSet extends KRoot {
     readonly 0: unknown
@@ -36,6 +37,11 @@ export const set: ISet = (() => {
         ...monoid<KSet>({
             empty: () => new Set(),
             append: (fa, fb) => fa.union(fb)
+        }),
+        ...arrayLike<KSet, $I>({
+            toArray,
+            fromArray,
+            scalar: trivial
         }),
         union,
         intersection,

@@ -1,9 +1,10 @@
-import { IArrayLike } from "./array-like.js";
+import { arrayLike, IArrayLike } from "./array-like.js";
 import { $, $I, $Q, KRoot } from "./hkt.js";
 import { Maybe } from "./maybe.js";
 import { IMonad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
 import { ITransformer, monadTrans } from "./transformer.js";
+import { trivial } from "./trivial.js";
 import { id } from "./utils.js";
 
 export interface KArray extends KRoot {
@@ -113,6 +114,11 @@ export const array: IArray = (() => {
             empty: <A>() => [] as A[],
             append: <A>(fa: A[], fb: A[]): A[] => fa.concat(fb)
         }), 
+        ...arrayLike<KArray, $I>({
+            scalar: trivial,
+            toArray: id,
+            fromArray: id
+        }),
         first,
         filter,
         transform,
@@ -124,7 +130,5 @@ export const array: IArray = (() => {
         mapAsync,
         take,
         skip,
-        toArray: id,
-        fromArray: id
     };
 })();
