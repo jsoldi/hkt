@@ -13,6 +13,8 @@ export interface IArrayLikeBase<F, G> {
 export interface IArrayLike<F, G> extends IArrayLikeBase<F, G> {
     collapse<A>(monoid: IMonoid<$<$K, A>>): (fsa: $<F, A>) => $<G, A>
     expand<A>(fsa: $<G, A>): $<F, A>
+    filter<A, B extends A>(f: (a: A) => a is B): (fa: $<F, A>) => $<F, B>
+    filter<A>(p: (a: A) => unknown): (fa: $<F, A>) => $<F, A>
 }
 
 export function arrayLike<F, G>(base: IArrayLikeBase<F, G>): IArrayLike<F, G> {
@@ -28,9 +30,16 @@ export function arrayLike<F, G>(base: IArrayLikeBase<F, G>): IArrayLike<F, G> {
         base.fromArray,
     );
 
+    const filter: I['filter'] = <A>(p: (a: A) => unknown) => chain(
+        base.toArray<A>,
+        base.scalar.fmap(array.filter(p)),
+        base.fromArray,
+    );
+
     return {
         ...base,
         collapse,
         expand,
+        filter,
     }
 }

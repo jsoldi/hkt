@@ -21,7 +21,7 @@ interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans>, IArrayLi
     unfoldr<A, B>(f: (b: B) => Maybe<[A, B]>): (b: B) => A[]
     filter: {
         <T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[];
-        <T>(predicate: (item: T) => boolean): (items: T[]) => T[];
+        <T>(predicate: (item: T) => unknown): (items: T[]) => T[];
     },
     chunk: (size: number) => <A>(fa: A[]) => A[][]
     distinctBy<A, B>(f: (a: A) => B): (fa: A[]) => A[]
@@ -33,7 +33,7 @@ interface IArray extends IMonadPlus<KArray>, ITransformer<KArrayTrans>, IArrayLi
 export const array: IArray = (() => {
     const filter: {
         <T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[];
-        <T>(predicate: (item: T) => boolean): (items: T[]) => T[];
+        <T>(predicate: (item: T) => unknown): (items: T[]) => T[];
     } = <T, S extends T>(predicate: (item: T) => any): (items: T[]) => T[] | S[] => {
         return (items: T[]) => items.filter(predicate);
     };    

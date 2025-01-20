@@ -29,6 +29,7 @@ export const set: ISet = (() => {
     const isDisjointFrom = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isDisjointFrom(fb);
     const toArray = <A>(fa: Set<A>): A[] => [...fa];
     const fromArray = <A>(as: A[]): Set<A> => new Set(as);
+    const filter = <A>(p: (a: A) => boolean) => (fa: Set<A>): Set<A> => new Set([...fa].filter(p));
 
     return {
         ...functor<KSet>({
@@ -50,7 +51,6 @@ export const set: ISet = (() => {
         isSubsetOf,
         isSupersetOf,
         isDisjointFrom,
-        toArray,
-        fromArray
+        filter,
     };
 })();

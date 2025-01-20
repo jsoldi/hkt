@@ -212,8 +212,6 @@ export const gen: IGen = (() => {
         take,
         flat,
         forEach,
-        toArray,
-        fromArray,
         filter,
         takeWhile,
         skipWhile,
