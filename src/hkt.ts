@@ -1,8 +1,8 @@
-export interface KArgs<A = {}> {
+export interface KArgs<A = Record<string, unknown>> {
     readonly args: A
 }
 
-export interface KRoot<B = unknown, A = {}> extends KArgs<A> {
+export interface KRoot<B = unknown, A = Record<string, unknown>> extends KArgs<A> {
     readonly body: B
 }
 

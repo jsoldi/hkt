@@ -1,7 +1,6 @@
-import { KArray } from "./array.js";
 import { functor, IFunctor } from "./functor.js";
 import { $ } from "./hkt.js";
-import { curry, flip, id } from "./utils.js";
+import { id } from "./utils.js";
 import { pipe as _pipe } from "./utils.js";
 
 export interface IMonadBase<F> {

@@ -60,7 +60,7 @@ export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F
                 empty: base.empty,
                 append: (a, b) => base.append(b, a),
             });
-        
+
             return {
                 when,
                 foldMap,

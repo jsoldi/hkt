@@ -1,7 +1,6 @@
 import { $I, KRoot } from "./hkt.js";
-import { functor, IFunctor } from "./functor.js";
-import { IMonoid, monoid } from "./monoid.js";
-import { arrayLike, IArrayLike } from "./array-like.js";
+import { IMonadPlus } from "./monadPlus.js";
+import { monadFold } from "./monadFold.js";
 import { ITrivial, trivial } from "./trivial.js";
 
 interface KSet extends KRoot {
@@ -9,8 +8,8 @@ interface KSet extends KRoot {
     readonly body: Set<this[0]>
 }
 
-interface ISet extends IMonoid<KSet>, IFunctor<KSet>, IArrayLike<KSet, $I> {
-    readonly scalar: ITrivial
+interface ISet extends IMonadPlus<KSet> {
+    readonly scalar: ITrivial;
     union: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     intersection: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     difference: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
@@ -28,32 +27,27 @@ export const set: ISet = (() => {
     const isSubsetOf = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isSubsetOf(fb);
     const isSupersetOf = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isSupersetOf(fb);
     const isDisjointFrom = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isDisjointFrom(fb);
-    const toArray = <A>(fa: Set<A>): A[] => [...fa];
-    const fromArray = <A>(as: A[]): Set<A> => new Set(as);
-    const filter = <A>(p: (a: A) => boolean) => (fa: Set<A>): Set<A> => new Set([...fa].filter(p));
-    const scalar = trivial;
+    const unit = <A>(a: A): Set<A> => new Set([a]);
+    const bind = <A, B>(fa: Set<A>, f: (a: A) => Set<B>): Set<B> => new Set([...fa].flatMap(a => [...f(a)]));
+    const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => (fa: Set<A>): B => [...fa].reduce(f, b);
 
     return {
-        ...functor<KSet>({
-            map: (fa, f) => new Set([...fa].map(f))
-        }),
-        ...monoid<KSet>({
+        ...monadFold<KSet, $I>({
+            unit,
+            bind,
+            map: (fa, f) => new Set([...fa].map(f)),
             empty: () => new Set(),
-            append: (fa, fb) => fa.union(fb)
+            append: (fa, fb) => fa.union(fb),
+            foldl,
+            wrap: unit,
+            scalar: trivial,
         }),
-        ...arrayLike<KSet, $I>({
-            toArray,
-            fromArray,
-            scalar
-        }),
-        scalar,
         union,
         intersection,
         difference,
         symmetricDifference,
         isSubsetOf,
         isSupersetOf,
-        isDisjointFrom,
-        filter,
+        isDisjointFrom
     };
 })();

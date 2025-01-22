@@ -1,10 +1,10 @@
-import { arrayLike, IArrayLike } from "./array-like.js"
 import { KRoot } from "./hkt.js"
 import { Maybe } from "./maybe.js"
-import { monad } from "./monad.js"
-import { IMonadPlus, monadPlus } from "./monadPlus.js"
+import { IMonad, monad } from "./monad.js"
+import { monadFold } from "./monadFold.js"
+import { IMonadPlus } from "./monadPlus.js"
 import { monoid } from "./monoid.js"
-import { IPromise, KPromise, promise } from "./promise.js"
+import { KPromise, promise } from "./promise.js"
 
 export type Gen<T> = AsyncGenerator<T, void, void>
 
@@ -16,10 +16,9 @@ export interface KGen extends KRoot {
 type Awaitable<T> = T | Promise<T>
 type GenLike<T> = (() => GenLike<T>) | T[] | Promise<T>
 
-export interface IGen extends IMonadPlus<KGen>, IArrayLike<KGen, KPromise> {
-    readonly scalar: IPromise
+export interface IGen extends IMonadPlus<KGen> {
+    readonly scalar: IMonad<KPromise>
     from: <T>(genlike: GenLike<T>) => Gen<T>
-    fromArray<A>(as: A[] | Promise<A[]>): Gen<A>
     flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
     take: (n: number) => <T>(fa: Gen<T>) => Gen<T>
     forEach: <T>(f: (a: T) => void) => (fa: Gen<T>) => Gen<T>
@@ -64,11 +63,6 @@ export const gen: IGen = (() => {
         } else {
             yield await genlike
         }
-    }
-
-    const fromArray: IGen["fromArray"] = async function* (array) {
-        for (const a of await array)
-            yield a;
     }
 
     const flat = <T>(gen: Gen<Gen<T>>): Gen<T> => bind(gen, a => a);
@@ -160,9 +154,9 @@ export const gen: IGen = (() => {
             yield chunk;
     }
 
-    const reduce = <T, U>(init: U, f: (acc: U, a: T) => U) => async function (fa: Gen<T>): Promise<U> {
+    const reduce = <T, U>(init: U, f: (acc: U, a: T) => U) => async function(fa: Gen<T>): Promise<U> {
         // Can't directly modify init because it'd modify it for all passed generators
-        let acc = init;
+        let acc = init; 
 
         for await (const a of fa)
             acc = f(acc, a);
@@ -170,14 +164,14 @@ export const gen: IGen = (() => {
         return acc;
     }
 
-    const empty = () => (async function* () { })();
+    const empty = () => (async function*() {})();
 
-    const append: <A>(fa: Gen<A>, fb: Gen<A>) => Gen<A> = async function* (fa, fb) {
+    const append: <A>(fa: Gen<A>, fb: Gen<A>) => Gen<A> = async function*(fa, fb) {
         yield* fa;
         yield* fb;
     }
-
-    const unfoldr = <A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>) => async function* (b: B): Gen<A> {
+        
+    const unfoldr = <A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>) => async function*(b: B): Gen<A> {
         let next = await f(b);
 
         while (next.right) {
@@ -190,7 +184,7 @@ export const gen: IGen = (() => {
 
     const flatMapFrom = <A, B>(f: (a: A) => GenLike<B>) => (gen: Gen<A>): Gen<B> => bind(gen, a => from(f(a)));
 
-    const _monadPlus = monadPlus<KGen>({
+    const _monadFold = monadFold<KGen, KPromise>({
         ...monad<KGen>({
             map,
             unit,
@@ -199,23 +193,19 @@ export const gen: IGen = (() => {
         ...monoid<KGen>({
             empty,
             append
-        })
+        }),
+        foldl: f => i => reduce(i, f),
+        wrap: from,
+        scalar: promise
     });
 
-    const scalar = promise;
-
     return {
-        ..._monadPlus,
-        ...arrayLike<KGen, KPromise>({
-            toArray,
-            fromArray,
-            scalar,
-        }),
-        scalar,
+        ..._monadFold,
         from, // override MonadPlus implementation
         take,
         flat,
         forEach,
+        toArray,
         filter,
         takeWhile,
         skipWhile,
