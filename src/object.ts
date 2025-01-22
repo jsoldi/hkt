@@ -20,6 +20,7 @@ interface IObject extends IFunctor<KObject>, IMonoid<KObject> {
     fmap<T extends Record<K, any>, B>(f: (a: T[keyof T]) => B): (fa: T) => { [K in keyof T]: B }
     fmap<T extends Record<K, any>, B, C>(f: (a: T[keyof T]) => B, g: (b: B) => C): (fa: T) => { [K in keyof T]: C }
     fmap<T extends Record<K, any>, B, C, D>(f: (a: T[keyof T]) => B, g: (b: B) => C, h: (c: C) => D): (fa: T) => { [K in keyof T]: D }
+    setDefault<T>(def: T): (record: Record<K, T>) => Record<K, T>
 }
 
 export const object: IObject = (() => {
@@ -45,6 +46,15 @@ export const object: IObject = (() => {
     const keys = <A>(fa: Record<K, A>): K[] => Object.keys(fa);
     const values = <A>(fa: Record<K, A>): A[] => Object.values(fa);
 
+    const setDefault = <T>(def: T) => (record: Record<keyof any, T>): Record<keyof any, T> => new Proxy(record, {
+        get(target, prop) {
+            if (prop in target) 
+                return target[prop];
+            
+            return def;
+        }
+    });
+
     const _monoid = <A>(sum: (l: A, r: A) => A) => monoidFor<Record<K, A>>({}, (fa, fb) => {
             const result = { ...fa };
     
@@ -61,6 +71,7 @@ export const object: IObject = (() => {
         keys,
         values,
         rebuild,
+        setDefault,
         monoid: _monoid,
         ...functor<KObject>({ map }),
         ...monoid<KObject>({ empty, append }),
