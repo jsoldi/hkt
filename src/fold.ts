@@ -1,5 +1,6 @@
 import { functor, IFunctor, IFunctorBase } from "./functor.js";
 import { $, $K } from "./hkt.js";
+import { IMonad } from "./monad.js";
 import { IMonoid } from "./monoid.js";
 import { num } from "./primitive.js";
 import { chain } from "./utils.js";
@@ -8,7 +9,7 @@ import { chain } from "./utils.js";
  * I think the idea of this is that a MonadPlus can be reduced to a Monad by collapsing its monoidal structure.
  */
 export interface IFoldBase<F, G> {
-    readonly scalar: IFunctor<G>
+    readonly scalar: IMonad<G>
     foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: $<F, A>) => $<G, B>
     wrap<A>(ga: $<G, A>): $<F, A>
 }
