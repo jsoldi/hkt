@@ -183,6 +183,8 @@ export const gen: IGen = (() => {
     };
 
     const flatMapFrom = <A, B>(f: (a: A) => GenLike<B>) => (gen: Gen<A>): Gen<B> => bind(gen, a => from(f(a)));
+    const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => reduce(b, f);
+    const scalar = promise;
 
     const _monadFold = monadPlus<KGen>({
         ...monad<KGen>({
@@ -198,12 +200,14 @@ export const gen: IGen = (() => {
 
     return {
         ...fold<KGen, KPromise>({
+            unit,
+            bind,
             map,
-            foldl: f => i => reduce(i, f),
+            foldl,
             wrap: from,
-            scalar: promise
+            scalar
         }),
-        scalar: promise,
+        scalar,
         ..._monadFold,
         from, // override MonadPlus implementation
         take,

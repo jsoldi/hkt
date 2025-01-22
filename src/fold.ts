@@ -1,12 +1,11 @@
-import { functor, IFunctor, IFunctorBase } from "./functor.js";
 import { $, $K } from "./hkt.js";
-import { IMonad } from "./monad.js";
+import { IMonad, IMonadBase, monad } from "./monad.js";
 import { IMonoid } from "./monoid.js";
 import { num } from "./primitive.js";
 import { chain } from "./utils.js";
 
 /**
- * I think the idea of this is that a MonadPlus can be reduced to a Monad by collapsing its monoidal structure.
+ * This is the opposite of a monad plus, kind of a combination of a monad and a comonoid.
  */
 export interface IFoldBase<F, G> {
     readonly scalar: IMonad<G>
@@ -14,7 +13,7 @@ export interface IFoldBase<F, G> {
     wrap<A>(ga: $<G, A>): $<F, A>
 }
 
-export interface IFold<F, G> extends IFoldBase<F, G>, IFunctor<F> {    
+export interface IFold<F, G> extends IFoldBase<F, G>, IMonad<F> {    
     toArray<A>(fa: $<F, A>): $<G, A[]>
     collapse<A>(m: IMonoid<$<$K, A>>): (fa: $<F, A>) => $<G, A>
     size(fa: $<F, unknown>): $<G, number>
@@ -22,7 +21,7 @@ export interface IFold<F, G> extends IFoldBase<F, G>, IFunctor<F> {
     avg(fa: $<F, number>): $<G, number>
 }
 
-export function fold<F, G>(base: IFoldBase<F, G> & IFunctorBase<F> & Partial<IFold<F, G>>): IFold<F, G> {
+export function fold<F, G>(base: IFoldBase<F, G> & IMonadBase<F> & Partial<IFold<F, G>>): IFold<F, G> {
     type I = IFold<F, G>;
 
     const toArray: I['toArray'] = <A>(fa: $<F, A>) => base.foldl((acc: A[], a: A) => [...acc, a])([])(fa);
@@ -36,7 +35,7 @@ export function fold<F, G>(base: IFoldBase<F, G> & IFunctorBase<F> & Partial<IFo
     );
 
     return {
-        ...functor(base),
+        ...monad(base),
         toArray,
         collapse,
         size,

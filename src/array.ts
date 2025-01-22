@@ -105,21 +105,29 @@ export const array: IArray = (() => {
 
     const take = <A>(n: number) => (fa: A[]): A[] => n >= 0 ? fa.slice(0, n) : fa.slice(Math.max(fa.length + n, 0));
     const skip = <A>(n: number) => (fa: A[]): A[] => n >= 0 ? fa.slice(n) : fa.slice(0, Math.max(fa.length + n, 0));
+    const map = <A, B>(fa: A[], f: (a: A) => B): B[] => fa.map(f);
+    const unit = <A>(a: A): A[] => [a];
+    const bind = <A, B>(fa: A[], f: (a: A) => B[]): B[] => fa.flatMap(f);
+    const empty = <A>(): A[] => [];
+    const append = <A>(fa: A[], fb: A[]): A[] => fa.concat(fb);
+    const scalar = trivial;
 
     return { 
         ...fold<KArray, $I>({
-            map: (fa, f) => fa.map(f),
-            scalar: trivial,
+            map,            
+            unit,
+            bind,
+            scalar,
             foldl,
-            wrap: a => [a],
+            wrap: unit,
         }),
-        scalar: trivial,
+        scalar,
         ...monadPlus<KArray>({ 
-            map: (fa, f) => fa.map(f),
-            unit: a => [a], 
-            bind: (fa, f) => fa.flatMap(f),            
-            empty: <A>() => [] as A[],
-            append: <A>(fa: A[], fb: A[]): A[] => fa.concat(fb),
+            map,
+            unit, 
+            bind,
+            empty,
+            append,
         }), 
         first,
         filter,
