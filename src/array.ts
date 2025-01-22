@@ -1,9 +1,10 @@
 import { $, $I, $Q, KRoot } from "./hkt.js";
 import { Maybe } from "./maybe.js";
 import { IMonad } from "./monad.js";
-import { IMonadFold, monadFold } from "./monadFold.js";
+import { fold, IFold } from "./fold.js";
 import { ITransformer, monadTrans } from "./transformer.js";
 import { ITrivial, trivial } from "./trivial.js";
+import { IMonadPlus, monadPlus } from "./monadPlus.js";
 
 export interface KArray extends KRoot {
     readonly 0: unknown
@@ -12,7 +13,7 @@ export interface KArray extends KRoot {
 
 type KArrayTrans = $<$Q, KArray>
 
-interface IArray extends IMonadFold<KArray, $I>, ITransformer<KArrayTrans> {
+interface IArray extends IMonadPlus<KArray>, IFold<KArray, $I>, ITransformer<KArrayTrans> {
     readonly scalar: ITrivial
     first<A>(fa: A[]): A | undefined
     foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: A[]) => B
@@ -106,15 +107,18 @@ export const array: IArray = (() => {
     const skip = <A>(n: number) => (fa: A[]): A[] => n >= 0 ? fa.slice(n) : fa.slice(0, Math.max(fa.length + n, 0));
 
     return { 
-        ...monadFold<KArray, $I>({ 
+        ...fold<KArray, $I>({
+            scalar: trivial,
+            foldl,
+            wrap: a => [a],
+        }),
+        scalar: trivial,
+        ...monadPlus<KArray>({ 
             map: (fa, f) => fa.map(f),
             unit: a => [a], 
             bind: (fa, f) => fa.flatMap(f),            
             empty: <A>() => [] as A[],
             append: <A>(fa: A[], fb: A[]): A[] => fa.concat(fb),
-            scalar: trivial,
-            foldl,
-            wrap: a => [a],
         }), 
         first,
         filter,

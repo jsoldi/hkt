@@ -4,7 +4,7 @@ export * from './functor.js';
 export * from './monad.js';
 export * from './monadPlus.js';
 export * from './monoid.js';
-export * from './monadFold.js';
+export * from './fold.js';
 export * from './object.js';
 export * from './array.js';
 export * from './either.js';

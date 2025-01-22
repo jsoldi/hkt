@@ -1,6 +1,6 @@
 import { $I, KRoot } from "./hkt.js";
-import { IMonadPlus } from "./monadPlus.js";
-import { monadFold } from "./monadFold.js";
+import { IMonadPlus, monadPlus } from "./monadPlus.js";
+import { fold, IFold } from "./fold.js";
 import { ITrivial, trivial } from "./trivial.js";
 
 interface KSet extends KRoot {
@@ -8,7 +8,7 @@ interface KSet extends KRoot {
     readonly body: Set<this[0]>
 }
 
-interface ISet extends IMonadPlus<KSet> {
+interface ISet extends IMonadPlus<KSet>, IFold<KSet, $I> {
     readonly scalar: ITrivial;
     union: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     intersection: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
@@ -32,15 +32,18 @@ export const set: ISet = (() => {
     const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => (fa: Set<A>): B => [...fa].reduce(f, b);
 
     return {
-        ...monadFold<KSet, $I>({
+        ...fold<KSet, $I>({
+            foldl,
+            wrap: unit,
+            scalar: trivial,
+        }),
+        scalar: trivial,
+        ...monadPlus<KSet>({
             unit,
             bind,
             map: (fa, f) => new Set([...fa].map(f)),
             empty: () => new Set(),
             append: (fa, fb) => fa.union(fb),
-            foldl,
-            wrap: unit,
-            scalar: trivial,
         }),
         union,
         intersection,

@@ -1,8 +1,8 @@
 import { KRoot } from "./hkt.js"
 import { Maybe } from "./maybe.js"
 import { IMonad, monad } from "./monad.js"
-import { monadFold } from "./monadFold.js"
-import { IMonadPlus } from "./monadPlus.js"
+import { fold, IFold } from "./fold.js"
+import { IMonadPlus, monadPlus } from "./monadPlus.js"
 import { monoid } from "./monoid.js"
 import { KPromise, promise } from "./promise.js"
 
@@ -16,7 +16,7 @@ export interface KGen extends KRoot {
 type Awaitable<T> = T | Promise<T>
 type GenLike<T> = (() => GenLike<T>) | T[] | Promise<T>
 
-export interface IGen extends IMonadPlus<KGen> {
+export interface IGen extends IMonadPlus<KGen>, IFold<KGen, KPromise> {
     readonly scalar: IMonad<KPromise>
     from: <T>(genlike: GenLike<T>) => Gen<T>
     flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
@@ -184,7 +184,7 @@ export const gen: IGen = (() => {
 
     const flatMapFrom = <A, B>(f: (a: A) => GenLike<B>) => (gen: Gen<A>): Gen<B> => bind(gen, a => from(f(a)));
 
-    const _monadFold = monadFold<KGen, KPromise>({
+    const _monadFold = monadPlus<KGen>({
         ...monad<KGen>({
             map,
             unit,
@@ -194,12 +194,15 @@ export const gen: IGen = (() => {
             empty,
             append
         }),
-        foldl: f => i => reduce(i, f),
-        wrap: from,
-        scalar: promise
     });
 
     return {
+        ...fold<KGen, KPromise>({
+            foldl: f => i => reduce(i, f),
+            wrap: from,
+            scalar: promise
+        }),
+        scalar: promise,
         ..._monadFold,
         from, // override MonadPlus implementation
         take,
