@@ -1,4 +1,4 @@
-import { IFunctor } from "./functor.js";
+import { functor, IFunctor, IFunctorBase } from "./functor.js";
 import { $, $K } from "./hkt.js";
 import { IMonoid } from "./monoid.js";
 import { num } from "./primitive.js";
@@ -13,7 +13,7 @@ export interface IFoldBase<F, G> {
     wrap<A>(ga: $<G, A>): $<F, A>
 }
 
-export interface IFold<F, G> extends IFoldBase<F, G> {    
+export interface IFold<F, G> extends IFoldBase<F, G>, IFunctor<F> {    
     toArray<A>(fa: $<F, A>): $<G, A[]>
     collapse<A>(m: IMonoid<$<$K, A>>): (fa: $<F, A>) => $<G, A>
     size(fa: $<F, unknown>): $<G, number>
@@ -21,7 +21,7 @@ export interface IFold<F, G> extends IFoldBase<F, G> {
     avg(fa: $<F, number>): $<G, number>
 }
 
-export function fold<F, G>(base: IFoldBase<F, G> & Partial<IFold<F, G>>): IFold<F, G> {
+export function fold<F, G>(base: IFoldBase<F, G> & IFunctorBase<F> & Partial<IFold<F, G>>): IFold<F, G> {
     type I = IFold<F, G>;
 
     const toArray: I['toArray'] = <A>(fa: $<F, A>) => base.foldl((acc: A[], a: A) => [...acc, a])([])(fa);
@@ -35,6 +35,7 @@ export function fold<F, G>(base: IFoldBase<F, G> & Partial<IFold<F, G>>): IFold<
     );
 
     return {
+        ...functor(base),
         toArray,
         collapse,
         size,

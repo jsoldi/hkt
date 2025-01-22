@@ -30,9 +30,11 @@ export const set: ISet = (() => {
     const unit = <A>(a: A): Set<A> => new Set([a]);
     const bind = <A, B>(fa: Set<A>, f: (a: A) => Set<B>): Set<B> => new Set([...fa].flatMap(a => [...f(a)]));
     const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => (fa: Set<A>): B => [...fa].reduce(f, b);
+    const map = <A, B>(fa: Set<A>, f: (a: A) => B): Set<B> => new Set([...fa].map(f));
 
     return {
         ...fold<KSet, $I>({
+            map,
             foldl,
             wrap: unit,
             scalar: trivial,
@@ -41,7 +43,7 @@ export const set: ISet = (() => {
         ...monadPlus<KSet>({
             unit,
             bind,
-            map: (fa, f) => new Set([...fa].map(f)),
+            map,
             empty: () => new Set(),
             append: (fa, fb) => fa.union(fb),
         }),
