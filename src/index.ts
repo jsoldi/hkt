@@ -17,3 +17,4 @@ export * from './reader.js';
 export * from './set.js';
 export * from './transformer.js';
 export * from './trivial.js';
+export * from './tuple.js';
