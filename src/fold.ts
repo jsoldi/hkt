@@ -1,4 +1,4 @@
-import { $, $K } from "./hkt.js";
+import { $ } from "./hkt.js";
 import { IMonad, IMonadBase, monad } from "./monad.js";
 import { IMonoid } from "./monoid.js";
 import { num } from "./primitive.js";
@@ -15,7 +15,7 @@ export interface IFoldBase<F, G> {
 
 export interface IFold<F, G> extends IFoldBase<F, G>, IMonad<F> {    
     toArray<A>(fa: $<F, A>): $<G, A[]>
-    collapse<A>(m: IMonoid<$<$K, A>>): (fa: $<F, A>) => $<G, A>
+    collapse<M>(m: IMonoid<M>): <A>(fa: $<F, $<M,A>>) => $<G, $<M, A>>
     size(fa: $<F, unknown>): $<G, number>
     sum(fa: $<F, number>): $<G, number>
     avg(fa: $<F, number>): $<G, number>

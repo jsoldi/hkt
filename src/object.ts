@@ -1,6 +1,6 @@
 import { functor, IFunctor } from "./functor.js";
-import { $, $K, KRoot } from "./hkt.js";
-import { IMonoid, monoid, monoidFor } from "./monoid.js";
+import { $, $3, $B, KRoot } from "./hkt.js";
+import { IMonoid, monoid } from "./monoid.js";
 
 type K = keyof any;
 
@@ -14,7 +14,7 @@ interface IObject extends IFunctor<KObject>, IMonoid<KObject> {
     keys<A>(fa: Record<K, A>): K[]
     values<A>(fa: Record<K, A>): A[]
     rebuild<T extends Record<K, any>, B>(fa: T, f: (a: T[keyof T], k: K) => [B, K]): { [K in keyof T]: B }
-    monoid<A>(sum: (l: A, r: A) => A): IMonoid<$<$K, Record<K, A>>>
+    monoid<M>(m: IMonoid<M>): IMonoid<$3<$B, KObject, M>>
     map<T extends Record<K, any>, R>(obj: T, f: (a: T[keyof T], k: K) => R): { [K in keyof T]: R }
     map<A, B>(fa: Record<K, A>, f: (a: A, k: K) => B): Record<K, B>
     fmap<T extends Record<K, any>, B>(f: (a: T[keyof T]) => B): (fa: T) => { [K in keyof T]: B }
@@ -55,16 +55,17 @@ export const object: IObject = (() => {
         }
     });
 
-    const _monoid = <A>(sum: (l: A, r: A) => A) => monoidFor<Record<K, A>>({}, (fa, fb) => {
+    const _monoid = <M>(m: IMonoid<M>) => monoid<$3<$B, KObject, M>>({
+        empty: () => ({}),
+        append: <A>(fa: Record<K, $<M, A>>, fb: Record<K, $<M, A>>) => {
             const result = { ...fa };
     
-            for (const k in fb) {
-                result[k] = k in fa ? sum(fa[k], fb[k]) : fb[k];
-            }
+            for (const k in fb) 
+                result[k] = k in fa ? m.append(fa[k], fb[k]) : fb[k];
     
-            return result;
-        }        
-    );
+            return setDefault<$<M, A>>(m.empty())(result);
+        }
+    });
 
     return {
         entries,

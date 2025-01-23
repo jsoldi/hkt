@@ -9,7 +9,7 @@ export interface KTuple<F = $I, G = $I> extends KRoot {
 }
 
 export interface ITuple<L> extends IFunctor<$<KTuple, L>> {
-    monoid<G = $I>(l: IMonoid<$<$K, L>>, r: IMonoid<G>): IMonoid<$<KTuple<$I, G>, L>>
+    monoid<G>(l: IMonoid<$<$K, L>>, r: IMonoid<G>): IMonoid<$<KTuple<$I, G>, L>>
     swap<R>(t: [L, R]): [R, L]
     left<R>(t: [L, R]): L
     right<R>(t: [L, R]): R
@@ -18,7 +18,7 @@ export interface ITuple<L> extends IFunctor<$<KTuple, L>> {
 }
 
 export function tuple<L>(): ITuple<L> {
-    const _monoid = <G = $I>(l: IMonoid<$<$K, L>>, r: IMonoid<G>) => monoid<$<KTuple<$I, G>, L>>({
+    const _monoid = <G>(l: IMonoid<$<$K, L>>, r: IMonoid<G>) => monoid<$<KTuple<$I, G>, L>>({
         empty: <B>() => [l.empty<L>(), r.empty<B>()],
         append: <B>([a1, b1]: [L, $<G, B>], [a2, b2]: [L, $<G, B>]) => [l.append<L>(a1, a2), r.append<B>(b1, b2)],
     });

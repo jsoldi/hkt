@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@jsoldi/hkt",
-  "version": "1.4.6",
+  "version": "1.4.8",
   "description": "Higher kinded types for typescript and a few utility monads.",
   "main": "./dist/index.js",
   "repository": {
@@ -15,7 +15,7 @@
     "typescript"
   ],
   "scripts": {
-    "start": "npx tsc && node ./dist/index.js"
+    "test": "npx tsc && node ./dist/test.js"
   },
   "files": [
     "dist"
