@@ -1,11 +1,13 @@
 // import { array } from "./array.js";
-// import { string } from "./primitive.js";
+// import { constant } from "./constant.js";
+// import { $, $K } from "./hkt.js";
+// import { monoidFor } from "./monoid.js";
+// import { num, string } from "./primitive.js";
+// import { set } from "./set.js";
 // import { pipe } from "./utils.js";
 
-// const lol = array.semiring(string);
-// const bit = ['0', '1'];
-// const res = lol.mult.concat(pipe([bit], array.repeat(5)));
+// const lol = array.semiring(constant(() => 123));
+// //const shite = lol.fromNatural(12);
 
-// for await (const x of res) {
-//     console.log(x);
-// }
+// const shite = array.map(lol.fromNatural(12), a => a());
+// console.log(shite);

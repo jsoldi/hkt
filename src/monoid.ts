@@ -15,7 +15,6 @@ export interface IMonoid<F> extends IMonoidBase<F> {
     join<A>(separator: $<F, A>): (fas: $<F, A>[]) => $<F, A>
     dual(): IMonoid<F>
     product<M>(mult: IMonad<M>): IMonoid<$N<[$B, M, F]>>
-    repeat(times: number): <A>(fa: $<F, A>) => $<F, A>
 }
 
 export function monoidFor<T>(empty: T, append: (a: T, b: T) => T) {
@@ -61,23 +60,13 @@ export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F
                 empty: base.empty,
                 append: (a, b) => base.append(b, a),
             });
-
-            const repeat = (times: number) => <A>(fa: $<F, A>) => {
-                let result = base.empty<A>();
-
-                for (let i = 0; i < times; i++)
-                    result = base.append(result, fa);
-
-                return result;
-            }
-
+            
             return {
                 when,
                 foldMap,
                 join,
                 dual,
                 product,
-                repeat,
                 ...base,
             }
         }

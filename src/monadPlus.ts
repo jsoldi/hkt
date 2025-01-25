@@ -1,7 +1,7 @@
 import { $, $3, $B } from "./hkt.js";
 import { IMonad, IMonadBase, monad } from "./monad.js";
 import { IMonoid, IMonoidBase, monoid } from "./monoid.js";
-import { ISemiring } from "./semiring.js";
+import { ISemiring, semiring } from "./semiring.js";
 import { pipe } from "./utils.js";
 
 export interface IMonadPlus<F> extends IMonad<F>, IMonoid<F> {
@@ -9,7 +9,7 @@ export interface IMonadPlus<F> extends IMonad<F>, IMonoid<F> {
     filter<A>(f: (a: A) => boolean): (fa: $<F, A>) => $<F, A>
     guard(b: boolean): $<F, null>
     from<A>(as: A[]): $<F, A>
-    semiring<M>(additive: IMonoid<M>): ISemiring<$3<$B, F, M>>    
+    semiring<M>(mult: IMonoid<M>): ISemiring<$3<$B, F, M>>    
 }
 
 export function monadPlus<F>(base: IMonadBase<F> & IMonoidBase<F> & Partial<IMonadPlus<F>>): IMonadPlus<F> {   
@@ -27,21 +27,19 @@ export function monadPlus<F>(base: IMonadBase<F> & IMonoidBase<F> & Partial<IMon
             const from = <A>(as: A[]) => 
                 as.reduce((acc, a) => base.append(acc, base.unit(a)), base.empty<A>());
 
-            const semiring = <M>(additive: IMonoid<M>): ISemiring<$3<$B, F, M>> => {
-                return {
-                    sum: monoid<$3<$B, F, M>>({ empty: base.empty, append: base.append }),
-                    mult: monoid<$3<$B, F, M>>({
-                        empty: () => base.unit(additive.empty()),
-                        append: (fa, fb) => base.bind(fa, a => base.map(fb, b => additive.append(a, b)))
-                    })
-                };
-            }
+            const _semiring = <M>(mult: IMonoid<M>): ISemiring<$3<$B, F, M>> => semiring<$3<$B, F, M>>({
+                sum: monoid<$3<$B, F, M>>({ empty: base.empty, append: base.append }),
+                mult: monoid<$3<$B, F, M>>({
+                    empty: () => base.unit(mult.empty()),
+                    append: (fa, fb) => base.bind(fa, a => base.map(fb, b => mult.append(a, b)))
+                })                
+            });
 
             return {
                 filter,
                 guard,
                 from,
-                semiring,
+                semiring: _semiring,
                 ...base,
             }
         }

@@ -53,3 +53,17 @@ export const not = <A>(f: (a: A) => boolean) => (a: A): boolean => !f(a);
 export const flip = <A, B, C>(f: (a: A) =>(b: B) => C) => (b: B) => (a: A): C => f(a)(b);
 export const spread = <A, B>(f: (a: A[]) => B) => (...a: A[]): B => f(a);
 export const unspread = <A, B>(f: (...a: A[]) => B) => (a: A[]): B => f(...a);
+
+export const memo = <T>(f: () => T) => {
+    let memo: T;
+    let done = false;
+
+    return () => {
+        if (!done) {
+            memo = f();
+            done = true;
+        }
+
+        return memo;
+    }
+}
