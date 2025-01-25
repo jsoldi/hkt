@@ -30,6 +30,10 @@ export interface KAsync extends KRoot {
 
 export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise> {
     readonly scalar: IMonad<KPromise>
+    // These tell typescript to preserve the generic type of the function
+    fromFun<T, A extends any[]>(asyncLike: (...a: A) => SyncGen<T>): (...args: A) => Async<T>
+    fromFun<T, A extends any[]>(asyncLike: (...a: A) => AsyncGen<T>): (...args: A) => Async<T>
+    fromFun<T, A extends any[]>(asyncLike: (...a: A) => AsyncLike<T>): (...args: A) => Async<T>
     fromFun<T, A extends any[]>(asyncLike: AsyncLike<T, A>): (...args: A) => Async<T>
     from<T, A extends any[]>(asyncLike: AsyncLike<T, A>, ...args: A): Async<T>
     bind<A, B>(fa: Async<A>, f: (a: A) => AsyncLike<B>): Async<B>

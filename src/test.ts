@@ -20,10 +20,10 @@
 //     yield '2';
 // }
 
-// const tela = async.fromFun(async function*(prefix: string) {
-//     yield prefix + 'A';
-//     yield prefix + prefix + 'B';
-//     yield prefix + prefix + prefix + 'C';
+// const tela = async.fromFun(async function*<T>(t: T) {
+//     yield t;
+//     yield t;    
+//     yield t;
 // });
 
 // const rek = lol.times(tela('___'), two);
