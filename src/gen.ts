@@ -6,8 +6,14 @@ import { IMonadPlus, monadPlus } from "./monadPlus.js"
 import { monoid } from "./monoid.js"
 import { KPromise, promise } from "./promise.js"
 
+/**
+ * @deprecated use Async<T> instead
+ */
 export type Gen<T> = AsyncGenerator<T, void, void>
 
+/**
+ * @deprecated use KAsync instead
+ */
 export interface KGen extends KRoot {
     readonly 0: unknown
     readonly body: Gen<this[0]>
@@ -16,6 +22,9 @@ export interface KGen extends KRoot {
 type Awaitable<T> = T | Promise<T>
 type GenLike<T> = (() => GenLike<T>) | T[] | Promise<T>
 
+/**
+ * @deprecated use IAsync instead
+ */
 export interface IGen extends IMonadPlus<KGen>, IFold<KGen, KPromise> {
     readonly scalar: IMonad<KPromise>
     from: <T>(genlike: GenLike<T>) => Gen<T>

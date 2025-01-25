@@ -11,7 +11,6 @@ export * from './either.js';
 export * from './gen.js';
 export * from './maybe.js';
 export * from './primitive.js';
-export * from './product.js';
 export * from './promise.js';
 export * from './reader.js';
 export * from './set.js';
