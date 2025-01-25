@@ -14,8 +14,14 @@ export type Sync<T> = () => SyncGen<T>
 
 export type Awaitable<T> = T | Promise<T>
 
-export type AsyncLike<T> = Async<T> | Sync<T> | Awaitable<T[]>
-export type GenLike<T> = AsyncLike<T> | AsyncGen<T> | SyncGen<T>
+export type AsyncLike<T, A extends any[] = []> =
+    T[] |
+    Promise<T[]> |
+    ((...a: A) => SyncGen<T>) |
+    ((...a: A) => AsyncGen<T>) |
+    ((...a: A) => AsyncLike<T>) |
+    never
+;
 
 export interface KAsync extends KRoot {
     readonly 0: unknown
@@ -24,8 +30,9 @@ export interface KAsync extends KRoot {
 
 export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise> {
     readonly scalar: IMonad<KPromise>
-    from<A>(asyncLike: AsyncLike<A>): Async<A>
-    bind<A, B>(fa: Async<A>, f: (a: A) => GenLike<B>): Async<B>
+    fromFun<T, A extends any[]>(asyncLike: AsyncLike<T, A>): (...args: A) => Async<T>
+    from<T, A extends any[]>(asyncLike: AsyncLike<T, A>, ...args: A): Async<T>
+    bind<A, B>(fa: Async<A>, f: (a: A) => AsyncLike<B>): Async<B>
     flat<T>(gen: Async<Async<T>>): Async<T>
     take(n: number): <T>(fa: Async<T>) => Async<T>
     forEach<T>(f: (a: T) => void): (fa: Async<T>) => Async<T>
@@ -44,16 +51,21 @@ export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise> {
 export const async: IAsync = (() => {
     type I = IAsync;
 
-    const gen = async function* <T>(gen: GenLike<T>) {
-        yield* await (typeof gen === 'function' ? gen() : gen);
+    const fromFun = <T, A extends any[]>(asyncLike: AsyncLike<T, A>) => (...args: A): Async<T> => async function* () {
+        const getGen = async <A extends any[]>(al: SyncGen<T> | AsyncGen<T> | AsyncLike<T, A>, ...as: A): Promise<T[] | AsyncGen<T> | SyncGen<T>> => {
+            return await (typeof al !== 'function' ? al : getGen(al(...as)));
+        }
+
+        for await (const a of await getGen(asyncLike, ...args)) 
+            yield a;
     }
 
     const unit: I['unit'] = a => async function* () { yield a; }
 
     const bind: I['bind'] = (fa, f) => async function* () {
         for await (const a of fa()) {
-            for await (const b of gen(f(a)))
-                yield b;            
+            for await (const b of fromFun(f)(a)())
+                yield b;
         }
     }
 
@@ -62,13 +74,13 @@ export const async: IAsync = (() => {
             yield f(a);
     }
 
-    const from = <A>(asyncLike: AsyncLike<A>): Async<A> => async function* () {
-        for await (const a of gen(asyncLike))
+    const from = <T, A extends any[]>(asyncLike: AsyncLike<T, A>, ...args: A): Async<T> => async function* () {
+        for await (const a of fromFun(asyncLike)(...args)())
             yield a;
     }
 
-    const flat: I['flat'] = gen => async function* () {
-        for await (const a of gen())
+    const flat: I['flat'] = fa => async function* () {
+        for await (const a of fa())
             yield* a();
     }
 
@@ -211,6 +223,7 @@ export const async: IAsync = (() => {
         }),
         scalar,
         ..._monadFold,
+        fromFun,
         from, // override MonadPlus implementation
         take,
         flat,

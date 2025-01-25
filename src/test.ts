@@ -1,4 +1,5 @@
 // import { array } from "./array.js";
+// import { Async, async } from "./async.js";
 // import { constant } from "./constant.js";
 // import { $, $K } from "./hkt.js";
 // import { monoidFor } from "./monoid.js";
@@ -6,8 +7,27 @@
 // import { set } from "./set.js";
 // import { pipe } from "./utils.js";
 
-// const lol = array.semiring(constant(() => 123));
-// //const shite = lol.fromNatural(12);
+// const lol = async.semiring(string);
 
-// const shite = array.map(lol.fromNatural(12), a => a());
-// console.log(shite);
+// async function* one() {
+//     yield 'a';
+//     yield 'b';
+//     yield 'c';
+// }
+
+// async function* two() {
+//     yield '1';
+//     yield '2';
+// }
+
+// const tela = async.fromFun(async function*(prefix: string) {
+//     yield prefix + 'A';
+//     yield prefix + prefix + 'B';
+//     yield prefix + prefix + prefix + 'C';
+// });
+
+// const rek = lol.times(tela('___'), two);
+
+// for await (const a of rek()) {
+//     console.log(a);
+// }
