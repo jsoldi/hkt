@@ -1,5 +1,6 @@
 import { $ } from "./hkt.js";
 import { IMonoid, IMonoidBase, monoid } from "./monoid.js";
+import { memo } from "./utils.js";
 
 export interface ISemiringBase<F> {
     readonly sum: IMonoidBase<F>
@@ -16,11 +17,13 @@ export interface ISemiring<F> extends ISemiringBase<F> {
     fromNatural<A>(nat: number): $<F, A>
 }
 
-export function semiring<F>({ sum, mult }: ISemiringBase<F>): ISemiring<F> {
-    const zero = sum.empty;
-    const one = mult.empty;
-    const plus = sum.append;
-    const times = mult.append;
+export function semiring<F>({ sum: _sum, mult: _mult }: ISemiringBase<F>): ISemiring<F> {
+    const zero = _sum.empty;
+    const one = _mult.empty;
+    const plus = _sum.append;
+    const times = _mult.append;
+    const sum = memo(() => monoid<F>(_sum));
+    const mult = memo(() => monoid<F>(_mult));
 
     return {
         zero,
@@ -35,8 +38,7 @@ export function semiring<F>({ sum, mult }: ISemiringBase<F>): ISemiring<F> {
             
             return result;
         },
-        // TODO: Would it be worth memoizing these?
-        sum: monoid<F>(sum),   
-        mult: monoid<F>(mult)
+        get sum() { return sum() },
+        get mult() { return mult() }
     }
 }

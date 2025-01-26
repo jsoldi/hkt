@@ -25,6 +25,8 @@ type TryResolve<K> =
             : K
         : K
 
+// Interfaces below are based on combinatory logic. See ../combinators.md
+
 /* I :: a -> a */
 export interface $I extends KRoot {
     readonly 0: unknown

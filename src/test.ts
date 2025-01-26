@@ -1,16 +1,17 @@
-// import { array } from "./array.js";
-// import { Async, async } from "./async.js";
+// import { KRoot } from "./hkt.js";
+// import { monoid } from "./monoid.js";
+// import { id } from "./utils.js";
 
-// const lel = async.from(['a', 'b', 'c']);
+// export type Endo<T> = (arg: T) => T;
 
-// const test = await async.foldl<string, [boolean, Async<string>]>(([isFirst, acc], a) => 
-//     [false, async.append(
-//         acc, 
-//         async.append(
-//             isFirst ? async.empty<string>() : async.wrap(async.scalar.unit(',')),
-//             async.wrap(async.scalar.unit(a)),
-//         )
-//     )]
-// )([true, async.empty<string>()])(lel);
+// export interface KEndo extends KRoot {
+//     readonly 0: unknown
+//     readonly body: Endo<this[0]>
+// }
 
-// console.log(await async.toArray(test[1]));
+// const endo = (() => {
+//     return monoid<KEndo>({
+//         empty: () => id,
+//         append: (f, g) => x => f(g(x))
+//     });
+// })();
