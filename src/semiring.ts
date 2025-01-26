@@ -16,11 +16,11 @@ export interface ISemiring<F> extends ISemiringBase<F> {
     fromNatural<A>(nat: number): $<F, A>
 }
 
-export function semiring<F>(base: ISemiringBase<F>): ISemiring<F> {
-    const zero = base.sum.empty;
-    const one = base.mult.empty;
-    const plus = base.sum.append;
-    const times = base.mult.append;
+export function semiring<F>({ sum, mult }: ISemiringBase<F>): ISemiring<F> {
+    const zero = sum.empty;
+    const one = mult.empty;
+    const plus = sum.append;
+    const times = mult.append;
 
     return {
         zero,
@@ -36,7 +36,7 @@ export function semiring<F>(base: ISemiringBase<F>): ISemiring<F> {
             return result;
         },
         // TODO: Would it be worth memoizing these?
-        sum: monoid<F>(base.sum),   
-        mult: monoid<F>(base.mult)
+        sum: monoid<F>(sum),   
+        mult: monoid<F>(mult)
     }
 }

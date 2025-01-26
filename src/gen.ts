@@ -195,7 +195,7 @@ export const gen: IGen = (() => {
     const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => reduce(b, f);
     const scalar = promise;
 
-    const _monadFold = monadPlus<KGen>({
+    const _monadPlus = monadPlus<KGen>({
         ...monad<KGen>({
             map,
             unit,
@@ -217,7 +217,7 @@ export const gen: IGen = (() => {
             scalar
         }),
         scalar,
-        ..._monadFold,
+        ..._monadPlus,
         from, // override MonadPlus implementation
         take,
         flat,

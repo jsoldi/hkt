@@ -204,7 +204,7 @@ export const async: IAsync = (() => {
     const wrap = <T>(prom: Promise<T>) => async function* () { yield await prom; }
     const scalar = promise;
 
-    const _monadFold = monadPlus<KAsync>({
+    const _monadPlus = monadPlus<KAsync>({
         ...monad<KAsync>({
             map,
             unit,
@@ -226,7 +226,7 @@ export const async: IAsync = (() => {
             scalar
         }),
         scalar,
-        ..._monadFold,
+        ..._monadPlus,
         fromFun,
         from, // override MonadPlus implementation
         take,

@@ -28,11 +28,8 @@ export function monadPlus<F>(base: IMonadBase<F> & IMonoidBase<F> & Partial<IMon
                 as.reduce((acc, a) => base.append(acc, base.unit(a)), base.empty<A>());
 
             const _semiring = <M>(mult: IMonoid<M>): ISemiring<$3<$B, F, M>> => semiring<$3<$B, F, M>>({
-                sum: monoid<$3<$B, F, M>>({ empty: base.empty, append: base.append }),
-                mult: monoid<$3<$B, F, M>>({
-                    empty: () => base.unit(mult.empty()),
-                    append: (fa, fb) => base.bind(fa, a => base.map(fb, b => mult.append(a, b)))
-                })                
+                sum: { empty: base.empty, append: base.append },
+                mult: { empty: () => base.unit(mult.empty()), append: base.lift2(mult.append) }   
             });
 
             return {
