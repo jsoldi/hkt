@@ -114,9 +114,6 @@ export const array: IArray = (() => {
 
     return { 
         ...fold<KArray, $I>({
-            map,            
-            unit,
-            bind,
             scalar,
             foldl,
             wrap: unit,

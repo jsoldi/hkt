@@ -35,9 +35,6 @@ export const set: ISet = (() => {
 
     return {
         ...fold<KSet, $I>({
-            unit,
-            bind,
-            map,
             foldl,
             wrap: unit,
             scalar,

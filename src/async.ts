@@ -218,9 +218,6 @@ export const async: IAsync = (() => {
 
     return {
         ...fold<KAsync, KPromise>({
-            unit,
-            bind,
-            map,
             foldl,
             wrap,
             scalar

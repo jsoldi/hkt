@@ -1,5 +1,5 @@
 import { $ } from "./hkt.js";
-import { IMonad, IMonadBase, monad } from "./monad.js";
+import { IMonad } from "./monad.js";
 import { IMonoid } from "./monoid.js";
 import { num } from "./primitive.js";
 import { chain } from "./utils.js";
@@ -13,15 +13,15 @@ export interface IFoldBase<F, G> {
     wrap<A>(ga: $<G, A>): $<F, A>
 }
 
-export interface IFold<F, G> extends IFoldBase<F, G>, IMonad<F> {    
+export interface IFold<F, G> extends IFoldBase<F, G> {    
     toArray<A>(fa: $<F, A>): $<G, A[]>
-    collapse<M>(m: IMonoid<M>): <A>(fa: $<F, $<M,A>>) => $<G, $<M, A>>
+    collapse<M>(m: IMonoid<M>): <A>(fa: $<F, $<M, A>>) => $<G, $<M, A>>
     size(fa: $<F, unknown>): $<G, number>
     sum(fa: $<F, number>): $<G, number>
     avg(fa: $<F, number>): $<G, number>
 }
 
-export function fold<F, G>(base: IFoldBase<F, G> & IMonadBase<F> & Partial<IFold<F, G>>): IFold<F, G> {
+export function fold<F, G>(base: IFoldBase<F, G> & Partial<IFold<F, G>>): IFold<F, G> {
     type I = IFold<F, G>;
 
     const toArray: I['toArray'] = <A>(fa: $<F, A>) => base.foldl((acc: A[], a: A) => [...acc, a])([])(fa);
@@ -35,7 +35,6 @@ export function fold<F, G>(base: IFoldBase<F, G> & IMonadBase<F> & Partial<IFold
     );
 
     return {
-        ...monad(base),
         toArray,
         collapse,
         size,
