@@ -16,7 +16,6 @@ type KArrayTrans = $<$Q, KArray>
 interface IArray extends IMonadPlus<KArray>, IFold<KArray, $I>, ITransformer<KArrayTrans> {
     readonly scalar: ITrivial
     first<A>(fa: A[]): A | undefined
-    foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: A[]) => B
     foldr<A, B>(f: (a: A, b: B) => B): (b: B) => (fa: A[]) => B
     unfoldr<A, B>(f: (b: B) => Maybe<[A, B]>): (b: B) => A[]
     filter: {

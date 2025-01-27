@@ -19,6 +19,8 @@ export interface IFold<F, G> extends IFoldBase<F, G> {
     size(fa: $<F, unknown>): $<G, number>
     sum(fa: $<F, number>): $<G, number>
     avg(fa: $<F, number>): $<G, number>
+    every<A>(p: (a: A) => unknown): (fa: $<F, A>) => $<G, boolean>
+    some<A>(p: (a: A) => unknown): (fa: $<F, A>) => $<G, boolean>
 }
 
 export function fold<F, G>(base: IFoldBase<F, G> & Partial<IFold<F, G>>): IFold<F, G> {
@@ -28,6 +30,8 @@ export function fold<F, G>(base: IFoldBase<F, G> & Partial<IFold<F, G>>): IFold<
     const collapse: I['collapse'] = m => base.foldl(m.append)(m.empty());
     const size: I['size'] = fa => base.foldl((acc: number, _: unknown) => acc + 1)(0)(fa);
     const sum: I['sum'] = collapse(num.sum);
+    const every: I['every'] = <A>(p: (a: A) => unknown) => (fa: $<F, A>) => base.foldl<A, boolean>((acc, a) => acc && !!p(a))(true)(fa);
+    const some: I['some'] = <A>(p: (a: A) => unknown) => (fa: $<F, A>) => base.foldl<A, boolean>((acc, a) => acc || !!p(a))(false)(fa);
 
     const avg: I['avg'] = chain(
         base.foldl<number, [number, number]>(([sum, count], n) => [sum + n, count + 1])([0, 0]),
@@ -40,6 +44,8 @@ export function fold<F, G>(base: IFoldBase<F, G> & Partial<IFold<F, G>>): IFold<
         size,
         sum,
         avg,
+        every,
+        some,
         ...base,
     };
 }
