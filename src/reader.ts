@@ -5,15 +5,14 @@ import { id } from "./utils.js"
 
 export type Reader<in E, out R> = (a: E) => R
 
-export interface KReader extends KRoot {
+export interface KReader<E> extends KRoot {
     readonly 0: unknown
-    readonly 1: unknown
-    readonly body: Reader<this[0], this[1]>
+    readonly body: Reader<E, this[0]>
 }
 
-export type KReaderTrans<E> = $<$B, $<KReader, E>>
+export type KReaderTrans<E> = $<$B, KReader<E>>
 
-export interface IReader<E> extends IMonad<$<KReader, E>>, ITransformer<KReaderTrans<E>> {
+export interface IReader<E> extends IMonad<KReader<E>>, ITransformer<KReaderTrans<E>> {
     ask: Reader<E, E>
     local: <A>(f: (e: E) => E) => (m: Reader<E, A>) => Reader<E, A>
     reader: <A>(f: (e: E) => A) => Reader<E, A>
@@ -36,7 +35,7 @@ export function reader<E>(): IReader<E> {
     };
 
     return {
-        ...monad<$<KReader, E>>({
+        ...monad<KReader<E>>({
             map: (fa, f) => e => f(fa(e)),
             unit: <A>(a: A) => (_: E) => a,
             bind: <A, B>(fa: Reader<E, A>, f: (a: A) => Reader<E, B>) => (e: E) => f(fa(e))(e)

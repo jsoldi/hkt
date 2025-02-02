@@ -1,4 +1,5 @@
-import { ITypeClass, $, $K } from "./hkt.js";
+import { ITypeClass, $, $K, $3, $B } from "./hkt.js";
+import { IMonad } from "./monad.js";
 import { curry, pipe } from "./utils.js";
 
 export interface IMonoidBase<F> extends ITypeClass<F> {
@@ -13,6 +14,7 @@ export interface IMonoid<F> extends IMonoidBase<F> {
     foldMap<A>(as: A[]): <B>(f: (a: A) => $<F, B>) => $<F, B>
     join<A>(separator: $<F, A>): (fas: $<F, A>[]) => $<F, A>
     dual(): IMonoid<F>
+    liftMonoidUnder<M>(m: IMonad<M>): IMonoid<$3<$B, M, F>>
 }
 
 export function monoidFor<T>(empty: T, append: (a: T, b: T) => T) {
@@ -53,11 +55,19 @@ export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F
                 append: (a, b) => base.append(b, a),
             });
             
+            const liftMonoidUnder = <M>(m: IMonad<M>) => {
+                return monoid<$3<$B, M, F>>({ 
+                    empty: () => m.unit(base.empty()),
+                    append: m.lift2(base.append)
+                });
+            }
+
             return {
                 when,
                 foldMap,
                 join,
                 dual,
+                liftMonoidUnder,
                 ...base,
             }
         }

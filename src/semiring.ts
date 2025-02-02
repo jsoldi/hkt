@@ -1,8 +1,8 @@
-import { $ } from "./hkt.js";
+import { $, ITypeClass } from "./hkt.js";
 import { IMonoid, IMonoidBase, monoid } from "./monoid.js";
 import { memo } from "./utils.js";
 
-export interface ISemiringBase<F> {
+export interface ISemiringBase<F> extends ITypeClass<F> {
     readonly sum: IMonoidBase<F>
     readonly mult: IMonoidBase<F>
 }

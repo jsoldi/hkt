@@ -209,6 +209,7 @@ export const gen: IGen = (() => {
 
     return {
         ...fold<KGen, KPromise>({
+            map,
             foldl,
             wrap: from,
             scalar
