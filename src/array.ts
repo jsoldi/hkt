@@ -5,7 +5,7 @@ import { fold, IFold } from "./fold.js";
 import { ITransformer, monadTrans } from "./transformer.js";
 import { ITrivial, trivial } from "./trivial.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
-import { unfold } from "./unfold.js";
+import { IUnnfold, unfold } from "./unfold.js";
 
 export interface KArray extends KRoot {
     readonly 0: unknown
@@ -14,7 +14,7 @@ export interface KArray extends KRoot {
 
 type KArrayTrans = $<$Q, KArray>
 
-interface IArray extends IMonadPlus<KArray>, IFold<KArray, $I>, ITransformer<KArrayTrans> {
+interface IArray extends IMonadPlus<KArray>, IFold<KArray, $I>, IUnnfold<KArray, $I>, ITransformer<KArrayTrans> {
     readonly scalar: ITrivial
     first<A>(fa: A[]): A | undefined
     foldr<A, B>(f: (a: A, b: B) => B): (b: B) => (fa: A[]) => B
@@ -27,6 +27,7 @@ interface IArray extends IMonadPlus<KArray>, IFold<KArray, $I>, ITransformer<KAr
     mapAsync: <A, B>(f: (a: A) => Promise<B>) => (fa: A[]) => Promise<B[]>
     take<A>(n: number): (fa: A[]) => A[]
     skip<A>(n: number): (fa: A[]) => A[]
+    zip<A, B>(fa: A[], fb: B[]): [A, B][]
 }
 
 export const array: IArray = (() => {
@@ -109,6 +110,7 @@ export const array: IArray = (() => {
     const bind = <A, B>(fa: A[], f: (a: A) => B[]): B[] => fa.flatMap(f);
     const empty = <A>(): A[] => [];
     const append = <A>(fa: A[], fb: A[]): A[] => fa.concat(fb);
+    const zip = <A, B>(fa: A[], fb: B[]): [A, B][] => Array.from({ length: Math.min(fa.length, fb.length) }, (_, i) => [fa[i], fb[i]]);
     const scalar = trivial;
 
     return { 
@@ -140,6 +142,7 @@ export const array: IArray = (() => {
         distinctBy,
         mapAsync,
         take,
-        skip
+        skip,
+        zip,
     };
 })();

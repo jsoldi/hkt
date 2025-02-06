@@ -5,7 +5,7 @@ import { fold, IFold } from "./fold.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
 import { monoid } from "./monoid.js"
 import { KPromise, promise } from "./promise.js"
-import { unfold } from "./unfold.js"
+import { IUnnfold, unfold } from "./unfold.js"
 
 export type AsyncGen<T> = AsyncGenerator<T, void, void>
 export type SyncGen<T> = Generator<T, void, void>
@@ -29,7 +29,7 @@ export interface KAsync extends KRoot {
     readonly body: Async<this[0]>
 }
 
-export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise> {
+export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise>, IUnnfold<KAsync, KPromise> {
     readonly scalar: IMonad<KPromise>
     // These tell typescript to preserve the generic type of the function
     fromFun<T, A extends any[]>(asyncLike: (...a: A) => SyncGen<T>): (...args: A) => Async<T>
@@ -37,8 +37,8 @@ export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise> {
     fromFun<T, A extends any[]>(asyncLike: (...a: A) => AsyncLike<T>): (...args: A) => Async<T>
     fromFun<T, A extends any[]>(asyncLike: AsyncLike<T, A>): (...args: A) => Async<T>
     from<T, A extends any[]>(asyncLike: AsyncLike<T, A>, ...args: A): Async<T>
-    bind<A, B>(fa: Async<A>, f: (a: A) => AsyncLike<B>): Async<B>
-    flatMap<A, B>(f: (a: A) => AsyncLike<B>): (fa: Async<A>) => Async<B>
+    bind<A, B>(fa: Async<A>, f: AsyncLike<B, [A]>): Async<B>
+    flatMap<A, B>(f: AsyncLike<B, [A]>): (fa: Async<A>) => Async<B>
     flat<T>(gen: Async<Async<T>>): Async<T>
     take(n: number): <T>(fa: Async<T>) => Async<T>
     toArray<T>(fa: Async<T>): Promise<T[]>
@@ -49,6 +49,7 @@ export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise> {
     distinctBy<T, K>(key: (a: T) => K): (fa: Async<T>) => Async<T>
     distinct<T>(fa: Async<T>): Async<T>
     chunks<T>(size: number): (fa: Async<T>) => Async<T[]>
+    zip<A, B>(fa: Async<A>, fb: Async<B>): Async<[A, B]>
 }
 
 export const async: IAsync = (() => {
@@ -194,6 +195,20 @@ export const async: IAsync = (() => {
         }
     };
 
+    const zip = <A, B>(fa: Async<A>, fb: Async<B>): Async<[A, B]> => async function* () {
+        const a = fa();
+        const b = fb();
+
+        while (true) {
+            const [aVal, bVal] = await Promise.all([a.next(), b.next()]);
+
+            if (aVal.done || bVal.done)
+                break;
+
+            yield [aVal.value, bVal.value];
+        }
+    }
+
     const wrap = <T>(prom: Promise<T>) => async function* () { yield await prom; }
     const scalar = promise;
 
@@ -233,5 +248,6 @@ export const async: IAsync = (() => {
         distinctBy,
         distinct,
         chunks,
+        zip,
     }
 })();

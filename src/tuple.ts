@@ -12,7 +12,7 @@ export interface KTuple extends KRoot {
     readonly body: KTuple1<this[0]>
 }
 
-export interface ITuple<L> extends IFunctor<$<KTuple, L>> {
+export interface ITuple<L = any> extends IFunctor<$<KTuple, L>> {
     of<T>(): ITuple<T>
     monoid<G>(l: IMonoid<$<$K, L>>, r: IMonoid<G>): IMonoid<$3<$B, $<KTuple, L>, G>>
     swap<R>(t: [L, R]): [R, L]

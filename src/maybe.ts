@@ -26,8 +26,9 @@ export interface IMaybe extends IMonadPlus<KMaybe>, ITransformer<$<$Q, KMaybe>> 
 }
 
 export const maybe: IMaybe = (() => {
-    const just = <A>(a: A): Just<A> => either.right(a);
-    const nothing: Nothing = either.left(null);
+    const nullable = either.of<null>();
+    const just = <A>(a: A): Just<A> => nullable.right(a);
+    const nothing: Nothing = nullable.left(null);
     const isJust = <A>(fa: Maybe<A>): fa is Just<A> => fa.right;
     const isNothing = <A>(fa: Maybe<A>): fa is Nothing => !fa.right;
     const maybe = <B, A, C>(b: B, map?: (a: A) => C) => (fa: Maybe<A>) => fa.right ? map?.(fa.value) ?? fa.value : b;
@@ -38,7 +39,7 @@ export const maybe: IMaybe = (() => {
     const fromNullable = <A>(a: A): Maybe<NonNullable<A>> => a == null ? nothing : just<NonNullable<A>>(a);
 
     const transform = <M>(outer: IMonad<M>) => {
-        const et = either.monad<null>().transform(outer);
+        const et = nullable.transform(outer);
         
         return monadTrans<$<$Q, KMaybe>, M>({ 
             map: et.map,
