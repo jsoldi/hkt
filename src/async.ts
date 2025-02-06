@@ -5,6 +5,7 @@ import { fold, IFold } from "./fold.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
 import { monoid } from "./monoid.js"
 import { KPromise, promise } from "./promise.js"
+import { unfold } from "./unfold.js"
 
 export type AsyncGen<T> = AsyncGenerator<T, void, void>
 export type SyncGen<T> = Generator<T, void, void>
@@ -37,9 +38,9 @@ export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise> {
     fromFun<T, A extends any[]>(asyncLike: AsyncLike<T, A>): (...args: A) => Async<T>
     from<T, A extends any[]>(asyncLike: AsyncLike<T, A>, ...args: A): Async<T>
     bind<A, B>(fa: Async<A>, f: (a: A) => AsyncLike<B>): Async<B>
+    flatMap<A, B>(f: (a: A) => AsyncLike<B>): (fa: Async<A>) => Async<B>
     flat<T>(gen: Async<Async<T>>): Async<T>
     take(n: number): <T>(fa: Async<T>) => Async<T>
-    forEach<T>(f: (a: T) => void): (fa: Async<T>) => Async<T>
     toArray<T>(fa: Async<T>): Promise<T[]>
     filter<T, S extends T>(pred: (a: T) => a is S): (fa: Async<T>) => Async<S>
     filter<T>(pred: (a: T) => unknown): (fa: Async<T>) => Async<T>
@@ -48,8 +49,6 @@ export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise> {
     distinctBy<T, K>(key: (a: T) => K): (fa: Async<T>) => Async<T>
     distinct<T>(fa: Async<T>): Async<T>
     chunks<T>(size: number): (fa: Async<T>) => Async<T[]>
-    reduce<T, U>(acc: U, f: (acc: U, a: T) => U): (fa: Async<T>) => Promise<U>
-    unfoldr<A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>): (b: B) => Async<A>
 }
 
 export const async: IAsync = (() => {
@@ -73,6 +72,8 @@ export const async: IAsync = (() => {
         }
     }
 
+    const flatMap: I['flatMap'] = f => fa => bind(fa, f);
+
     const map: I['map'] = (fa, f) => async function* () {
         for await (const a of fa())
             yield f(a);
@@ -94,13 +95,6 @@ export const async: IAsync = (() => {
                 break;
 
             yield a
-        }
-    }
-
-    const forEach: I['forEach'] = f => fa => async function* () {
-        for await (const a of fa()) {
-            f(a);
-            yield a;
         }
     }
 
@@ -172,7 +166,7 @@ export const async: IAsync = (() => {
             yield chunk;
     }
 
-    const reduce: I['reduce'] = (init, f) => async fa => {
+    const foldl: I['foldl'] = f => init => async fa => {
         // Can't directly modify init because it'd modify it for all passed generators
         let acc = init;
 
@@ -189,7 +183,7 @@ export const async: IAsync = (() => {
         yield* fb();
     }
 
-    const unfoldr: I['unfoldr'] = <A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>) => (b: B) => async function* () {
+    const _unfold = <A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>) => (b: B) => async function* () {
         let next = await f(b);
 
         while (next.right) {
@@ -200,21 +194,8 @@ export const async: IAsync = (() => {
         }
     };
 
-    const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => reduce(b, f);
     const wrap = <T>(prom: Promise<T>) => async function* () { yield await prom; }
     const scalar = promise;
-
-    const _monadPlus = monadPlus<KAsync>({
-        ...monad<KAsync>({
-            map,
-            unit,
-            bind,
-        }),
-        ...monoid<KAsync>({
-            empty,
-            append
-        }),
-    });
 
     return {
         ...fold<KAsync, KPromise>({
@@ -223,13 +204,28 @@ export const async: IAsync = (() => {
             wrap,
             scalar
         }),
+        ...unfold<KAsync, KPromise>({
+            map,
+            unfold: _unfold,
+            scalar
+        }),
+        ...monadPlus<KAsync>({
+            ...monad<KAsync>({
+                map,
+                unit,
+                bind,
+            }),
+            ...monoid<KAsync>({
+                empty,
+                append
+            }),
+        }),
         scalar,
-        ..._monadPlus,
+        flatMap,
         fromFun,
         from, // override MonadPlus implementation
         take,
         flat,
-        forEach,
         toArray,
         filter,
         takeWhile,
@@ -237,7 +233,5 @@ export const async: IAsync = (() => {
         distinctBy,
         distinct,
         chunks,
-        reduce,
-        unfoldr,
     }
 })();

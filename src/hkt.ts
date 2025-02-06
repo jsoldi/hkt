@@ -14,15 +14,13 @@ type KArgLength<K, T extends any[] = []> = K extends KArgs<{ readonly [k in T['l
     ? KArgLength<K, [any, ...T]> 
     : T['length']
 
-type SetArgumentAt<K, I extends number, T> = K & KArgs<{ readonly [k in I]: T }>
+type SetArgAt<K, I extends number, T> = K & KArgs<{ readonly [k in I]: T }>
 
 type GetParameterAt<K, I> = I extends keyof K ? K[I] : never
 
-type SetNextArgument<K, T> = SetArgumentAt<K, KArgLength<K>, T>
+type SetArg<K, T> = SetArgAt<K, KArgLength<K>, T>
 
-type GetNextParameter<K> = GetParameterAt<K, KArgLength<K>>
-
-type TryResolve<K> = 
+type Eval<K> = 
     K extends KRoot ?
         K['args'] & KRoot<never, never> extends K 
             ? (K & K['args'])['body'] 
@@ -76,7 +74,7 @@ export interface $K extends KRoot1 {
 }
 
 /* A :: (a -> b) -> a -> b */
-export type $<K, T> = TryResolve<SetNextArgument<K, T>>
+export type $<K, T> = Eval<SetArg<K, T>>
 
 export type $3<K, A, B> = $<$<K, A>, B>
 export type $4<K, A, B, C> = $<$<$<K, A>, B>, C>

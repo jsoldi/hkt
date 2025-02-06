@@ -5,6 +5,7 @@ import { fold, IFold } from "./fold.js";
 import { ITransformer, monadTrans } from "./transformer.js";
 import { ITrivial, trivial } from "./trivial.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
+import { unfold } from "./unfold.js";
 
 export interface KArray extends KRoot {
     readonly 0: unknown
@@ -17,12 +18,11 @@ interface IArray extends IMonadPlus<KArray>, IFold<KArray, $I>, ITransformer<KAr
     readonly scalar: ITrivial
     first<A>(fa: A[]): A | undefined
     foldr<A, B>(f: (a: A, b: B) => B): (b: B) => (fa: A[]) => B
-    unfoldr<A, B>(f: (b: B) => Maybe<[A, B]>): (b: B) => A[]
     filter: {
         <T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[];
         <T>(predicate: (item: T) => unknown): (items: T[]) => T[];
     },
-    chunk: (size: number) => <A>(fa: A[]) => A[][]
+    chunks(size: number): <A>(fa: A[]) => A[][]
     distinctBy<A, B>(f: (a: A) => B): (fa: A[]) => A[]
     mapAsync: <A, B>(f: (a: A) => Promise<B>) => (fa: A[]) => Promise<B[]>
     take<A>(n: number): (fa: A[]) => A[]
@@ -41,7 +41,7 @@ export const array: IArray = (() => {
     const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => (fa: A[]) => fa.reduce(f, b);
     const foldr = <A, B>(f: (a: A, b: B) => B) => (b: B) => (fa: A[]) => fa.reduceRight((a, b) => f(b, a), b);
         
-    const unfoldr = <A, B>(f: (b: B) => Maybe<[A, B]>) => (b: B): A[] => {
+    const _unfold = <A, B>(f: (b: B) => Maybe<[A, B]>) => (b: B): A[] => {
         const result: A[] = [];
         let next = f(b);
 
@@ -118,7 +118,11 @@ export const array: IArray = (() => {
             foldl,
             wrap: unit,
         }),
-        scalar,
+        ...unfold<KArray, $I>({
+            map,
+            scalar,
+            unfold: _unfold ,
+        }),
         ...monadPlus<KArray>({ 
             map,
             unit, 
@@ -126,13 +130,13 @@ export const array: IArray = (() => {
             empty,
             append,
         }), 
+        scalar,
         first,
         filter,
         transform,
         foldl,
         foldr,
-        unfoldr,
-        chunk,
+        chunks: chunk,
         distinctBy,
         mapAsync,
         take,

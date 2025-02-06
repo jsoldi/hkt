@@ -16,12 +16,14 @@ export interface IReader<E> extends IMonad<KReader<E>>, ITransformer<KReaderTran
     ask: Reader<E, E>
     local: <A>(f: (e: E) => E) => (m: Reader<E, A>) => Reader<E, A>
     reader: <A>(f: (e: E) => A) => Reader<E, A>
+    of: <T>() => IReader<T>
 }
 
-export function reader<E>(): IReader<E> {
+function readerOf<E>(): IReader<E> {
     const ask: Reader<E, E> = id;
     const local = (f: (e: E) => E) => <A>(m: Reader<E, A>): Reader<E, A> => e => m(f(e));
-    const reader: <A>(f: (e: E) => A) => Reader<E, A> = id;
+    const _reader: <A>(f: (e: E) => A) => Reader<E, A> = id;
+    const of = <T>() => readerOf<T>();
 
     const transform = <M>(inner: IMonad<M>) => {
         type KType = $<KReaderTrans<E>, M>;
@@ -42,7 +44,10 @@ export function reader<E>(): IReader<E> {
         }),
         ask,
         local,
-        reader,
+        reader: _reader,
+        of,
         transform
     }
 }
+
+export const reader = readerOf<any>();
