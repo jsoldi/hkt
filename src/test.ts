@@ -4,12 +4,12 @@
 // import { pipe } from "./utils.js";
 
 // // Non higher-kinded Log type
-// export type Log<T> = [string[], T];
+// type Log<T> = [string[], T];
 
 // // Higher-kinded Log type. 
 // // The `$` operator can be used to pass arguments. 
 // // For instance, `$<KLog, boolean>` evaluates to `Log<boolean>`
-// export interface KLog extends KRoot {
+// interface KLog extends KRoot {
 //     readonly 0: unknown;
 //     readonly body: Log<this[0]>;
 // }
@@ -17,13 +17,13 @@
 // // Custom monad implementation using the `KLog` type
 // const logger = {
 //     ...monad<KLog>({
-//         unit: a => [[], a], // Unit function to create a Log
+//         unit: a => [[], a], 
 //         bind: ([logA, a], f) => {
-//             const [logB, b] = f(a); // Bind function to chain Log operations
+//             const [logB, b] = f(a); 
 //             return [[...logA, ...logB], b]; // Concatenate logs
 //         },
 //     }),
-//     log: <A>(log: string, a: A): Log<A> => [[log], a] // Function to create a Log with a message
+//     log: <A>(log: string, a: A): Log<A> => [[log], a] // Utility function to add a log entry
 // }
 
 // // Normal fetch

@@ -11,18 +11,15 @@ npm install @jsoldi/hkt
 ## Example
 
 ```typescript
-import { array } from "./array.js";
-import { KRoot } from "./hkt.js";
-import { monad } from "./monad.js";
-import { pipe } from "./utils.js";
+import { KRoot, monad, pipe, array } from '@jsoldi/hkt';
 
 // Non higher-kinded Log type
-export type Log<T> = [string[], T];
+type Log<T> = [string[], T];
 
 // Higher-kinded Log type. 
 // The `$` operator can be used to pass arguments. 
 // For instance, `$<KLog, boolean>` evaluates to `Log<boolean>`
-export interface KLog extends KRoot {
+interface KLog extends KRoot {
     readonly 0: unknown;
     readonly body: Log<this[0]>;
 }
@@ -60,6 +57,7 @@ function logFetchURL(url: string) {
 
 // `pipe` passes the first argument to the function composition of the rest
 const result = pipe(
+    // `sequence` evaluates each monad in the array and returns a single array monad 
     logger.sequence([
         logFetchURL('https://example/1'),
         logFetchURL('file:///localhost/1'),
@@ -72,4 +70,3 @@ const result = pipe(
 
 console.log(result); // [[ 'Success', 'Error', 'Success', 'Error' ], [ 'GOOD', 'GOOD' ]]
 ```
-
