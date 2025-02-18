@@ -1,8 +1,11 @@
 import { Left, Right, either } from "./either.js";
-import { $, $Q, KRoot } from "./hkt.js";
+import { IFold } from "./fold.js";
+import { foldable, IFoldable } from "./foldable.js";
+import { $, $B2, $Q, KRoot } from "./hkt.js";
 import { IMonad } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
-import { ITransformer, monadTrans } from "./transformer.js";
+import { IMonadTrans, ITransformer, monadTrans } from "./transformer.js";
+import { ITraversable, traversable } from "./traversable.js";
 
 export type Nothing = Left<null>
 export type Just<T> = Right<T>
@@ -13,7 +16,7 @@ export interface KMaybe extends KRoot {
     readonly body: Maybe<this[0]>
 }
 
-export interface IMaybe extends IMonadPlus<KMaybe>, ITransformer<$<$Q, KMaybe>> {
+export interface IMaybe extends IMonadPlus<KMaybe>, IFoldable<KMaybe>, ITraversable<KMaybe>, ITransformer<$<$Q, KMaybe>> {
     just<A>(a: A): Just<A>
     readonly nothing: Nothing
     isJust<A>(fa: Maybe<A>): fa is Just<A>
@@ -23,6 +26,11 @@ export interface IMaybe extends IMonadPlus<KMaybe>, ITransformer<$<$Q, KMaybe>> 
     fromList<A>(fa: A[]): Maybe<A>
     toList<A>(fa: Maybe<A>): [] | [A]
     fromNullable<A>(a: A): Maybe<NonNullable<A>>
+    if(cond: unknown): Maybe<null>
+    transform<M>(base: IMonad<M>): IMaybeTrans<M>
+}
+
+export interface IMaybeTrans<M> extends IMonadTrans<$<$Q, KMaybe>, M>, IFold<$B2<M, KMaybe>, M>, IMonadPlus<$B2<M, KMaybe>> {
 }
 
 export const maybe: IMaybe = (() => {
@@ -35,28 +43,61 @@ export const maybe: IMaybe = (() => {
     const fromList = <A>(fa: A[]): Maybe<A> => fa.length > 0 ? just(fa[0]) : nothing;
     const toList = <A>(fa: Maybe<A>): [] | [A] => fa.right ? [fa.value] : [];
     const map = <A, B>(fa: Maybe<A>, f: (a: A) => B): Maybe<B> => fa.right ? just(f(fa.value)) : nothing;
+    const unit = <A>(a: A): Maybe<A> => just(a);
     const bind = <A, B>(fa: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> => fa.right ? f(fa.value) : nothing;
     const fromNullable = <A>(a: A): Maybe<NonNullable<A>> => a == null ? nothing : just<NonNullable<A>>(a);
+    const empty = <A>(): Maybe<A> => nothing;
+    const append = nullable.append;
+    const _if = (cond: unknown) => cond ? just(null) : nothing;
 
-    const transform = <M>(outer: IMonad<M>) => {
+    const _monadPlus = monadPlus<KMaybe>({
+        map,
+        unit,
+        bind,
+        empty,
+        append
+    });
+
+    const _foldable = foldable<KMaybe>({
+        map,
+        foldl: f => b => fa => fa.right ? f(b, fa.value) : b
+    });
+
+    const transform = <M>(outer: IMonad<M>): IMaybeTrans<M> => {
         const et = nullable.transform(outer);
         
-        return monadTrans<$<$Q, KMaybe>, M>({ 
+        const __monadTrans = monadTrans<$<$Q, KMaybe>, M>({ 
             map: et.map,
             unit: et.unit,
             bind: et.bind,
-            lift: et.lift
+            lift: et.lift,
+            wrap: et.wrap
         });
+
+        const __monoid = outer.liftMonoid<KMaybe>(_monadPlus);
+        const __foldable: IFold<$B2<M, KMaybe>, M> = _foldable.liftFoldUnder<M>(outer);
+
+        return {
+            ...__monadTrans,
+            ...__foldable,
+            ...monadPlus<$B2<M, KMaybe>>({
+                append: __monoid.append,
+                bind: __monadTrans.bind,
+                empty: __monoid.empty,
+                unit: __monadTrans.unit,
+            }),
+        }
     };
 
+    const _traversable = traversable<KMaybe>({
+        traverse: m => f => fa => fa.right ? m.map(f(fa.value), unit) : m.unit(empty())
+    });
+
     return { 
-        ...monadPlus<KMaybe>({
-            map,
-            unit: just,
-            bind,
-            empty: () => nothing,
-            append: (fa, fb) => fa.right ? just(fa.value) : fb
-        }), 
+        ..._traversable,
+        ..._foldable,
+        ..._monadPlus, 
+        if: _if,
         just, 
         nothing,
         isJust,

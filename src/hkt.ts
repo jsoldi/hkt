@@ -82,8 +82,10 @@ export type $5<K, A, B, C, D> = $<$<$<$<K, A>, B>, C>, D>
 export type $N<T> = T extends readonly [...infer L, infer R] ? $<$N<L>, R> : $I
 
 export interface ITypeClass<F> {
-    readonly _classParam1?: (f: F) => F // when F is * -> *
+    readonly _classArg?: (f: F) => F // when F is * -> *
 }
+
+export type KType<T> = T extends ITypeClass<infer F> ? F : never
 
 // export interface ITypeClass2<F> {
 //     readonly _classParam2?: (f: F) => F // when F is * -> * -> *

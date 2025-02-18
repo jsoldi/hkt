@@ -55,15 +55,15 @@ export const spread = <A, B>(f: (a: A[]) => B) => (...a: A[]): B => f(a);
 export const unspread = <A, B>(f: (...a: A[]) => B) => (a: A[]): B => f(...a);
 
 export const memo = <T>(f: () => T) => {
-    let memo: T;
+    let value: T;
     let done = false;
 
     return () => {
         if (!done) {
-            memo = f();
+            value = f();
             done = true;
         }
 
-        return memo;
+        return value;
     }
 }

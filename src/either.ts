@@ -1,5 +1,6 @@
 import { $, $Q, KRoot } from "./hkt.js"
 import { IMonad, monad } from "./monad.js"
+import { ISemigroup } from "./monoid.js"
 import { ITransformer, monadTrans } from "./transformer.js"
 import { pipe } from "./utils.js"
 
@@ -28,8 +29,11 @@ interface IEitherCore {
     right<B>(b: B): Right<B>;
     left<A>(a: A): Left<A>;
     either<A, B, C, D = C>(onLeft: (a: A) => C, onRight: (b: B) => D): (fa: Either<A, B>) => C | D;
+    bimap<A, B, C, D = C>(onLeft: (a: A) => C, onRight: (b: B) => D): (fa: Either<A, B>) => Either<C, D>;
     lefts<A, B>(fa: Either<A, B>[]): A[];
     rights<A, B>(fa: Either<A, B>[]): B[];
+    or<A, X>(fa: Either<A, X>): <B, Y = X>(fb: Either<B, Y>) => Either<B, X | Y>;
+    and<A, X>(fa: Either<A, X>): <B, Y = X>(fb: Either<B, Y>) => Either<A | B, Y>;
     isLeft<A, B>(fa: Either<A, B>): fa is Left<A>;
     isRight<A, B>(fa: Either<A, B>): fa is Right<B>;
     fromLeft<C>(a: C): <A, B>(fa: Either<A, B>) => A | C;
@@ -44,13 +48,14 @@ interface IEitherCore {
 }
 
 // Same as IEither but with fixed left type set to L
-export interface IEither<L = any> extends IEitherCore, IMonad<$<KEither, L>>, ITransformer<KEitherTrans<L>> { }
+export interface IEither<L = any> extends IEitherCore, ISemigroup<$<KEither, L>>, IMonad<$<KEither, L>>, ITransformer<KEitherTrans<L>> { }
 
 const core: IEitherCore = {
     of: () => eitherOf(),
     right: (b) => ({ right: true, value: b }),
     left: (a) => ({ right: false, value: a }),
     either: (onLeft, onRight) => (fa) => fa.right ? onRight(fa.value) : onLeft(fa.value),
+    bimap: (onLeft, onRight) => (fa) => fa.right ? core.right(onRight(fa.value)) : core.left(onLeft(fa.value)),
     lefts: <A, B>(fa: Either<A, B>[]) => {
         const result = [] as A[];
 
@@ -71,6 +76,8 @@ const core: IEitherCore = {
 
         return result;
     },
+    or: <A, X>(fa: Either<A, X>) => <B, Y>(fb: Either<B, Y>) => fa.right ? fa : fb,
+    and: <A, X>(fa: Either<A, X>) => <B, Y>(fb: Either<B, Y>) => fa.right ? fb : fa,
     isLeft: <A, B>(fa: Either<A, B>): fa is Left<A> => !fa.right,
     isRight: <A, B>(fa: Either<A, B>): fa is Right<B> => fa.right,
     fromLeft: <C>(a: C) => <A, B>(fa: Either<A, B>) => fa.right ? a : fa.value,
@@ -126,6 +133,7 @@ function eitherOf<L>(): IEither<L> {
             ...base
         }),
         base => ({
+            append: (fa, fb) => fa.right ? fa : fb,
             transform: <M>(outer: IMonad<M>) => {
                 type KType = $<KEitherTrans<L>, M>;
 
@@ -134,7 +142,8 @@ function eitherOf<L>(): IEither<L> {
                     unit: <A>(a: A) => outer.unit<Either<L, A>>(base.right(a)),
                     bind: <A, B>(fa: $<KType, A>, f: (a: A) => $<KType, B>): $<KType, B> =>
                         outer.bind(fa, a => a.right ? f(a.value) : outer.unit<Either<L, B>>(base.left(a.value))),
-                    lift: <A>(a: $<M, A>) => outer.map<A, Either<L, A>>(a, base.right)
+                    lift: <A>(a: $<M, A>) => outer.map<A, Either<L, A>>(a, base.right),
+                    wrap: a => outer.unit(a),
                 });
             },
             ...base

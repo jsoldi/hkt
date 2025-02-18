@@ -1,60 +1,48 @@
-// import { array } from "./array.js";
-// import { KRoot } from "./hkt.js";
-// import { monad } from "./monad.js";
-// import { pipe } from "./utils.js";
+// import { cont } from "./cont/cont.js";
+// import { ContSync } from "./cont/contThunk.js";
+// import { ContVoid } from "./cont/contVoid.js";
+// import { id, pipe } from "./utils.js";
 
-// // Non higher-kinded Log type
-// type Log<T> = [string[], T];
+// const sync = cont.sync;
 
-// // Higher-kinded Log type. 
-// // The `$` operator can be used to pass arguments. 
-// // For instance, `$<KLog, boolean>` evaluates to `Log<boolean>`
-// interface KLog extends KRoot {
-//     readonly 0: unknown;
-//     readonly body: Log<this[0]>;
-// }
+// const fibonacci = sync.memoize((n: bigint): ContSync<bigint> => {
+//     if (n < 2)
+//         return sync.unit(1n);
 
-// // Custom monad implementation using the `KLog` type
-// const logger = {
-//     ...monad<KLog>({
-//         unit: a => [[], a], 
-//         bind: ([logA, a], f) => {
-//             const [logB, b] = f(a); 
-//             return [[...logA, ...logB], b]; // Concatenate logs
-//         },
-//     }),
-//     log: <A>(log: string, a: A): Log<A> => [[log], a] // Utility function to add a log entry
-// }
+//     return sync.pipe(
+//         sync.lazy(() => fibonacci(n - 1n)),
+//         _ => sync.lazy(() => fibonacci(n - 2n)),
+//         (m1, m2) => sync.unit(m1 + m2)
+//     );
+// });
 
-// // Normal fetch
-// function fetchURL(url: string) {
-//     if (url.startsWith('https://')) {
-//         return `Good`;
-//     } else {
-//         throw new Error(`Bad`);
-//     }
-// }
+// const prompt = (message: string): ContVoid<string> => resolve => {
+//     console.log(message);
 
-// // Logging fetch
-// function logFetchURL(url: string) {
-//     try {
-//         const data = fetchURL(url);
-//         return logger.log('Success', data); // Log success
-//     } catch (e: any) {
-//         return logger.log(`Error`, null); // Log error
-//     }
-// }
+//     process.stdin.addListener("data", function listen(data) {
+//         process.stdin.removeListener("data", listen);
+//         resolve(data.toString().trim());
+//     });
+// };
 
-// // `pipe` passes the first argument to the function composition of the rest
-// const result = pipe(
-//     logger.sequence([
-//         logFetchURL('https://example/1'),
-//         logFetchURL('file:///localhost/1'),
-//         logFetchURL('https://example/2'),
-//         logFetchURL('file:///localhost/2'),
-//     ]),
-//     logger.fmap(array.filter(s => s !== null)),     // Filter out null values
-//     logger.fmap(array.fmap(s => s.toUpperCase()))   // Make results uppercase
-// );
-
-// console.log(result); // [[ 'Success', 'Error', 'Success', 'Error' ], [ 'GOOD', 'GOOD' ]]
+// pipe(
+//     cont.void.map(
+//         prompt('Enter position in Fibonacci sequence or "exit": '),
+//         input => {
+//             try {
+//                 return input === 'exit' ? false : pipe(
+//                     input, 
+//                     BigInt, 
+//                     fibonacci, 
+//                     sync.run,
+//                     n => console.log('Result', n, '\n'),
+//                     _ => true
+//                 );
+//             } catch (e) {
+//                 console.log('Invald number\n');
+//                 return true;
+//             }
+//         }
+//     ),
+//     cont.void.doWhile(id)
+// )(_ => process.exit(0));

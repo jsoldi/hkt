@@ -1,11 +1,13 @@
-import { $, $I, $Q, KRoot } from "./hkt.js";
+import { $, $B2, $Q, KRoot } from "./hkt.js";
 import { Maybe } from "./maybe.js";
 import { IMonad } from "./monad.js";
-import { fold, IFold } from "./fold.js";
-import { ITransformer, monadTrans } from "./transformer.js";
-import { ITrivial, trivial } from "./trivial.js";
+import { IFold } from "./fold.js";
+import { IMonadTrans, ITransformer, monadTrans } from "./transformer.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
-import { IUnnfold, unfold } from "./unfold.js";
+import { ITraversable, traversable } from "./traversable.js";
+import { IApplicative } from "./applicative.js";
+import { foldable, IFoldable } from "./foldable.js";
+import { IUnfoldable, unfoldable } from "./unfoldable.js";
 
 export interface KArray extends KRoot {
     readonly 0: unknown
@@ -14,8 +16,7 @@ export interface KArray extends KRoot {
 
 type KArrayTrans = $<$Q, KArray>
 
-interface IArray extends IMonadPlus<KArray>, IFold<KArray, $I>, IUnnfold<KArray, $I>, ITransformer<KArrayTrans> {
-    readonly scalar: ITrivial
+interface IArray extends IMonadPlus<KArray>, IFoldable<KArray>, IUnfoldable<KArray>, ITraversable<KArray>, ITransformer<KArrayTrans> {
     first<A>(fa: A[]): A | undefined
     foldr<A, B>(f: (a: A, b: B) => B): (b: B) => (fa: A[]) => B
     filter: {
@@ -28,6 +29,10 @@ interface IArray extends IMonadPlus<KArray>, IFold<KArray, $I>, IUnnfold<KArray,
     take<A>(n: number): (fa: A[]) => A[]
     skip<A>(n: number): (fa: A[]) => A[]
     zip<A, B>(fa: A[], fb: B[]): [A, B][]
+    transform<M>(base: IMonad<M>): IArrayTrans<M>
+}
+
+export interface IArrayTrans<M> extends IMonadTrans<KArrayTrans, M>, IFold<$B2<M, KArray>, M>, IMonadPlus<$B2<M, KArray>> {
 }
 
 export const array: IArray = (() => {
@@ -55,15 +60,6 @@ export const array: IArray = (() => {
 
         return result;
     };
-
-    const transform = <M>(outer: IMonad<M>) => {
-        return monadTrans<KArrayTrans, M>({ 
-            map: (fa, f) => outer.map(fa, a => a.map(f)),
-            unit: a => outer.unit([a]),
-            bind: (fa, f) => outer.bind(fa, ae => outer.map(outer.sequence(ae.map(f)), a => a.flat())),
-            lift: a => outer.map(a, a => [a])
-        });
-    }
 
     const chunk = (size: number) => <A>(fa: A[]): A[][] => {
         if (size < 1)
@@ -111,28 +107,63 @@ export const array: IArray = (() => {
     const empty = <A>(): A[] => [];
     const append = <A>(fa: A[], fb: A[]): A[] => fa.concat(fb);
     const zip = <A, B>(fa: A[], fb: B[]): [A, B][] => Array.from({ length: Math.min(fa.length, fb.length) }, (_, i) => [fa[i], fb[i]]);
-    const scalar = trivial;
+
+    const _traversable = traversable<KArray>({
+        traverse: <M>(m: IApplicative<M>) => <A, B>(f: (a: A) => $<M, B>) => (ta: A[]): $<M, B[]> => 
+            ta.reduceRight<$<M, B[]>>(
+                (acc, a) => m.lift2((b: B, bs: B[]) => [b, ...bs])(f(a), acc), 
+                m.unit([])
+            )
+    });
+
+    const _monadPlus = monadPlus<KArray>({ 
+        map,
+        unit, 
+        bind,
+        empty,
+        append,
+    });
+
+    const _foldable = foldable<KArray>({
+        map,
+        foldl,
+    });
+
+    const transform = <M>(outer: IMonad<M>): IArrayTrans<M> => {
+        const __monadTrans = monadTrans<KArrayTrans, M>({ 
+            map: (fa, f) => outer.map(fa, a => a.map(f)),
+            unit: a => outer.unit([a]),
+            bind: (fa, f) => outer.bind(fa, ae => outer.map(
+                _traversable.sequence(outer)(ae.map(f)), 
+                a => a.flat()
+            )),
+            lift: a => outer.map(a, a => [a]),
+            wrap: a => outer.unit(a),
+        });
+        
+        const __monoid = outer.liftMonoid<KArray>(_monadPlus);
+        const __foldable: IFold<$B2<M, KArray>, M> = _foldable.liftFoldUnder<M>(outer);
+
+        return {
+            ...__monadTrans,
+            ...__foldable,
+            ...monadPlus<$B2<M, KArray>>({
+                append: __monoid.append,
+                bind: __monadTrans.bind,
+                empty: __monoid.empty,
+                unit: __monadTrans.unit,
+            }),
+        }
+    }
 
     return { 
-        ...fold<KArray, $I>({
+        ..._traversable,
+        ..._foldable,
+        ...unfoldable<KArray>({
             map,
-            scalar,
-            foldl,
-            wrap: unit,
-        }),
-        ...unfold<KArray, $I>({
-            map,
-            scalar,
             unfold: _unfold ,
         }),
-        ...monadPlus<KArray>({ 
-            map,
-            unit, 
-            bind,
-            empty,
-            append,
-        }), 
-        scalar,
+        ..._monadPlus, 
         first,
         filter,
         transform,

@@ -1,20 +1,21 @@
-import { ITypeClass, $, $K, $3, $B } from "./hkt.js";
-import { IMonad } from "./monad.js";
+import { ITypeClass, $, $K } from "./hkt.js";
+import { TypeClassArg } from "./utilities.js";
 import { curry, pipe } from "./utils.js";
 
-export interface IMonoidBase<F> extends ITypeClass<F> {
-    empty: <A>() => $<F, A>
+export interface ISemigroup<F> extends ITypeClass<F> {
     append: <A>(fa: $<F, A>, fb: $<F, A>) => $<F, A>
+}
+
+export interface IMonoidBase<F> extends ISemigroup<F> {
+    empty: <A>() => $<F, A>
 }
 
 export interface IMonoid<F> extends IMonoidBase<F> {
     mappend<A>(fa: $<F, A>): (fb: $<F, A>) => $<F, A>
     concat<A>(fas: $<F, A>[]): $<F, A>
-    when(b: boolean): <A>(fa: $<F, A>) => $<F, A>
-    foldMap<A>(as: A[]): <B>(f: (a: A) => $<F, B>) => $<F, B>
+    when(b: unknown): <A>(fa: $<F, A>) => $<F, A>
     join<A>(separator: $<F, A>): (fas: $<F, A>[]) => $<F, A>
     dual(): IMonoid<F>
-    liftMonoidUnder<M>(m: IMonad<M>): IMonoid<$3<$B, M, F>>
 }
 
 export function monoidFor<T>(empty: T, append: (a: T, b: T) => T) {
@@ -24,7 +25,12 @@ export function monoidFor<T>(empty: T, append: (a: T, b: T) => T) {
     });
 }
 
-export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F> {
+const is_monoid = Symbol("is_monoid");
+
+export function monoid<F>(base: TypeClassArg<IMonoidBase<F>, IMonoid<F>, typeof is_monoid>): IMonoid<F> {
+    if (is_monoid in base)
+        return base;
+
     return pipe(
         base,
         base => {
@@ -38,9 +44,7 @@ export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F
             }
         },
         base => {
-            const when = (b: boolean) => <A>(fa: $<F, A>) => b ? fa : base.empty<A>();
-
-            const foldMap = <A>(as: A[]) => <B>(f: (a: A) => $<F, B>) => base.concat(as.map(f));
+            const when = (b: unknown) => <A>(fa: $<F, A>) => b ? fa : base.empty<A>();
 
             const join = <A>(separator: $<F, A>) => (fas: $<F, A>[]) => {
                 if (fas.length === 0)
@@ -54,20 +58,12 @@ export function monoid<F>(base: IMonoidBase<F> & Partial<IMonoid<F>>): IMonoid<F
                 empty: base.empty,
                 append: (a, b) => base.append(b, a),
             });
-            
-            const liftMonoidUnder = <M>(m: IMonad<M>) => {
-                return monoid<$3<$B, M, F>>({ 
-                    empty: () => m.unit(base.empty()),
-                    append: m.lift2(base.append)
-                });
-            }
 
             return {
+                [is_monoid]: true,
                 when,
-                foldMap,
                 join,
                 dual,
-                liftMonoidUnder,
                 ...base,
             }
         }

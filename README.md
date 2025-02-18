@@ -18,13 +18,23 @@ type Log<T> = [string[], T];
 
 // Higher-kinded Log type. 
 // The `$` operator can be used to pass arguments. 
-// For instance, `$<KLog, boolean>` evaluates to `Log<boolean>`
+// For instance, `$<KLog, number>` evaluates to `Log<number>`
 interface KLog extends KRoot {
     readonly 0: unknown;
     readonly body: Log<this[0]>;
 }
 
-// Custom monad implementation using the `KLog` type
+// Custom monad implementation using the `KLog` type. 
+// The `monad` function takes an `IMonadBase` object, 
+// where `IMonadBase` is defined as:
+//
+//  export interface IMonadBase<F> {
+//      unit<A>(a: A): $<F, A>
+//      bind<A, B>(fa: $<F, A>, f: (a: A) => $<F, B>): $<F, B>
+//  }
+//
+// In the defintion above the `$` operator is used to generate 
+// types by passing arguments to a higher kinded type.
 const logger = {
     ...monad<KLog>({
         unit: a => [[], a], 

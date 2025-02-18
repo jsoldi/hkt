@@ -1,14 +1,13 @@
-import { $I, KRoot } from "./hkt.js";
+import { KRoot } from "./hkt.js";
+import { ITrivial, trivial } from "./monad.js";
 import { IMonadPlus, monadPlus } from "./monadPlus.js";
-import { fold, IFold } from "./fold.js";
-import { ITrivial, trivial } from "./trivial.js";
 
 interface KSet extends KRoot {
     readonly 0: unknown
     readonly body: Set<this[0]>
 }
 
-interface ISet extends IMonadPlus<KSet>, IFold<KSet, $I> {
+interface ISet extends IMonadPlus<KSet> {
     readonly scalar: ITrivial;
     union: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     intersection: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
@@ -29,17 +28,10 @@ export const set: ISet = (() => {
     const isDisjointFrom = <A>(fa: Set<A>) => (fb: Set<A>): boolean => fa.isDisjointFrom(fb);
     const unit = <A>(a: A): Set<A> => new Set([a]);
     const bind = <A, B>(fa: Set<A>, f: (a: A) => Set<B>): Set<B> => new Set([...fa].flatMap(a => [...f(a)]));
-    const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => (fa: Set<A>): B => [...fa].reduce(f, b);
     const map = <A, B>(fa: Set<A>, f: (a: A) => B): Set<B> => new Set([...fa].map(f));
     const scalar = trivial;
 
     return {
-        ...fold<KSet, $I>({
-            map,
-            foldl,
-            wrap: unit,
-            scalar,
-        }),
         scalar,
         ...monadPlus<KSet>({
             unit,

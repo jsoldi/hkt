@@ -32,7 +32,8 @@ function readerOf<E>(): IReader<E> {
             map: (fa, f) => e => inner.map(fa(e), f),
             unit: <A>(a: A) => _ => inner.unit(a),
             bind: <A, B>(fa: $<KType, A>, f: (a: A) => $<KType, B>) => e => inner.bind(fa(e), a => f(a)(e)),
-            lift: <A>(a: $<M, A>): Reader<E, $<M, A>> => _ => a
+            lift: <A>(a: $<M, A>): Reader<E, $<M, A>> => _ => a,
+            wrap: r => e => inner.unit(r(e))
         });
     };
 

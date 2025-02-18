@@ -35,13 +35,14 @@ export function state<S>(): IState<S> {
     const transform = <M>(inner: IMonad<M>) => {
         const unit = <A>(a: A): StateTrans<M, S, A> => s => inner.unit([a, s] as const);
 
-        const bind = <A, B>(fa: StateTrans<M, S, A>, f: (a: A) => StateTrans<M, S, B>): StateTrans<M, S, B> => s => {
-            return inner.bind(fa(s), ([a, t]) => f(a)(t));
-        }
+        const bind = <A, B>(fa: StateTrans<M, S, A>, f: (a: A) => StateTrans<M, S, B>): StateTrans<M, S, B> => s => 
+            inner.bind(fa(s), ([a, t]) => f(a)(t));
 
         const lift = <A>(ma: $<M, A>): StateTrans<M, S, A> => s => inner.map(ma, a => [a, s] as const);
 
-        return monadTrans<KStateTrans<S>, M>({ unit, bind, lift });
+        const wrap: <A>(fa: State<S, A>) => StateTrans<M, S, A> = fa => s => inner.unit(fa(s));
+
+        return monadTrans<KStateTrans<S>, M>({ unit, bind, lift, wrap });
     };
 
     return {

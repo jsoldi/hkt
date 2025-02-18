@@ -5,7 +5,7 @@ import { fold, IFold } from "./fold.js"
 import { IMonadPlus, monadPlus } from "./monadPlus.js"
 import { monoid } from "./monoid.js"
 import { KPromise, promise } from "./promise.js"
-import { IUnnfold, unfold } from "./unfold.js"
+import { IUnfold, unfold } from "./unfold.js"
 
 export type AsyncGen<T> = AsyncGenerator<T, void, void>
 export type SyncGen<T> = Generator<T, void, void>
@@ -29,7 +29,7 @@ export interface KAsync extends KRoot {
     readonly body: Async<this[0]>
 }
 
-export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise>, IUnnfold<KAsync, KPromise> {
+export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise>, IUnfold<KAsync, KPromise> {
     readonly scalar: IMonad<KPromise>
     // These tell typescript to preserve the generic type of the function
     fromFun<T, A extends any[]>(asyncLike: (...a: A) => SyncGen<T>): (...args: A) => Async<T>
@@ -209,14 +209,12 @@ export const async: IAsync = (() => {
         }
     }
 
-    const wrap = <T>(prom: Promise<T>) => async function* () { yield await prom; }
     const scalar = promise;
 
     return {
         ...fold<KAsync, KPromise>({
             map,
             foldl,
-            wrap,
             scalar
         }),
         ...unfold<KAsync, KPromise>({
