@@ -25,24 +25,26 @@ interface KLog extends KRoot {
 }
 ```
 
-To pass arguments to a higher-kinded type, use the `$` operator:
-
-```typescript
-type NumberLog = $<KLog, number>; // Evaluates to `Log<number>`
-```
-
-Higher kinded types can be used to define type classes. For instance this is the `IMonadBase` definition, which is passed to the `monad` function to create an instance of `IMonad`:
+To apply arguments to higher-kinded types, use the `$` operator like `$<F, A>`, where `F` is a higher-kinded type and `A` is the type argument:
 
 ```typescript
 import { $ } from '@jsoldi/hkt';
 
+type NumberLog = $<KLog, number>; // Evaluates to `Log<number>`
+```
+
+Higher kinded types can themselves be used as type arguments. For instance, this is the `IMonadBase` definition, which can be passed to the `monad` function to produce an `IMonad`:
+
+```typescript
 export interface IMonadBase<F> {
     unit<A>(a: A): $<F, A>
     bind<A, B>(fa: $<F, A>, f: (a: A) => $<F, B>): $<F, B>
 }
 ```
 
-Putting it all together:
+## Examples
+
+### Writing a custom monad
 
 ```typescript
 import { KRoot, monad, pipe, array } from '@jsoldi/hkt';
@@ -78,17 +80,17 @@ function fetchURL(url: string) {
 }
 
 // Logging fetch
-function logFetchURL(url: string) {
+function logFetchURL(url: string): Log<string> {
     try {
         const data = fetchURL(url);
         return logger.log('Success', data); // Log success
     } catch (e: any) {
-        return logger.log(`Error`, null); // Log error
+        return logger.log('Error', ''); // Log error
     }
 }
 
 // `pipe` passes the first argument to the function composition of the rest
-const result = pipe(
+const result: Log<string[]> = pipe(
     // `sequence` takes an array of monads and returns a monad of an array    
     array.sequence(logger)([
         logFetchURL('https://example/1'),
@@ -100,5 +102,61 @@ const result = pipe(
     logger.fmap(array.fmap(s => s.toUpperCase()))   // Make results uppercase
 );
 
-console.log(result); // [[ 'Success', 'Error', 'Success', 'Error' ], [ 'GOOD', 'GOOD' ]]
+console.log(result); 
+// [
+//   ['Success', 'Error', 'Success', 'Error'],  // Logs
+//   ['GOOD', 'GOOD']                           // Results
+// ]
+```
+
+### Using continuations to handle callbacks and avoid stack overflow 
+
+```typescript
+// Stack-safe trampoline combining continuations and thunks
+const sync = cont.syncThunk;
+
+// Fibonacci sequence using trampoline and memoization
+const fibonacci = sync.memo((n: bigint): ContSync<bigint> => {
+    if (n < 2)
+        return sync.unit(1n);
+
+    // Like `pipe` but specialized to monads
+    return sync.pipe(
+        sync.lazy(() => fibonacci(n - 1n)),
+        _ => sync.lazy(() => fibonacci(n - 2n)),
+        (m1, m2) => sync.unit(m1 + m2)
+    );
+});
+
+// Prompt function as a void returning continuation
+const prompt = (message: string): ContVoid<string> => resolve => {
+    console.log(message);
+
+    process.stdin.addListener("data", function listen(data) {
+        process.stdin.removeListener("data", listen);
+        resolve(data.toString().trim());
+    });
+};
+
+pipe(
+    cont.void.map(
+        prompt('Enter position in Fibonacci sequence or "exit": '),
+        input => {
+            try {
+                return input === 'exit' ? false : pipe(
+                    input, 
+                    BigInt, 
+                    fibonacci, 
+                    sync.run,
+                    n => console.log('Result', n, '\n'),
+                    _ => true
+                );
+            } catch (e) {
+                console.log('Invalid number\n');
+                return true;
+            }
+        }
+    ),
+    cont.void.doWhile(id) // Loop while true
+)(_ => process.exit(0));
 ```

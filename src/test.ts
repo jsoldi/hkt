@@ -1,11 +1,14 @@
 // import { pipe, id, cont, ContSync, ContVoid } from "./index.js";
 
-// const sync = cont.sync;
+// // Stack-safe trampoline combining continuations and thunks
+// const sync = cont.syncThunk;
 
+// // Fibonacci sequence using trampoline and memoization
 // const fibonacci = sync.memo((n: bigint): ContSync<bigint> => {
 //     if (n < 2)
 //         return sync.unit(1n);
 
+//     // Like `pipe` but specialized to monads
 //     return sync.pipe(
 //         sync.lazy(() => fibonacci(n - 1n)),
 //         _ => sync.lazy(() => fibonacci(n - 2n)),
@@ -13,6 +16,7 @@
 //     );
 // });
 
+// // Prompt function as a void returning continuation
 // const prompt = (message: string): ContVoid<string> => resolve => {
 //     console.log(message);
 
@@ -36,10 +40,10 @@
 //                     _ => true
 //                 );
 //             } catch (e) {
-//                 console.log('Invald number\n');
+//                 console.log('Invalid number\n');
 //                 return true;
 //             }
 //         }
 //     ),
-//     cont.void.doWhile(id)
+//     cont.void.doWhile(id) // Loop while true
 // )(_ => process.exit(0));
