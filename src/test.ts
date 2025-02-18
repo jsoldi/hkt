@@ -1,7 +1,7 @@
 // import { pipe, id, cont, ContSync, ContVoid } from "./index.js";
 
 // // Stack-safe trampoline combining continuations and thunks
-// const sync = cont.syncThunk;
+// const sync = cont.thunkSync;
 
 // // Fibonacci sequence using trampoline and memoization
 // const fibonacci = sync.memo((n: bigint): ContSync<bigint> => {

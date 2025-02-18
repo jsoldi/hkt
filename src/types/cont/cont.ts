@@ -40,8 +40,8 @@ export interface ICont<M> extends IContCore<M> {
     of<N>(): IContCore<N>
     ofMonad<N>(m: IMonad<N>): IContMonad<N>
     ofThunk<F>(t: IThunkCore<F>): IContThunk<F>
-    readonly syncThunk: IContThunk<$I>
-    readonly asyncThunk: IContThunk<KTask>
+    readonly thunkSync: IContThunk<$I>
+    readonly thunkAsync: IContThunk<KTask>
     readonly void: IContVoid
 }
 
@@ -116,8 +116,8 @@ function contOf<M>(): IContCore<M> {
 
 export const cont: ICont<$I> = (() => {
     const base = contOf<$I>();
-    const _sync = memo(() => contThunkOf(thunk.sync));
-    const _async = memo(() => contThunkOf(thunk.async));
+    const _thunkSync = memo(() => contThunkOf(thunk.sync));
+    const _thunkAsync = memo(() => contThunkOf(thunk.async));
     const _void = memo(() => contVoid());    
 
     return {
@@ -125,8 +125,8 @@ export const cont: ICont<$I> = (() => {
         of: contOf,
         ofMonad: contMonadOf,
         ofThunk: contThunkOf,
-        get syncThunk() { return _sync() },
-        get asyncThunk() { return _async() },
+        get thunkSync() { return _thunkSync() },
+        get thunkAsync() { return _thunkAsync() },
         get void() { return _void() },
     }    
 })();
