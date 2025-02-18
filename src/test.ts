@@ -1,11 +1,8 @@
-// import { cont } from "./cont/cont.js";
-// import { ContSync } from "./cont/contThunk.js";
-// import { ContVoid } from "./cont/contVoid.js";
-// import { id, pipe } from "./utils.js";
+// import { pipe, id, cont, ContSync, ContVoid } from "./index.js";
 
 // const sync = cont.sync;
 
-// const fibonacci = sync.memoize((n: bigint): ContSync<bigint> => {
+// const fibonacci = sync.memo((n: bigint): ContSync<bigint> => {
 //     if (n < 2)
 //         return sync.unit(1n);
 

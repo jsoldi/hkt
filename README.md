@@ -8,7 +8,41 @@ Lightweight higher-kinded types for TypeScript, defining basic type classes such
 npm install @jsoldi/hkt
 ```
 
-## Example
+## Usage
+
+Higher kinded types can be defined by extending from the `KRoot` interface:
+
+```typescript
+import { KRoot } from '@jsoldi/hkt';
+
+// Non higher-kinded Log type
+type Log<T> = [string[], T];
+
+// Higher-kinded Log type
+interface KLog extends KRoot {
+    readonly 0: unknown;
+    readonly body: Log<this[0]>;
+}
+```
+
+To pass arguments to a higher-kinded type, use the `$` operator:
+
+```typescript
+type NumberLog = $<KLog, number>; // Evaluates to `Log<number>`
+```
+
+Higher kinded types can be used to define type classes. For instance this is the `IMonadBase` definition, which is passed to the `monad` function to create an instance of `IMonad`:
+
+```typescript
+import { $ } from '@jsoldi/hkt';
+
+export interface IMonadBase<F> {
+    unit<A>(a: A): $<F, A>
+    bind<A, B>(fa: $<F, A>, f: (a: A) => $<F, B>): $<F, B>
+}
+```
+
+Putting it all together:
 
 ```typescript
 import { KRoot, monad, pipe, array } from '@jsoldi/hkt';
@@ -16,25 +50,13 @@ import { KRoot, monad, pipe, array } from '@jsoldi/hkt';
 // Non higher-kinded Log type
 type Log<T> = [string[], T];
 
-// Higher-kinded Log type. 
-// The `$` operator can be used to pass arguments. 
-// For instance, `$<KLog, number>` evaluates to `Log<number>`
+// Higher-kinded Log type
 interface KLog extends KRoot {
     readonly 0: unknown;
     readonly body: Log<this[0]>;
 }
 
 // Custom monad implementation using the `KLog` type. 
-// The `monad` function takes an `IMonadBase` object, 
-// where `IMonadBase` is defined as:
-//
-//  export interface IMonadBase<F> {
-//      unit<A>(a: A): $<F, A>
-//      bind<A, B>(fa: $<F, A>, f: (a: A) => $<F, B>): $<F, B>
-//  }
-//
-// In the defintion above the `$` operator is used to generate 
-// types by passing arguments to a higher kinded type.
 const logger = {
     ...monad<KLog>({
         unit: a => [[], a], 
@@ -43,7 +65,7 @@ const logger = {
             return [[...logA, ...logB], b]; // Concatenate logs
         },
     }),
-    log: <A>(log: string, a: A): Log<A> => [[log], a] // Utility function to add a log entry
+    log: <A>(log: string, a: A): Log<A> => [[log], a] // Add a log entry
 }
 
 // Normal fetch
@@ -67,8 +89,8 @@ function logFetchURL(url: string) {
 
 // `pipe` passes the first argument to the function composition of the rest
 const result = pipe(
-    // `sequence` evaluates each monad in the array and returns a single array monad 
-    logger.sequence([
+    // `sequence` takes an array of monads and returns a monad of an array    
+    array.sequence(logger)([
         logFetchURL('https://example/1'),
         logFetchURL('file:///localhost/1'),
         logFetchURL('https://example/2'),

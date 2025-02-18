@@ -3,7 +3,7 @@ import { memo } from "../core/utils.js";
 import { IFunctor } from "../classes/functor.js";
 import { IMonad, monad, trivial } from "../classes/monad.js";
 import { Left, Right, either } from "./either.js";
-import { KPromise, promise } from "./promise.js";
+import { KTask, task } from "./task.js";
 
 export type Thunk<T, F = $I> = Left<T> | Right<() => $<F, Thunk<T, F>>>;
 
@@ -46,7 +46,7 @@ export function thunkOf<F>(base: IThunkBase<F>): IThunkCore<F> {
 }
 
 export interface IThunk extends IThunkCore<$I> {
-    readonly async: IThunkCore<KPromise>
+    readonly async: IThunkCore<KTask>
     of<F>(base: IThunkBase<F>): IThunkCore<F>
 }
 
@@ -64,10 +64,10 @@ export const thunk = (() => {
     });
     
     const _async = memo(() => of({
-        ...promise,
-        run: async t => {
+        ...task,
+        run: t => async () => {
             while (t.right) 
-                t = await t.value();
+                t = await t.value()();
     
             return t.value;
         }

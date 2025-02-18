@@ -30,5 +30,6 @@ export * from './types/promise.js';
 export * from './types/reader.js';
 export * from './types/set.js';
 export * from './types/state.js';
+export * from './types/task.js';
 export * from './types/thunk.js';
 export * from './types/tuple.js';

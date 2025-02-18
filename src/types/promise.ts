@@ -1,11 +1,18 @@
 import { KRoot } from "../core/hkt.js";
 import { IMonad, monad } from "../classes/monad.js";
+import { AbortError } from "./task.js";
 
+/**
+ * @deprecated use `KTask` instead
+ */
 export interface KPromise extends KRoot {
     readonly 0: unknown
     readonly body: Promise<this[0]>
 }
 
+/**
+ * @deprecated use `ITask` instead
+ */
 export interface IPromise extends IMonad<KPromise> {
     delay: (ms: number) => Promise<void>
     all: <A>(fa: Promise<A>[]) => Promise<A[]>
@@ -17,13 +24,9 @@ export interface IPromise extends IMonad<KPromise> {
     finally: <A>(f: () => unknown) => (fa: Promise<A>) => Promise<A>
 }
 
-export class AbortError extends Error {
-    constructor(msg?: string) {
-        super(msg ?? 'Promise was aborted');
-        this.name = 'AbortError';
-    }
-}
-
+/**
+ * @deprecated use `task` instead
+ */
 export const promise: IPromise = (() => {
     const unit: <A>(a: A) => Promise<A> = a => Promise.resolve(a);
 

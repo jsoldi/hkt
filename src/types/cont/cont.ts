@@ -2,12 +2,12 @@ import { $I, $, KRoot, $3, $B2 } from "../../core/hkt.js";
 import { IMonad, monad } from "../../classes/monad.js";
 import { IMonadTrans, ITransformer, monadTrans } from "../../classes/transformer.js";
 import { Maybe, maybe } from "../../types/maybe.js";
-import { KPromise } from "../../types/promise.js";
 import { IThunkCore, thunk } from "../../types/thunk.js";
 import { memo, pipe } from "../../core/utils.js";
 import { contMonadOf, IContMonad } from "./contMonad.js";
 import { contThunkOf, IContThunk } from "./contThunk.js";
 import { contVoid, IContVoid } from "./contVoid.js";
+import { KTask } from "../task.js";
 
 export type Cont<T, M = $I> = <R>(resolve: (t: T) => $<M, R>) => $<M, R>;
 
@@ -29,7 +29,7 @@ export interface IContTrans<M> extends IMonadTrans<KContTrans, M> {
 }
 
 export interface IContCore<M> extends IMonad<KCont<M>>, ITransformer<KContTrans> {
-    memoize<A, B>(f: (a: A) => Cont<B, M>): (a: A) => Cont<B, M>
+    memo<A, B>(f: (a: A) => Cont<B, M>): (a: A) => Cont<B, M>
     until<A, B>(predicate: (a: A) => Maybe<B>): (fa: Cont<A, M>) => Cont<B, M>
     doWhile<A>(predicate: (a: A) => boolean): (fa: Cont<A, M>) => Cont<A, M>
     skip<A, B>(a: Cont<A, M>): (b: Cont<B, M>) => Cont<A, M>
@@ -41,7 +41,7 @@ export interface ICont<M> extends IContCore<M> {
     ofMonad<N>(m: IMonad<N>): IContMonad<N>
     ofThunk<F>(t: IThunkCore<F>): IContThunk<F>
     readonly sync: IContThunk<$I>
-    readonly async: IContThunk<KPromise>
+    readonly async: IContThunk<KTask>
     readonly void: IContVoid
 }
 
@@ -67,7 +67,7 @@ function contOf<M>(): IContCore<M> {
 
             const doWhile: I['doWhile'] = predicate => until(a => predicate(a) ? maybe.nothing : maybe.just(a));
 
-            const memoize = <A, B>(f: (a: A) => Cont<B, M>): ((a: A) => Cont<B, M>) => {
+            const _memo = <A, B>(f: (a: A) => Cont<B, M>): ((a: A) => Cont<B, M>) => {
                 const cache = new Map<A, B>();
 
                 return (a: A) => {
@@ -106,7 +106,7 @@ function contOf<M>(): IContCore<M> {
                 until,
                 doWhile,
                 skip,
-                memoize,
+                memo: _memo,
                 transform,
                 ...base
             }
@@ -130,3 +130,7 @@ export const cont: ICont<$I> = (() => {
         get void() { return _void() },
     }    
 })();
+
+export { IContMonad } from "./contMonad.js";
+export { IContThunk, ContSync, ContAsync } from "./contThunk.js";
+export { IContVoid, ContVoid } from "./contVoid.js";

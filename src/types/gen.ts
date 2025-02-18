@@ -7,12 +7,12 @@ import { Maybe } from "./maybe.js"
 import { KPromise, promise } from "./promise.js"
 
 /**
- * @deprecated use Async<T> instead
+ * @deprecated use `Async<T>` instead
  */
 export type Gen<T> = AsyncGenerator<T, void, void>
 
 /**
- * @deprecated use KAsync instead
+ * @deprecated use `KAsync` instead
  */
 export interface KGen extends KRoot {
     readonly 0: unknown
@@ -23,7 +23,7 @@ type Awaitable<T> = T | Promise<T>
 type GenLike<T> = (() => GenLike<T>) | T[] | Promise<T>
 
 /**
- * @deprecated use IAsync instead
+ * @deprecated use `IAsync` instead
  */
 export interface IGen extends IMonadPlus<KGen>, IFold<KGen, KPromise> {
     readonly scalar: IMonad<KPromise>
@@ -46,6 +46,9 @@ export interface IGen extends IMonadPlus<KGen>, IFold<KGen, KPromise> {
     flatMapFrom: <A, B>(f: (a: A) => GenLike<B>) => (fa: Gen<A>) => Gen<B>
 }
 
+/**
+ * @deprecated use `async` instead
+ */
 export const gen: IGen = (() => {
     async function* unit<T>(a: T): Gen<T> {
         yield a

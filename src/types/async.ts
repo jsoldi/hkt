@@ -5,14 +5,12 @@ import { IMonadPlus, monadPlus } from "../classes/monadPlus.js"
 import { monoid } from "../classes/monoid.js"
 import { IUnfold, unfold } from "../classes/unfold.js"
 import { Maybe } from "./maybe.js"
-import { KPromise, promise } from "./promise.js"
+import { KTask, Task, task, TaskLike } from "./task.js"
 
 export type AsyncGen<T> = AsyncGenerator<T, void, void>
 export type SyncGen<T> = Generator<T, void, void>
-
 export type Async<T> = () => AsyncGen<T>
 export type Sync<T> = () => SyncGen<T>
-
 export type Awaitable<T> = T | Promise<T>
 
 export type AsyncLike<T, A extends any[] = []> =
@@ -29,19 +27,19 @@ export interface KAsync extends KRoot {
     readonly body: Async<this[0]>
 }
 
-export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise>, IUnfold<KAsync, KPromise> {
-    readonly scalar: IMonad<KPromise>
+export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KTask>, IUnfold<KAsync, KTask> {
+    readonly scalar: IMonad<KTask>
     // These tell typescript to preserve the generic type of the function
-    fromFun<T, A extends any[]>(asyncLike: (...a: A) => SyncGen<T>): (...args: A) => Async<T>
-    fromFun<T, A extends any[]>(asyncLike: (...a: A) => AsyncGen<T>): (...args: A) => Async<T>
-    fromFun<T, A extends any[]>(asyncLike: (...a: A) => AsyncLike<T>): (...args: A) => Async<T>
-    fromFun<T, A extends any[]>(asyncLike: AsyncLike<T, A>): (...args: A) => Async<T>
+    fun<T, A extends any[]>(asyncLike: (...a: A) => SyncGen<T>): (...args: A) => Async<T>
+    fun<T, A extends any[]>(asyncLike: (...a: A) => AsyncGen<T>): (...args: A) => Async<T>
+    fun<T, A extends any[]>(asyncLike: (...a: A) => AsyncLike<T>): (...args: A) => Async<T>
+    fun<T, A extends any[]>(asyncLike: AsyncLike<T, A>): (...args: A) => Async<T>
     from<T, A extends any[]>(asyncLike: AsyncLike<T, A>, ...args: A): Async<T>
     bind<A, B>(fa: Async<A>, f: AsyncLike<B, [A]>): Async<B>
     flatMap<A, B>(f: AsyncLike<B, [A]>): (fa: Async<A>) => Async<B>
-    flat<T>(gen: Async<Async<T>>): Async<T>
+    unfold<A, B>(alg: (b: B) => TaskLike<Maybe<[A, B]>, [B]>): (b: B) => Async<A>
     take(n: number): <T>(fa: Async<T>) => Async<T>
-    toArray<T>(fa: Async<T>): Promise<T[]>
+    toArray<T>(fa: Async<T>): Task<T[]>
     filter<T, S extends T>(pred: (a: T) => a is S): (fa: Async<T>) => Async<S>
     filter<T>(pred: (a: T) => unknown): (fa: Async<T>) => Async<T>
     takeWhile<T>(pred: (a: T) => unknown): (fa: Async<T>) => Async<T>
@@ -55,7 +53,7 @@ export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KPromise>, IUn
 export const async: IAsync = (() => {
     type I = IAsync;
 
-    const fromFun = <T, A extends any[]>(asyncLike: AsyncLike<T, A>) => (...args: A): Async<T> => async function* () {
+    const fun = <T, A extends any[]>(asyncLike: AsyncLike<T, A>) => (...args: A): Async<T> => async function* () {
         const getGen = async <A extends any[]>(al: SyncGen<T> | AsyncGen<T> | AsyncLike<T, A>, ...as: A): Promise<T[] | AsyncGen<T> | SyncGen<T>> => {
             return await (typeof al !== 'function' ? al : getGen(al(...as)));
         }
@@ -68,7 +66,7 @@ export const async: IAsync = (() => {
 
     const bind: I['bind'] = (fa, f) => async function* () {
         for await (const a of fa()) {
-            for await (const b of fromFun(f)(a)())
+            for await (const b of fun(f)(a)())
                 yield b;
         }
     }
@@ -81,7 +79,7 @@ export const async: IAsync = (() => {
     }
 
     const from = <T, A extends any[]>(asyncLike: AsyncLike<T, A>, ...args: A): Async<T> => async function* () {
-        for await (const a of fromFun(asyncLike)(...args)())
+        for await (const a of fun(asyncLike)(...args)())
             yield a;
     }
 
@@ -99,7 +97,7 @@ export const async: IAsync = (() => {
         }
     }
 
-    const toArray: I['toArray'] = async <T>(fa: Async<T>) => {
+    const toArray: I['toArray'] = <T>(fa: Async<T>) => async () => {
         const result: T[] = [];
 
         for await (const a of fa())
@@ -167,7 +165,7 @@ export const async: IAsync = (() => {
             yield chunk;
     }
 
-    const foldl: I['foldl'] = f => init => async fa => {
+    const foldl: I['foldl'] = f => init => fa => async () => {
         // Can't directly modify init because it'd modify it for all passed generators
         let acc = init;
 
@@ -184,14 +182,14 @@ export const async: IAsync = (() => {
         yield* fb();
     }
 
-    const _unfold = <A, B>(f: (b: B) => Awaitable<Maybe<[A, B]>>) => (b: B) => async function* () {
-        let next = await f(b);
+    const _unfold = <A, B>(f: TaskLike<Maybe<[A, B]>, [B]>) => (b: B) => async function* () {
+        let next = await task.fun(f)(b)();
 
         while (next.right) {
             let a: A;
             [a, b] = next.value;
             yield a;
-            next = await f(b);
+            next = await task.fun(f)(b)();
         }
     };
 
@@ -209,15 +207,15 @@ export const async: IAsync = (() => {
         }
     }
 
-    const scalar = promise;
+    const scalar = task;
 
     return {
-        ...fold<KAsync, KPromise>({
+        ...fold<KAsync, KTask>({
             map,
             foldl,
             scalar
         }),
-        ...unfold<KAsync, KPromise>({
+        ...unfold<KAsync, KTask>({
             map,
             unfold: _unfold,
             scalar
@@ -227,6 +225,7 @@ export const async: IAsync = (() => {
                 map,
                 unit,
                 bind,
+                flatMap,
             }),
             ...monoid<KAsync>({
                 empty,
@@ -235,7 +234,7 @@ export const async: IAsync = (() => {
         }),
         scalar,
         flatMap,
-        fromFun,
+        fun: fun,
         from, // override MonadPlus implementation
         take,
         flat,

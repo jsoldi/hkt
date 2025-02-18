@@ -1,9 +1,9 @@
 import { $, $I } from "../../core/hkt.js";
-import { KPromise } from "../../types/promise.js";
 import { KThunk, IThunkCore } from "../../types/thunk.js";
 import { pipe } from "../../core/utils.js";
 import { IContMonad } from "./contMonad.js";
 import { cont, Cont } from "./cont.js";
+import { KTask } from "../task.js";
 
 export interface IContThunk<F> extends IContMonad<KThunk<F>> {
     lazy<T>(f: () => $<F, Cont<T, KThunk<F>>>): Cont<T, KThunk<F>>
@@ -11,7 +11,7 @@ export interface IContThunk<F> extends IContMonad<KThunk<F>> {
 }
 
 export type ContSync<T> = Cont<T, KThunk<$I>>;
-export type ContAsync<T> = Cont<T, KThunk<KPromise>>;
+export type ContAsync<T> = Cont<T, KThunk<KTask>>;
 
 export function contThunkOf<F>(m: IThunkCore<F>): IContThunk<F> {
     type I = IContThunk<F>;
