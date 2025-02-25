@@ -25,8 +25,8 @@ type GenLike<T> = (() => GenLike<T>) | T[] | Promise<T>
 /**
  * @deprecated use `IAsync` instead
  */
-export interface IGen extends IMonadPlus<KGen>, IFold<KGen, KPromise> {
-    readonly scalar: IMonad<KPromise>
+export interface IGen extends IMonadPlus<KGen>/*, IFold<KGen, KPromise>*/ {
+    // readonly scalar: IMonad<KPromise>
     from: <T>(genlike: GenLike<T>) => Gen<T>
     flat: <T>(gen: Gen<Gen<T>>) => Gen<T>
     take: (n: number) => <T>(fa: Gen<T>) => Gen<T>
@@ -211,12 +211,12 @@ export const gen: IGen = (() => {
     });
 
     return {
-        ...fold<KGen, KPromise>({
-            map,
-            foldl,
-            scalar
-        }),
-        scalar,
+        // ...fold<KGen, KPromise>({
+        //     map,
+        //     foldl,
+        //     scalar
+        // }),
+        // scalar,
         ..._monadPlus,
         from, // override MonadPlus implementation
         take,

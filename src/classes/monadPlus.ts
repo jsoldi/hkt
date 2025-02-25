@@ -1,5 +1,5 @@
 import { alternative, IAlternative } from "./alternative.js";
-import { $ } from "../core/hkt.js";
+import { $, $K1 } from "../core/hkt.js";
 import { IMonad, IMonadBase, monad } from "./monad.js";
 import { IMonoidBase, monoid } from "./monoid.js";
 import { TypeClassArg } from "./utilities.js";
@@ -12,7 +12,9 @@ export interface IMonadPlus<F> extends IMonad<F>, IAlternative<F> {
 
 const is_monadPlus = Symbol("is_monadPlus");
 
-export function monadPlus<F>(base: TypeClassArg<IMonadBase<F> & IMonoidBase<F>, IMonadPlus<F>, typeof is_monadPlus>): IMonadPlus<F> {   
+export type MonadPlusArg<F> = TypeClassArg<IMonadBase<F> & IMonoidBase<F>, IMonadPlus<F>, typeof is_monadPlus>;
+
+export function _monadPlus<F>(base: MonadPlusArg<F>): IMonadPlus<F> {   
     if (is_monadPlus in base) 
         return base;
 
@@ -38,3 +40,26 @@ export function monadPlus<F>(base: TypeClassArg<IMonadBase<F> & IMonoidBase<F>, 
         }
     );
 }
+
+export interface IMonadPlusFactory {
+    <F>(base: MonadPlusArg<F>): IMonadPlus<F>;
+    /** Type T **must** have a single possible value like `null` or `undefined`. */
+    const<const T>(t: T): IMonad<$K1<T>>;
+    readonly void: IMonad<$K1<void>>;
+    readonly null: IMonad<$K1<null>>;
+}
+
+_monadPlus.const = <T>(t: T) => _monadPlus<$K1<T>>({
+    unit: () => t,
+    bind: () => t,
+    map: () => t,
+    flatMap: () => () => t,
+    flat: () => t,
+    empty: () => t,
+    append: () => t,
+});
+
+_monadPlus.void = _monadPlus.const<void>(undefined);
+_monadPlus.null = _monadPlus.const(null);
+
+export const monadPlus: IMonadPlusFactory = _monadPlus;

@@ -112,7 +112,7 @@ console.log(result);
 ### Using continuations to handle callbacks and avoid stack overflow 
 
 ```typescript
-import { pipe, id, cont, ContSync, ContVoid } from '@jsoldi/hkt';
+import { pipe, cont, ContSync, ContVoid } from '@jsoldi/hkt';
 
 // Stack-safe trampoline combining continuations and thunks
 const sync = cont.thunkSync;
@@ -120,7 +120,7 @@ const sync = cont.thunkSync;
 // Fibonacci sequence using trampoline and memoization
 const fibonacci = sync.memo((n: bigint): ContSync<bigint> => {
     if (n < 2)
-        return sync.unit(1n);
+        return sync.unit(n);
 
     // Like `pipe` but specialized to monads
     return sync.pipe(
@@ -145,20 +145,16 @@ pipe(
         prompt('Enter position in Fibonacci sequence or "exit": '),
         input => {
             try {
-                return input === 'exit' ? false : pipe(
-                    input, 
-                    BigInt, 
-                    fibonacci, 
-                    sync.run,
-                    n => console.log('Result', n, '\n'),
-                    _ => true
-                );
+                if (input === 'exit') 
+                    return true;
+
+                const result = pipe(input, BigInt, fibonacci, sync.run);
+                console.log('Result', result, '\n');
             } catch (e) {
                 console.log('Invalid number\n');
-                return true;
             }
         }
     ),
-    cont.void.doWhile(id) // Loop while true
+    cont.void.doWhile(exit => !exit) // Loop until exit is true
 )(_ => process.exit(0));
 ```

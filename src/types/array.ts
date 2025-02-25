@@ -161,7 +161,7 @@ export const array: IArray = (() => {
         ..._foldable,
         ...unfoldable<KArray>({
             map,
-            unfold: _unfold ,
+            unfold: _unfold,
         }),
         ..._monadPlus, 
         first,

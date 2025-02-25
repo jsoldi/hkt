@@ -1,4 +1,4 @@
-import { ITypeClass, $, $K } from "../core/hkt.js";
+import { ITypeClass, $, $K, $K1, KRoot } from "../core/hkt.js";
 import { TypeClassArg } from "./utilities.js";
 import { curry, pipe } from "../core/utils.js";
 
@@ -18,16 +18,11 @@ export interface IMonoid<F> extends IMonoidBase<F> {
     dual(): IMonoid<F>
 }
 
-export function monoidFor<T>(empty: T, append: (a: T, b: T) => T) {
-    return monoid<$<$K, T>>({
-        empty: () => empty,
-        append: (a, b) => append(a, b)
-    });
-}
-
 const is_monoid = Symbol("is_monoid");
 
-export function monoid<F>(base: TypeClassArg<IMonoidBase<F>, IMonoid<F>, typeof is_monoid>): IMonoid<F> {
+export type MonoidArg<F> = TypeClassArg<IMonoidBase<F>, IMonoid<F>, typeof is_monoid>;
+
+function _monoid<F>(base: MonoidArg<F>): IMonoid<F> {
     if (is_monoid in base)
         return base;
 
@@ -54,7 +49,7 @@ export function monoid<F>(base: TypeClassArg<IMonoidBase<F>, IMonoid<F>, typeof 
                 return tail.reduce((acc, a) => base.append(base.append(acc, separator), a), head);
             };
 
-            const dual = () => monoid({
+            const dual = () => _monoid({
                 empty: base.empty,
                 append: (a, b) => base.append(b, a),
             });
@@ -69,3 +64,15 @@ export function monoid<F>(base: TypeClassArg<IMonoidBase<F>, IMonoid<F>, typeof 
         }
     );
 }
+
+export interface IMonoidFactory {
+    <F>(base: MonoidArg<F>): IMonoid<F>;
+    concrete<T>(empty: T, append: (a: T, b: T) => T): IMonoid<$K1<T>>;
+}
+
+_monoid.concrete = <T>(empty: T, append: (a: T, b: T) => T) => _monoid<$K1<T>>({
+    empty: () => empty,
+    append: (a, b) => append(a, b)
+});
+
+export const monoid: IMonoidFactory = _monoid;

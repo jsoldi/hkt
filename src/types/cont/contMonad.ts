@@ -1,27 +1,26 @@
-import { $ } from "../../core/hkt.js";
-import { pipe } from "../../core/utils.js";
-import { IMonad } from "../../classes/monad.js";
-import { cont, Cont, IContCore } from "./cont.js";
+import { IMonad } from "../../classes/monad.js"
+import { $K1 } from "../../core/hkt.js"
+import { pipe } from "../../core/utils.js"
+import { ICont, Cont, contCore } from "./contCore.js"
 
-export interface IContMonad<M> extends IContCore<M> { 
-    lift<A>(fa: $<M, A>): Cont<A, M>
-    drop<A>(ca: Cont<A, M>): $<M, A>
+export interface IContMonad<M> extends ICont<M> {
+    readonly contMonad: IMonad<M>
+    toVoid<A>(ca: Cont<A, M>): Cont<A, $K1<void>>
 }
 
-export function contMonadOf<M>(m: IMonad<M>): IContMonad<M> {
+export function contMonad<M>(m: IMonad<M>): IContMonad<M> {
     type I = IContMonad<M>;
 
     return pipe(
-        cont.of<M>(),
+        contCore<M>(),
         base => {
-            const lift: I['lift'] = fa => resolve => m.bind(fa, resolve);
-            const drop: I['drop'] = ca => ca(m.unit);
-
+            const toVoid: I['toVoid'] = base.mapCont<M, $K1<void>>(m.unit, _ => undefined);
+    
             return {
                 ...base,
-                lift,
-                drop,
+                contMonad: m,
+                toVoid
             }
-        }
+        }   
     );
 }

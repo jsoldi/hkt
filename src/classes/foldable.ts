@@ -1,7 +1,7 @@
 import { IFoldBase, IFold, fold } from "./fold.js";
 import { IFunctorBase } from "./functor.js";
 import { $, $I, $B2, $Q2 } from "../core/hkt.js";
-import { IMonadBase, ITrivial, monad, trivial } from "./monad.js";
+import { IMonadBase, ITrivial, monad } from "./monad.js";
 import { TypeClassArg } from "./utilities.js";
 import { chain, pipe } from "../core/utils.js";
 
@@ -26,10 +26,10 @@ export function foldable<F>(base: TypeClassArg<IFoldableBase<F>, IFoldable<F>, t
         base,
         base => ({
             ...fold<F, $I>({
-                scalar: trivial,
+                scalar: monad.trivial,
                 ...base,
             }),
-            scalar: trivial,
+            scalar: monad.trivial,
             ...base
         }),
         base => {        

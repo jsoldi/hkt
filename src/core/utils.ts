@@ -54,16 +54,38 @@ export const flip = <A, B, C>(f: (a: A) =>(b: B) => C) => (b: B) => (a: A): C =>
 export const spread = <A, B>(f: (a: A[]) => B) => (...a: A[]): B => f(a);
 export const unspread = <A, B>(f: (...a: A[]) => B) => (a: A[]): B => f(...a);
 
-export const memo = <T>(f: () => T) => {
-    let value: T;
-    let done = false;
+const deepCache = <A extends any[], B>() => {
+    type DeepCache<B> = {
+        leaf: undefined | { value: B },
+        node: Map<any, DeepCache<B>>
+    }
+    
+    const map: DeepCache<B> = { leaf: undefined, node: new Map() };
 
-    return () => {
-        if (!done) {
-            value = f();
-            done = true;
+    return (keys: A, getValue: () => B) => {
+        let item: DeepCache<B> = map;
+        let miss = false;
+
+        for (const key of keys) {
+            let child = miss ? undefined : item.node.get(key);
+
+            if (child === undefined) {
+                miss = true;
+                child = { leaf: undefined, node: new Map() };
+                item.node.set(key, child);
+            }
+
+            item = child;
         }
 
-        return value;
-    }
+        if (item.leaf === undefined) 
+            item.leaf = { value: getValue() };
+
+        return item.leaf.value;
+    }        
+}
+
+export const memo = <A extends any[], B>(f: (...a: A) => B) => {
+    const cache = deepCache<A, B>();
+    return (...a: A): B => cache(a, () => f(...a));
 }

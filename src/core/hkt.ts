@@ -81,6 +81,7 @@ export type $4<K, A, B, C> = $<$<$<K, A>, B>, C>
 export type $5<K, A, B, C, D> = $<$<$<$<K, A>, B>, C>, D>
 export type $N<T> = T extends readonly [...infer L, infer R] ? $<$N<L>, R> : $I
 
+// TODO: Move these to classes utilities and export them
 export interface ITypeClass<F> {
     readonly _classArg?: (f: F) => F // when F is * -> *
 }

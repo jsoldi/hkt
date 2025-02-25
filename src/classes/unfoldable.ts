@@ -1,7 +1,7 @@
 import { IFunctorBase } from "./functor.js";
 import { $, $I } from "../core/hkt.js";
 import { Maybe } from "../types/maybe.js";
-import { ITrivial, trivial } from "./monad.js";
+import { ITrivial, monad } from "./monad.js";
 import { IUnfold, unfold } from "./unfold.js";
 import { TypeClassArg } from "./utilities.js";
 
@@ -22,9 +22,9 @@ export function unfoldable<F>(base: TypeClassArg<IUnfoldableBase<F>, IUnfoldable
     return {
         ...{ [is_unfoldable]: true },
         ...unfold<F, $I>({
-            scalar: trivial,
+            scalar: monad.trivial,
             ...base
         }),
-        scalar: trivial,
+        scalar: monad.trivial,
     };
 }

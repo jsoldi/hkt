@@ -5,6 +5,7 @@ import { ITransformer, monadTrans } from "./transformer.js";
 import { TypeClassArg } from "./utilities.js";
 import { id } from "../core/utils.js";
 import { pipe as _pipe } from "../core/utils.js";
+import { Free } from "../types/free/functorFree.js";
 
 export interface IMonadBase<F> {
     unit<A>(a: A): $<F, A>
@@ -13,6 +14,7 @@ export interface IMonadBase<F> {
 
 export interface IMonad<F> extends IMonadBase<F>, IApplicative<F> {
     flatMap<A, B>(f: (a: A) => $<F, B>): (fa: $<F, A>) => $<F, B>
+    runFree<A>(t: Free<A, F>): $<F, A>
     flat<A>(ffa: $<F, $<F, A>>): $<F, A>
     fish<A>(): (...a: [A]) => $<F, A>
     fish<A, B>(f: (...a: [A]) => $<F, B>): (...a: [A]) => $<F, B>
@@ -57,7 +59,9 @@ export interface IMonad<F> extends IMonadBase<F>, IApplicative<F> {
 
 const is_monad = Symbol("is_monad");
 
-export function monad<F>(base: TypeClassArg<IMonadBase<F>, IMonad<F>, typeof is_monad>): IMonad<F> {
+export type MonadArg<F> = TypeClassArg<IMonadBase<F>, IMonad<F>, typeof is_monad>;
+
+export function _monad<F>(base: MonadArg<F>): IMonad<F> {
     if (is_monad in base) 
         return base;
 
@@ -89,6 +93,14 @@ export function monad<F>(base: TypeClassArg<IMonadBase<F>, IMonad<F>, typeof is_
 
             const _chain = (...fs: ((...s: any[]) => $<F, any>)[]) => flatMap(_kleisli(...fs));
 
+            const runFree = <A>(t: Free<A, F>): $<F, A> => {
+                if(t.right) {
+                    return base.bind(t.value, runFree);
+                } else {
+                    return base.unit(t.value);
+                }
+            }
+
             return {
                 [is_monad]: true,
                 flatMap,
@@ -96,6 +108,7 @@ export function monad<F>(base: TypeClassArg<IMonadBase<F>, IMonad<F>, typeof is_
                 fish: _kleisli,
                 chain: _chain,
                 pipe: _pipe,
+                runFree,
                 ...base
             };
         }
@@ -104,10 +117,18 @@ export function monad<F>(base: TypeClassArg<IMonadBase<F>, IMonad<F>, typeof is_
 
 export type ITrivial = IMonad<$I> & ITransformer<$I>;
 
-export const trivial: ITrivial = {
-    ...monad<$I>({
+export interface IMonadFactory {
+    <F>(base: MonadArg<F>): IMonad<F>;
+    readonly trivial: ITrivial;
+}
+
+_monad.trivial = {
+    ..._monad<$I>({
         unit: a => a,
         bind: (fa, f) => f(fa),
+        map: (fa, f) => f(fa),
     }),
     transform: <M>(inner: IMonad<M>) => monadTrans<$I, M>({ ...inner, lift: id, wrap: inner.unit })
 }
+
+export const monad: IMonadFactory = _monad;

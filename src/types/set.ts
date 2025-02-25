@@ -1,5 +1,4 @@
 import { KRoot } from "../core/hkt.js";
-import { ITrivial, trivial } from "../classes/monad.js";
 import { IMonadPlus, monadPlus } from "../classes/monadPlus.js";
 
 interface KSet extends KRoot {
@@ -8,7 +7,6 @@ interface KSet extends KRoot {
 }
 
 interface ISet extends IMonadPlus<KSet> {
-    readonly scalar: ITrivial;
     union: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     intersection: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     difference: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
@@ -29,10 +27,8 @@ export const set: ISet = (() => {
     const unit = <A>(a: A): Set<A> => new Set([a]);
     const bind = <A, B>(fa: Set<A>, f: (a: A) => Set<B>): Set<B> => new Set([...fa].flatMap(a => [...f(a)]));
     const map = <A, B>(fa: Set<A>, f: (a: A) => B): Set<B> => new Set([...fa].map(f));
-    const scalar = trivial;
 
     return {
-        scalar,
         ...monadPlus<KSet>({
             unit,
             bind,

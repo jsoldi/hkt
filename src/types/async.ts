@@ -213,12 +213,12 @@ export const async: IAsync = (() => {
         ...fold<KAsync, KTask>({
             map,
             foldl,
-            scalar
+            scalar: scalar
         }),
         ...unfold<KAsync, KTask>({
             map,
             unfold: _unfold,
-            scalar
+            scalar: scalar
         }),
         ...monadPlus<KAsync>({
             ...monad<KAsync>({
@@ -232,7 +232,7 @@ export const async: IAsync = (() => {
                 append
             }),
         }),
-        scalar,
+        scalar: scalar,
         flatMap,
         fun: fun,
         from, // override MonadPlus implementation

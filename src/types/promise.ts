@@ -1,19 +1,13 @@
 import { KRoot } from "../core/hkt.js";
-import { IMonad, monad } from "../classes/monad.js";
 import { AbortError } from "./task.js";
+import { applicative, IApplicative } from "../classes/applicative.js";
 
-/**
- * @deprecated use `KTask` instead
- */
 export interface KPromise extends KRoot {
     readonly 0: unknown
     readonly body: Promise<this[0]>
 }
 
-/**
- * @deprecated use `ITask` instead
- */
-export interface IPromise extends IMonad<KPromise> {
+export interface IPromise extends IApplicative<KPromise> {
     delay: (ms: number) => Promise<void>
     all: <A>(fa: Promise<A>[]) => Promise<A[]>
     race: <A>(fa: Promise<A>[]) => Promise<A>
@@ -24,14 +18,11 @@ export interface IPromise extends IMonad<KPromise> {
     finally: <A>(f: () => unknown) => (fa: Promise<A>) => Promise<A>
 }
 
-/**
- * @deprecated use `task` instead
- */
 export const promise: IPromise = (() => {
     const unit: <A>(a: A) => Promise<A> = a => Promise.resolve(a);
 
-    const bind: <A, B>(fa: Promise<A>, f: (a: A) => Promise<B>) => Promise<B> = (fa, f) => 
-        fa.then(f); // this will flatten the promise if nested so just avoid nesting promises
+    const apply: <A, B>(fab: Promise<(a: A) => B>) => (fa: Promise<A>) => Promise<B> = fab => fa =>
+        fab.then(fa.then);
 
     const delay: (ms: number) => Promise<void> = ms => new Promise(resolve => setTimeout(resolve, ms));
     const all: <A>(fa: Promise<A>[]) => Promise<A[]> = fa => Promise.all(fa);
@@ -62,10 +53,10 @@ export const promise: IPromise = (() => {
         f => fa => fa.finally(f);
 
     return {
-        ...monad<KPromise>({ 
+        ...applicative<KPromise>({ 
             map: (fa, f) => fa.then(f),
             unit,
-            bind,
+            apply,
         }),
         delay,
         all,
