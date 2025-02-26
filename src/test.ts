@@ -1,52 +1,168 @@
-// import { $, KType } from "./core/hkt.js";
+// import { monad } from "./classes/monad.js";
+// import { monadPlus } from "./classes/monadPlus.js";
+// import { KRoot, KTypeOf } from "./core/hkt.js";
+// import { id } from "./core/utils.js";
 // import { cont } from "./types/cont/cont.js";
-// import { lazy } from "./types/lazy.js";
+// import { free, Free } from "./types/free/free.js";
+// import { Lazy, lazy } from "./types/lazy.js";
 
-// // Stack-safe trampoline combining continuations and thunks
-// const sync = cont.trampoline;
-// type ContSync<T> = $<KType<typeof sync>, T>;
-// //const sync = cont.thunkSync;
+// type Parser<T> = (input: string) => [T, string] | null;
 
-// // Fibonacci sequence using trampoline and memoization
-// const fibonacci = sync.memo((n: bigint): ContSync<bigint> => {
-//     if (n < 2)
-//         return sync.unit(n);
+// interface KParser extends KRoot {
+//     readonly 0: unknown
+//     readonly body: Parser<this[0]>
+// }
 
-//     // Like `pipe` but specialized to monads
-//     return sync.pipe(
-//         sync.suspend(() => fibonacci(n - 1n)),
-//         _ => sync.suspend(() => fibonacci(n - 2n)),
-//         (m1, m2) => sync.unit(m1 + m2)
-//     );
-// });
+// const parser = (() => {
+//     const unit = <A>(a: A): Parser<A> => input => [a, input];
 
-// const tele = sync.run(fibonacci(20000n))();
-// console.log(tele);
+//     const lazy = <A>(a: Lazy<Parser<A>>): Parser<A> => input => a()(input);
 
-// // // Prompt function as a void returning continuation
-// // const prompt = (message: string): ContVoid<string> => resolve => {
-// //     console.log(message);
+//     const bind = <A, B>(bp: Parser<A>, fb: (a: A) => Parser<B>): Parser<B> => (input: string) => {
+//         const pair = bp(input);
+//         return pair === null ? null : fb(pair[0])(pair[1]);
+//     }
 
-// //     process.stdin.addListener("data", function listen(data) {
-// //         process.stdin.removeListener("data", listen);
-// //         resolve(data.toString().trim());
-// //     });
-// // };
+//     const map = <A, B>(mp: Parser<A>, fm: (a: A) => B): Parser<B> => 
+//         bind(mp, a => unit(fm(a)));
 
-// // pipe(
-// //     cont.void.map(
-// //         prompt('Enter position in Fibonacci sequence or "exit": '),
-// //         input => {
-// //             try {
-// //                 if (input === 'exit') 
-// //                     return true;
+//     const empty = <A>(): Parser<A> => _ => null;
 
-// //                 const result = pipe(input, BigInt, fibonacci, sync.run);
-// //                 console.log('Result', result, '\n');
-// //             } catch (e) {
-// //                 console.log('Invalid number\n');
-// //             }
-// //         }
-// //     ),
-// //     cont.void.doWhile(exit => !exit) // Loop until exit is true
-// // )(_ => process.exit(0));
+//     const append = <A>(p1: Parser<A>, p2: Parser<A>): Parser<A> => (input: string) => {
+//         return p1(input) ?? p2(input);
+//     }
+
+//     const regex = (re: RegExp): Parser<string> => (input: string) => {
+//         const match = input.match(re);
+//         return match === null ? null : [match[0], input.slice(match[0].length)];
+//     }
+
+//     // const runFree = <A>(fp: Free<A, KParser>): Parser<A> => {
+//     //     if (fp.right) {
+//     //         return bind(fp.value, runFree);
+//     //     } else {
+//     //         return unit(fp.value);
+//     //     }
+//     // }
+
+//     const runFree = <A>(fp: Free<A, KParser>): Parser<A> => (input: string) => {
+//         console.log('runFree', fp);
+//         let current = fp;
+
+//         while (current.right) {
+//             const pair = current.value(input);
+            
+//             if (pair === null) 
+//                 return null;
+
+//             current = pair[0];
+//             input = pair[1];
+//         }
+
+//         return [current.value, input];
+//     }
+
+//     // const some3 = <A>(bp: Parser<A>): Parser<ConsList<Parser<A>>> => {
+//     //     return bind(bp, a => {
+
+//     //         //const result = unit(list.cons())
+
+//     //         const rekt = map(append(some3(bp), unit(list.empty())), as => list.cons(unit(a), as));
+//     //     });
+//     // }
+
+//     const some = <A>(bp: Parser<A>): Parser<A[]> => {
+//         return bind(bp, a => map(append(some(bp), unit([])), as => [a, ...as]));
+//     }
+
+//     //const someThunk = <A>
+
+//     // const some = <A>(bp: Parser<A>): Parser<A[]> => {
+//     //     function fb(a: A): Parser<A[]> {    
+//     //         return (input: string) => { // 3
+//     //             const pair = some_v(input) ?? [[], input]; // 4 -> 1
+//     //             return pair === null ? null : [[a, ...pair[0]], pair[1]];
+//     //         }
+//     //     };
+
+//     //     function some_v(input: string): [A[], string] | null { // 1
+//     //         const pair = bp(input);
+//     //         return pair === null ? null : fb(pair[0])(pair[1]); // 2
+//     //     };
+
+//     //     return some_v; // 0
+//     // }
+
+//     // return { some };
+
+//     return {
+//         ...monadPlus<KParser>({ unit, bind, empty, append }),
+//         runFree,
+//         some,
+//         regex,
+//         lazy
+//     }
+// })();
+
+// const freeParser = free.ofMonad(parser);
+// const sync = cont.ofMonadFree(freeParser);
+// type Sync<A> = KTypeOf<typeof sync, A>;
+
+// const someme = <A>(p: Parser<A>): Parser<A[]> => {
+//     return input => {
+//         const first = p(input);
+
+//         if (first === null) 
+//             return null;
+
+//         const input2 = first[1];
+//         const other = someme(p);
+//         const next1 = other(input2);
+//         const second = next1 !== null ? next1 : [[], input2] as [A[], string];
+//         return second === null ? null : [[first[0], ...second[0]], second[1]];
+//     }
+// }
+
+// const tramp = cont.trampoline;
+// type Tramp<A> = KTypeOf<typeof tramp, A>;
+// // const lols: Cont<[A[], string] | null, KFree<KLazy>>
+// // type Tramp<A> = <R>(resolve: (t: A) => Free<R, KLazy>) => Free<R, KLazy>
+
+// const shite = <A>(p: Parser<A>, input: string): Tramp<[A[], string] | null> => {
+//     const first = p(input);
+
+//     if (first === null) 
+//         return tramp.unit(null);
+
+//     const input2 = first[1];
+//     const next1Cont = tramp.suspend(() => shite(p, input2));
+
+//     return tramp.map(
+//         next1Cont,
+//         next1 => {
+//             const second = next1 !== null ? next1 : [[], input2] as [A[], string];
+//             return second === null ? null : [[first[0], ...second[0]], second[1]];
+//         }
+//     )
+// }
+
+// const someme2 = <A>(p: Parser<A>): Parser<A[]> => {
+//     return input => {
+//         const lel = shite(p, input);
+//         return tramp.drop(lel)();
+//     };
+// }
+
+// let digit = 0;
+// const nextDigit = () => (digit++ % 10).toString();
+// const digits = Array.from({ length: 10000 }, nextDigit).join('');
+
+// const test = someme2(parser.regex(/^\d/));
+// const result = test(digits + 'rest');
+
+// // const test = some(sync.lift(() => parser.regex(/^\d/)));
+// // const result = sync.drop(test)()(digits + 'rest');
+
+// console.log(result);
+
+// //---------------------------------------------------------------------------------------------------------------------------------------------

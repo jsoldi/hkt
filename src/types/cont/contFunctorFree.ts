@@ -3,13 +3,15 @@ import { pipe } from "../../core/utils.js";
 import { either } from "../either.js";
 import { KFree, Free, IFunctorFree } from "../free/functorFree.js";
 import { Cont, ICont } from "./contCore.js";
-import { contMonad } from "./contMonad.js";
+import { contMonad, IContMonad } from "./contMonad.js";
 
-export interface IContFunctorFree<F> extends ICont<KFree<F>> {
+export type ContFree<A, F> = Cont<A, KFree<F>>
+
+export interface IContFunctorFree<F> extends IContMonad<KFree<F>> {
     readonly contMonad: IFunctorFree<F>
-    suspend<A>(f: $<F, Cont<A, KFree<F>>>): Cont<A, KFree<F>>
-    lift<A>(lfa: $<F, A>): Cont<A, KFree<F>>
-    mapThunk<G>(transform: <R>(gt: $<G, Free<Free<R, F>, G>>) => $<F, Free<Free<R, F>, G>>): <A>(ag: Cont<A, KFree<G>>) => Cont<A, KFree<F>>
+    suspend<A>(f: $<F, ContFree<A, F>>): ContFree<A, F>
+    lift<A>(lfa: $<F, A>): ContFree<A, F>
+    mapThunk<G>(transform: <R>(gt: $<G, Free<Free<R, F>, G>>) => $<F, Free<Free<R, F>, G>>): <A>(ag: Cont<A, KFree<G>>) => ContFree<A, F>
 }
 
 export function contFunctorFree<F>(m: IFunctorFree<F>): IContFunctorFree<F> {

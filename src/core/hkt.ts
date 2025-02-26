@@ -86,7 +86,8 @@ export interface ITypeClass<F> {
     readonly _classArg?: (f: F) => F // when F is * -> *
 }
 
-export type KType<T> = T extends ITypeClass<infer F> ? F : never
+export type KType<M> = M extends ITypeClass<infer F> ? F : never
+export type KTypeOf<M, T> = $<KType<M>, T>
 
 // export interface ITypeClass2<F> {
 //     readonly _classParam2?: (f: F) => F // when F is * -> * -> *

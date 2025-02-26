@@ -25,8 +25,8 @@ export interface IContFactory {
 
 export const cont: IContFactory = (() => {
     const getTrivial = memo(() => contMonad<$I>(monad.trivial));
-    const getTrampoline = memo(() => contMonadFree(free.ofMonad(lazy)));
-    const getTrampolineAsync = memo(() => contMonadFree(free.ofMonad(task)));
+    const getTrampoline = memo(() => contMonadFree(free.trampoline));
+    const getTrampolineAsync = memo(() => contMonadFree(free.trampolineAsync));
     
     return {
         get trivial() { return getTrivial() },
@@ -41,7 +41,7 @@ export const cont: IContFactory = (() => {
 })();
 
 export { Cont, KCont, ICont } from "./contCore.js";
-export { IContVoid } from "./contVoid.js";
+export { IContVoid, ContVoid } from "./contVoid.js";
 export { IContMonad } from "./contMonad.js";
-export { IContFunctorFree } from "./contFunctorFree.js";
+export { IContFunctorFree, ContFree } from "./contFunctorFree.js";
 export { IContMonadFree } from "./contMonadFree.js";
