@@ -128,14 +128,14 @@
 // // const lols: Cont<[A[], string] | null, KFree<KLazy>>
 // // type Tramp<A> = <R>(resolve: (t: A) => Free<R, KLazy>) => Free<R, KLazy>
 
-// const shite = <A>(p: Parser<A>, input: string): Tramp<[A[], string] | null> => {
+// const shite = <A>(p: Parser<A>) => (input: string): Tramp<[A[], string] | null> => {
 //     const first = p(input);
 
 //     if (first === null) 
 //         return tramp.unit(null);
 
 //     const input2 = first[1];
-//     const next1Cont = tramp.suspend(() => shite(p, input2));
+//     const next1Cont = tramp.suspend(() => shite(p)(input2));
 
 //     return tramp.map(
 //         next1Cont,
@@ -146,10 +146,29 @@
 //     )
 // }
 
+// const shite2 = <A>(p: Parser<A>) => (input: string): Tramp<(lol: number) => [A[], string] | null> => {
+//     const first = p(input);
+
+//     if (first === null) 
+//         return tramp.unit(_lol => null);
+
+//     const input2 = first[1];
+//     const next1Cont = tramp.suspend(() => shite2(p)(input2));
+
+//     return tramp.map(
+//         next1Cont,
+//         lele => {
+//             const next1 = lele(0);
+//             const second = next1 !== null ? next1 : [[], input2] as [A[], string];
+//             return _lol => second === null ? null : [[first[0], ...second[0]], second[1]];
+//         }
+//     )
+// }
+
 // const someme2 = <A>(p: Parser<A>): Parser<A[]> => {
 //     return input => {
-//         const lel = shite(p, input);
-//         return tramp.drop(lel)();
+//         const lel = shite2(p)(input);
+//         return tramp.drop(lel)()(123);
 //     };
 // }
 
