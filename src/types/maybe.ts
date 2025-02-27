@@ -65,7 +65,7 @@ export const maybe: IMaybe = (() => {
 
     const transform = <M>(outer: IMonad<M>): IMaybeTrans<M> => {
         const et = nullable.transform(outer);
-        
+
         const __monadTrans = monadTrans<$<$Q, KMaybe>, M>({ 
             map: et.map,
             unit: et.unit,

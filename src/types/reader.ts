@@ -2,6 +2,7 @@ import { KRoot, $, $B } from "../core/hkt.js"
 import { IMonad, monad } from "../classes/monad.js"
 import { ITransformer, monadTrans } from "../classes/transformer.js"
 import { id } from "../core/utils.js"
+import { Lazy } from "./lazy.js"
 
 export type Reader<in E, out R> = (a: E) => R
 
@@ -13,10 +14,10 @@ export interface KReader<E> extends KRoot {
 export type KReaderTrans<E> = $<$B, KReader<E>>
 
 export interface IReader<E> extends IMonad<KReader<E>>, ITransformer<KReaderTrans<E>> {
-    ask: Reader<E, E>
-    local: <A>(f: (e: E) => E) => (m: Reader<E, A>) => Reader<E, A>
-    reader: <A>(f: (e: E) => A) => Reader<E, A>
-    of: <T>() => IReader<T>
+    readonly ask: Reader<E, E>
+    local<A>(f: (e: E) => E): (m: Reader<E, A>) => Reader<E, A>
+    reader<A>(f: (e: E) => A): Reader<E, A>
+    of<T>(): IReader<T>
 }
 
 function readerOf<E>(): IReader<E> {

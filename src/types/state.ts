@@ -1,6 +1,7 @@
 import { $, $I, KRoot } from "../core/hkt.js"
 import { IMonad, monad } from "../classes/monad.js";
 import { ITransformer, monadTrans } from "../classes/transformer.js";
+import { Lazy } from "./lazy.js";
 
 export type StateTrans<F, S, T> = (a: S) => $<F, readonly [T, S]>
 export type State<S, T> = StateTrans<$I, S, T>
@@ -17,11 +18,12 @@ export interface KStateTrans<S> extends KRoot {
 }
 
 interface IState<S> extends IMonad<KState<S>>, ITransformer<KStateTrans<S>> {
-    get: State<S, S>
-    put: <S>(s: S) => State<S, null>
+    readonly get: State<S, S>
+    put<S>(s: S): State<S, null>
+    of<T>(): IState<T>
 }
 
-export function state<S>(): IState<S> {
+function stateOf<S>(): IState<S> {
     const unit = <A>(a: A): State<S, A> => s => [a, s];
 
     const bind = <A, B>(fa: State<S, A>, f: (a: A) => State<S, B>): State<S, B> => s => {
@@ -29,6 +31,7 @@ export function state<S>(): IState<S> {
         return f(a)(t);
     };
 
+    const of = <T>() => stateOf<T>();
     const get: State<S, S> = s => [s, s];
     const put = <S>(s: S): State<S, null> => _ => [null, s];
 
@@ -47,8 +50,11 @@ export function state<S>(): IState<S> {
 
     return {
         ...monad<KState<S>>({ unit, bind }),
+        of,
         get,
         put,
         transform
     }
 }
+
+export const state = stateOf<any>();
