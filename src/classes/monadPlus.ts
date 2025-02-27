@@ -8,6 +8,8 @@ import { pipe } from "../core/utils.js";
 export interface IMonadPlus<F> extends IMonad<F>, IAlternative<F> {
     filter<A, B extends A>(f: (a: A) => a is B): (fa: $<F, A>) => $<F, B>
     filter<A>(f: (a: A) => unknown): (fa: $<F, A>) => $<F, A>
+    some<A>(fa: $<F, A>): $<F, A[]>
+    many<A>(fa: $<F, A>): $<F, A[]>
 }
 
 const is_monadPlus = Symbol("is_monadPlus");
@@ -32,9 +34,21 @@ export function _monadPlus<F>(base: MonadPlusArg<F>): IMonadPlus<F> {
         base => {
             const filter = <A>(f: (a: A) => unknown) => (fa: $<F, A>) => base.bind(fa, a => f(a) ? base.unit(a) : base.empty<A>());
 
+            const some = <A>(fa: $<F, A>): $<F, A[]> => base.bind(
+                fa, 
+                a => base.map(
+                    base.append(some(fa), base.unit<A[]>([])),
+                    as => [a, ...as]
+                )
+            );
+
+            const many = <A>(fa: $<F, A>): $<F, A[]> => base.append(some(fa), base.unit<A[]>([]));
+
             return {
                 [is_monadPlus]: true,
                 filter,
+                some,
+                many,
                 ...base,
             }
         }
