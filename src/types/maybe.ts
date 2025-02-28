@@ -71,6 +71,16 @@ export const maybe: IMaybe = (() => {
         foldl: f => b => fa => fa.right ? f(b, fa.value) : b
     });
 
+    // Override default to make it short-circuit on append
+    const liftMonad = <M>(m: IMonad<M>) => {
+        return monadPlus<$B2<M, KMaybe>>({
+            unit: m.unit,
+            bind: m.bind,
+            empty: <A>() => m.unit(empty<A>()),
+            append: <A>(fa: $<M, Maybe<A>>, fb: $<M, Maybe<A>>) => m.bind(fa, ma => ma.right ? m.unit<Maybe<A>>(ma) : fb)
+        });
+    }
+
     const transform = <M>(outer: IMonad<M>): IMaybeTrans<M> => {
         const et = base.transform(outer);
 
@@ -82,12 +92,7 @@ export const maybe: IMaybe = (() => {
             wrap: et.wrap
         });
 
-        // Not using `liftMonoid` to keep the short-circuiting behavior
-        const __monoid: IMonoid<$B2<M, KMaybe>> = monoid<$B2<M, KMaybe>>({
-            empty: () => outer.unit(empty()),
-            //append: (fa, fb) => outer.lift2(append)(fa, fb)
-            append: <A>(fa: $<M, Maybe<A>>, fb: $<M, Maybe<A>>) => outer.bind(fa, ma => ma.right ? outer.unit<Maybe<A>>(ma) : fb)
-        });
+        const __monoid = liftMonad(outer);
 
         const __foldable: IFold<$B2<M, KMaybe>, M> = _foldable.liftFoldUnder<M>(outer);
 
@@ -120,6 +125,7 @@ export const maybe: IMaybe = (() => {
         fromList,
         toList,  
         fromNullable,
+        liftMonad,
         transform,
     };
 })();

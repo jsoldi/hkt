@@ -7,6 +7,7 @@ import { ITraversable, traversable } from "../classes/traversable.js";
 import { foldable, IFoldable } from "../classes/foldable.js";
 import { IUnfoldable, unfoldable } from "../classes/unfoldable.js";
 import { Maybe } from "./maybe.js";
+import { monoid } from "../classes/monoid.js";
 
 export interface KArray extends KRoot {
     readonly 0: unknown
@@ -128,6 +129,15 @@ export const array: IArray = (() => {
         foldl,
     });
 
+    const liftMonad = <M>(m: IMonad<M>) => {
+        return monadPlus<$B2<M, KArray>>({
+            unit: m.unit,
+            bind: m.bind,
+            empty: <A>() => m.unit<A[]>([]),
+            append: (fa, fb) => m.bind(fa, a => a.length === 0 ? fb : m.map(fb, b => a.concat(b))),
+        });
+    };
+
     const transform = <M>(outer: IMonad<M>): IArrayTrans<M> => {
         const __monadTrans = monadTrans<KArrayTrans, M>({ 
             map: (fa, f) => outer.map(fa, a => a.map(f)),
@@ -140,7 +150,7 @@ export const array: IArray = (() => {
             wrap: a => outer.unit(a),
         });
         
-        const __monoid = outer.liftMonoid<KArray>(_monadPlus);
+        const __monoid = liftMonad(outer);
         const __foldable: IFold<$B2<M, KArray>, M> = _foldable.liftFoldUnder<M>(outer);
 
         return {
@@ -174,5 +184,6 @@ export const array: IArray = (() => {
         take,
         skip,
         zip,
+        liftMonad,
     };
 })();

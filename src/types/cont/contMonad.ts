@@ -1,5 +1,5 @@
 import { IMonad } from "../../classes/monad.js"
-import { $, $K1 } from "../../core/hkt.js"
+import { $K1 } from "../../core/hkt.js"
 import { pipe } from "../../core/utils.js"
 import { ICont, Cont, contCore } from "./contCore.js"
 

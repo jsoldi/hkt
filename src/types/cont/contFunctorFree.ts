@@ -2,7 +2,7 @@ import { $ } from "../../core/hkt.js";
 import { pipe } from "../../core/utils.js";
 import { either } from "../either.js";
 import { KFree, Free, IFunctorFree } from "../free/functorFree.js";
-import { Cont, ICont } from "./contCore.js";
+import { Cont } from "./contCore.js";
 import { contMonad, IContMonad } from "./contMonad.js";
 
 export type ContFree<A, F> = Cont<A, KFree<F>>

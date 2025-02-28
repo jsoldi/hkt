@@ -1,8 +1,8 @@
-import { KRoot, $, $B } from "../core/hkt.js"
+import { KRoot, $, $B, $3 } from "../core/hkt.js"
 import { IMonad, monad } from "../classes/monad.js"
-import { ITransformer, monadTrans } from "../classes/transformer.js"
+import { IMonadTrans, ITransformer, monadTrans } from "../classes/transformer.js"
 import { id } from "../core/utils.js"
-import { Lazy } from "./lazy.js"
+import { IMonadPlus, monadPlus } from "../classes/monadPlus.js"
 
 export type Reader<in E, out R> = (a: E) => R
 
@@ -12,6 +12,7 @@ export interface KReader<E> extends KRoot {
 }
 
 export type KReaderTrans<E> = $<$B, KReader<E>>
+type ReaderTrams<E, M, A> = Reader<E, $<M, A>>
 
 export interface IReader<E> extends IMonad<KReader<E>>, ITransformer<KReaderTrans<E>> {
     readonly ask: Reader<E, E>
@@ -27,13 +28,11 @@ function readerOf<E>(): IReader<E> {
     const of = <T>() => readerOf<T>();
 
     const transform = <M>(inner: IMonad<M>) => {
-        type KType = $<KReaderTrans<E>, M>;
-
         return monadTrans<KReaderTrans<E>, M>({
             map: (fa, f) => e => inner.map(fa(e), f),
             unit: <A>(a: A) => _ => inner.unit(a),
-            bind: <A, B>(fa: $<KType, A>, f: (a: A) => $<KType, B>) => e => inner.bind(fa(e), a => f(a)(e)),
-            lift: <A>(a: $<M, A>): Reader<E, $<M, A>> => _ => a,
+            bind: <A, B>(fa: ReaderTrams<E, M, A>, f: (a: A) => ReaderTrams<E, M, B>) => e => inner.bind(fa(e), a => f(a)(e)),
+            lift: <A>(a: $<M, A>): ReaderTrams<E, M, A> => _ => a,
             wrap: r => e => inner.unit(r(e))
         });
     };
@@ -48,7 +47,7 @@ function readerOf<E>(): IReader<E> {
         local,
         reader: _reader,
         of,
-        transform
+        transform,
     }
 }
 

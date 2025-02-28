@@ -15,7 +15,6 @@ export interface IMonadBase<F> {
 export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
     lift2<A, B, C>(f: (a: A, b: B) => C): (fa: $<F, A>, fb: $<F, B>) => $<F, C>
     lift3<A, B, C, D>(f: (a: A, b: B, c: C) => D): (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>) => $<F, D>
-    liftMonoid<M>(m: IMonoidBase<M>): IMonoid<$B2<F, M>>
     flatMap<A, B>(f: (a: A) => $<F, B>): (fa: $<F, A>) => $<F, B>
     runFree<A>(t: Free<A, F>): $<F, A>
     flat<A>(ffa: $<F, $<F, A>>): $<F, A>
@@ -83,13 +82,6 @@ export function _monad<F>(base: MonadArg<F>): IMonad<F> {
         
             const lift3 = <A, B, C, D>(f: (a: A, b: B, c: C) => D) => (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>): $<F, D> => 
                 base.bind(fa, a => base.bind(fb, b => base.bind(fc, c => base.unit(f(a, b, c)))));
-        
-            const liftMonoid = <M>(m: IMonoidBase<M>) => {
-                return monoid<$B2<F, M>>({
-                    empty: () => base.unit(m.empty()),
-                    append: lift2(m.append)
-                });
-            };
 
             const flatMap = <A, B>(f: (a: A) => $<F, B>) => (fa: $<F, A>) => base.bind(fa, f);
             const flat = <A>(ffa: $<F, $<F, A>>): $<F, A> => base.bind(ffa, id);
@@ -114,7 +106,6 @@ export function _monad<F>(base: MonadArg<F>): IMonad<F> {
                 [is_monad]: true,
                 lift2,
                 lift3,
-                liftMonoid,
                 flatMap,
                 flat,
                 fish: _kleisli,

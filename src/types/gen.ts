@@ -1,10 +1,9 @@
 import { KRoot } from "../core/hkt.js"
-import { IMonad, monad } from "../classes/monad.js"
-import { fold, IFold } from "../classes/fold.js"
+import { monad } from "../classes/monad.js"
 import { IMonadPlus, monadPlus } from "../classes/monadPlus.js"
 import { monoid } from "../classes/monoid.js"
 import { Maybe } from "./maybe.js"
-import { KPromise, promise } from "./promise.js"
+import { promise } from "./promise.js"
 
 /**
  * @deprecated use `Async<T>` instead

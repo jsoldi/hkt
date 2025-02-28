@@ -1,6 +1,8 @@
-import { ITypeClass, $, $K, $K1, KRoot } from "../core/hkt.js";
+import { ITypeClass, $, $K, $K1, KRoot, $B2 } from "../core/hkt.js";
 import { TypeClassArg } from "./utilities.js";
 import { curry, pipe } from "../core/utils.js";
+import { IMonad } from "./monad.js";
+import { IMonadPlus, monadPlus } from "./monadPlus.js";
 
 export interface ISemigroup<F> extends ITypeClass<F> {
     append: <A>(fa: $<F, A>, fb: $<F, A>) => $<F, A>
@@ -16,6 +18,7 @@ export interface IMonoid<F> extends IMonoidBase<F> {
     when(b: unknown): <A>(fa: $<F, A>) => $<F, A>
     join<A>(separator: $<F, A>): (fas: $<F, A>[]) => $<F, A>
     dual(): IMonoid<F>
+    liftMonad<M>(m: IMonad<M>): IMonadPlus<$B2<M, F>>
 }
 
 const is_monoid = Symbol("is_monoid");
@@ -54,11 +57,21 @@ function _monoid<F>(base: MonoidArg<F>): IMonoid<F> {
                 append: (a, b) => base.append(b, a),
             });
 
+            const liftMonad = <M>(m: IMonad<M>) => {
+                return monadPlus<$B2<M, F>>({
+                    unit: m.unit,
+                    bind: m.bind,
+                    empty: () => m.unit(base.empty()),
+                    append: m.lift2(base.append)
+                });
+            };
+
             return {
                 [is_monoid]: true,
                 when,
                 join,
                 dual,
+                liftMonad,
                 ...base,
             }
         }

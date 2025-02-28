@@ -8,12 +8,11 @@
 // import { state } from "./types/state.js";
 // import { task } from "./types/task.js";
 
-// const trampoline = cont.trampoline;
-// type Trampoline<A> = KTypeOf<typeof trampoline, A>;
+// const t = cont.trampoline;
 
-// const trampMonoid = maybe.transform(trampoline);
-// const lel = state.of<string>().transform(trampMonoid);
-// type Parser<T> = KTypeOf<typeof lel, T>;
+// const mt = maybe.transform(t);
+// const smt = state.of<string>().transform(mt);
+// type Parser<T> = KTypeOf<typeof smt, T>;
 
 // interface KParser extends KRoot {
 //     readonly 0: unknown
@@ -21,23 +20,22 @@
 // }
 
 // const parser = (() => {
-//     const unit = <A>(a: A): Parser<A> => input => trampoline.unit(maybe.unit([a, input]));
+//     const unit = <A>(a: A): Parser<A> => smt.unit(a);
 
 //     const bind = <A, B>(bp: Parser<A>, fb: (a: A) => Parser<B>): Parser<B> => {
-//         return lel.bind(bp, a => ((input) => trampoline.suspend(() => fb(a)(input))));
+//         return smt.bind(bp, a => ((input) => t.suspend(() => fb(a)(input))));
 //     }
 
-//     const empty = <A>(): Parser<A> => _ => trampoline.unit(maybe.nothing);
+//     const empty = <A>(): Parser<A> => _ => mt.empty();
 
 //     const append = <A>(p1: Parser<A>, p2: Parser<A>): Parser<A> => (input: string) => {
-//         return trampMonoid.append(p1(input), trampoline.suspend(() => p2(input)));
+//         return mt.append(p1(input), t.suspend(() => p2(input)));
 //     }
 
 //     const regex = (re: RegExp): Parser<string> => (input: string) => {
-//         console.log('regex', re, input);
 //         const match = input.match(re);
 
-//         return trampoline.unit(
+//         return t.unit(
 //             match === null ? maybe.nothing : maybe.unit([match[0], input.slice(match[0].length)])
 //         );
 //     }
@@ -48,23 +46,13 @@
 //     }
 // })();
 
-// //------------------------------------------------------------------------------------------------
+// let digit = 0;
+// const nextDigit = () => (digit++ % 10).toString();
+// const digits = Array.from({ length: 10000 }, nextDigit).join('');
 
-// const uno = parser.regex(/[1]/);
-// const dos = parser.regex(/[2]/);
-// const both = parser.append(uno, dos);
-// const result = trampoline.drop(both('1_rest'))();
+// const test = parser.some(parser.regex(/^\d/));
+// const result = t.drop(test(digits + 'rest'))();
+
 // console.log(result);
-
-// //------------------------------------------------------------------------------------------------
-
-// // let digit = 0;
-// // const nextDigit = () => (digit++ % 10).toString();
-// // const digits = Array.from({ length: 10000 }, nextDigit).join('');
-
-// // const test = parser.some(parser.regex(/^\d/));
-// // const result = trampoline.drop(test(digits + 'rest'))();
-
-// // console.log(result);
 
 // //------------------------------------------------------------------------------------------------

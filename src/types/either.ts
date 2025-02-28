@@ -3,7 +3,6 @@ import { pipe } from "../core/utils.js"
 import { IMonad, monad } from "../classes/monad.js"
 import { ISemigroup } from "../classes/monoid.js"
 import { ITransformer, monadTrans } from "../classes/transformer.js"
-import { Lazy } from "./lazy.js"
 
 export interface Left<out L> {
     readonly right: false
