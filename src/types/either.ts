@@ -3,6 +3,7 @@ import { pipe } from "../core/utils.js"
 import { IMonad, monad } from "../classes/monad.js"
 import { ISemigroup } from "../classes/monoid.js"
 import { ITransformer, monadTrans } from "../classes/transformer.js"
+import { Lazy } from "./lazy.js"
 
 export interface Left<out L> {
     readonly right: false
@@ -11,7 +12,7 @@ export interface Left<out L> {
 
 export interface Right<out R> {
     readonly right: true
-    readonly value: R
+    readonly value: R 
 }
 
 export type Either<L, R> = Left<L> | Right<R>
@@ -141,7 +142,7 @@ function eitherOf<L>(): IEither<L> {
                     map: (fa, f) => outer.map(fa, a => base.map(a, f)),
                     unit: <A>(a: A) => outer.unit<Either<L, A>>(base.right(a)),
                     bind: <A, B>(fa: $<KType, A>, f: (a: A) => $<KType, B>): $<KType, B> =>
-                        outer.bind(fa, a => a.right ? f(a.value) : outer.unit<Either<L, B>>(base.left(a.value))),
+                        outer.bind(fa, a => a.right ? f(a.value) : outer.unit<Either<L, B>>(a)),
                     lift: <A>(a: $<M, A>) => outer.map<A, Either<L, A>>(a, base.right),
                     wrap: a => outer.unit(a),
                 });

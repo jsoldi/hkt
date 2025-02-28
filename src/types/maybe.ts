@@ -6,8 +6,9 @@ import { ITraversable, traversable } from "../classes/traversable.js";
 import { IFold } from "../classes/fold.js";
 import { foldable, IFoldable } from "../classes/foldable.js";
 import { Left, Right, either } from "./either.js";
+import { IMonoid, monoid } from "../classes/monoid.js";
 
-export type Nothing = Left<null>
+export type Nothing = Left<never>
 export type Just<T> = Right<T>
 export type Maybe<T> = Just<T> | Nothing
 
@@ -34,9 +35,16 @@ export interface IMaybeTrans<M> extends IMonadTrans<$<$Q, KMaybe>, M>, IFold<$B2
 }
 
 export const maybe: IMaybe = (() => {
-    const nullable = either.of<null>();
-    const just = <A>(a: A): Just<A> => nullable.right(a);
-    const nothing: Nothing = nullable.left(null);
+    const base = either.of<never>();
+    const just = <A>(a: A): Just<A> => base.right(a);
+
+    const nothing: Nothing = ({ 
+        right: false, 
+        get value(): never { 
+            throw new Error("Nothing has no value"); // TODO: Make sure nobody touches `value` when this is a nothing
+        } 
+    });
+
     const isJust = <A>(fa: Maybe<A>): fa is Just<A> => fa.right;
     const isNothing = <A>(fa: Maybe<A>): fa is Nothing => !fa.right;
     const maybe = <B, A, C>(b: B, map?: (a: A) => C) => (fa: Maybe<A>) => fa.right ? map?.(fa.value) ?? fa.value : b;
@@ -47,7 +55,7 @@ export const maybe: IMaybe = (() => {
     const bind = <A, B>(fa: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> => fa.right ? f(fa.value) : nothing;
     const fromNullable = <A>(a: A): Maybe<NonNullable<A>> => a == null ? nothing : just<NonNullable<A>>(a);
     const empty = <A>(): Maybe<A> => nothing;
-    const append = nullable.append;
+    const append = base.append;
     const _if = (cond: unknown) => cond ? just(null) : nothing;
 
     const _monadPlus = monadPlus<KMaybe>({
@@ -64,7 +72,7 @@ export const maybe: IMaybe = (() => {
     });
 
     const transform = <M>(outer: IMonad<M>): IMaybeTrans<M> => {
-        const et = nullable.transform(outer);
+        const et = base.transform(outer);
 
         const __monadTrans = monadTrans<$<$Q, KMaybe>, M>({ 
             map: et.map,
@@ -74,7 +82,13 @@ export const maybe: IMaybe = (() => {
             wrap: et.wrap
         });
 
-        const __monoid = outer.liftMonoid<KMaybe>(_monadPlus);
+        // Not using `liftMonoid` to keep the short-circuiting behavior
+        const __monoid: IMonoid<$B2<M, KMaybe>> = monoid<$B2<M, KMaybe>>({
+            empty: () => outer.unit(empty()),
+            //append: (fa, fb) => outer.lift2(append)(fa, fb)
+            append: <A>(fa: $<M, Maybe<A>>, fb: $<M, Maybe<A>>) => outer.bind(fa, ma => ma.right ? outer.unit<Maybe<A>>(ma) : fb)
+        });
+
         const __foldable: IFold<$B2<M, KMaybe>, M> = _foldable.liftFoldUnder<M>(outer);
 
         return {
@@ -106,6 +120,6 @@ export const maybe: IMaybe = (() => {
         fromList,
         toList,  
         fromNullable,
-        transform
+        transform,
     };
 })();
