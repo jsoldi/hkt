@@ -1,13 +1,13 @@
 import { KRoot } from "../core/hkt.js";
 import { AbortError } from "./task.js";
-import { applicative, IApplicative } from "../classes/applicative.js";
+import { functor, IFunctor } from "../classes/functor.js";
 
 export interface KPromise extends KRoot {
     readonly 0: unknown
     readonly body: Promise<this[0]>
 }
 
-export interface IPromise extends IApplicative<KPromise> {
+export interface IPromise extends IFunctor<KPromise> {
     delay: (ms: number) => Promise<void>
     all: <A>(fa: Promise<A>[]) => Promise<A[]>
     race: <A>(fa: Promise<A>[]) => Promise<A>
@@ -53,10 +53,8 @@ export const promise: IPromise = (() => {
         f => fa => fa.finally(f);
 
     return {
-        ...applicative<KPromise>({ 
-            map: (fa, f) => fa.then(f),
-            unit,
-            apply,
+        ...functor<KPromise>({ 
+            map: (fa, f) => fa.then(f)
         }),
         delay,
         all,

@@ -4,7 +4,6 @@ import { IFold } from "../classes/fold.js";
 import { IMonadTrans, ITransformer, monadTrans } from "../classes/transformer.js";
 import { IMonadPlus, monadPlus } from "../classes/monadPlus.js";
 import { ITraversable, traversable } from "../classes/traversable.js";
-import { IApplicative } from "../classes/applicative.js";
 import { foldable, IFoldable } from "../classes/foldable.js";
 import { IUnfoldable, unfoldable } from "../classes/unfoldable.js";
 import { Maybe } from "./maybe.js";
@@ -109,7 +108,7 @@ export const array: IArray = (() => {
     const zip = <A, B>(fa: A[], fb: B[]): [A, B][] => Array.from({ length: Math.min(fa.length, fb.length) }, (_, i) => [fa[i], fb[i]]);
 
     const _traversable = traversable<KArray>({
-        traverse: <M>(m: IApplicative<M>) => <A, B>(f: (a: A) => $<M, B>) => (ta: A[]): $<M, B[]> => 
+        traverse: <M>(m: IMonad<M>) => <A, B>(f: (a: A) => $<M, B>) => (ta: A[]): $<M, B[]> => 
             ta.reduceRight<$<M, B[]>>(
                 (acc, a) => m.lift2((b: B, bs: B[]) => [b, ...bs])(f(a), acc), 
                 m.unit([])

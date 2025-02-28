@@ -1,11 +1,11 @@
 import { $, KRoot } from "../core/hkt.js";
-import { IApplicative } from "../classes/applicative.js";
 import { functor, IFunctor } from "../classes/functor.js";
 import { IMonoid, monoid } from "../classes/monoid.js";
 import { ITraversable, traversable } from "../classes/traversable.js";
 import { array } from "./array.js";
 import { maybe, Maybe } from "./maybe.js";
 import { Reader } from "./reader.js";
+import { IMonad } from "../classes/monad.js";
 
 type K = keyof any;
 
@@ -54,7 +54,7 @@ export const object: IObject = (() => {
             append: (a, b) => ({ ...a, ...b })
         }),
         ...traversable<KObject>({
-            traverse: <M>(m: IApplicative<M>) => <A, B>(f: (a: A) => $<M, B>) => (ta: Record<K, A>): $<M, Record<K, B>> => {
+            traverse: <M>(m: IMonad<M>) => <A, B>(f: (a: A) => $<M, B>) => (ta: Record<K, A>): $<M, Record<K, B>> => {
                 return m.map(
                     array.traverse(m)(([key, a]: [K, A]) => m.map(f(a), b => [key, b] as const))(Object.entries(ta)),
                     telas => Object.fromEntries(telas) as Record<K, B>

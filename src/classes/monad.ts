@@ -1,18 +1,21 @@
-import { applicative, IApplicative } from "./applicative.js";
-import { functor } from "./functor.js";
-import { $, $I } from "../core/hkt.js";
+import { functor, IFunctor } from "./functor.js";
+import { $, $B2, $I } from "../core/hkt.js";
 import { ITransformer, monadTrans } from "./transformer.js";
 import { TypeClassArg } from "./utilities.js";
 import { id } from "../core/utils.js";
 import { pipe as _pipe } from "../core/utils.js";
 import { Free } from "../types/free/functorFree.js";
+import { IMonoid, IMonoidBase, monoid } from "./monoid.js";
 
 export interface IMonadBase<F> {
     unit<A>(a: A): $<F, A>
     bind<A, B>(fa: $<F, A>, f: (a: A) => $<F, B>): $<F, B>
 }
 
-export interface IMonad<F> extends IMonadBase<F>, IApplicative<F> {
+export interface IMonad<F> extends IMonadBase<F>, IFunctor<F> {
+    lift2<A, B, C>(f: (a: A, b: B) => C): (fa: $<F, A>, fb: $<F, B>) => $<F, C>
+    lift3<A, B, C, D>(f: (a: A, b: B, c: C) => D): (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>) => $<F, D>
+    liftMonoid<M>(m: IMonoidBase<M>): IMonoid<$B2<F, M>>
     flatMap<A, B>(f: (a: A) => $<F, B>): (fa: $<F, A>) => $<F, B>
     runFree<A>(t: Free<A, F>): $<F, A>
     flat<A>(ffa: $<F, $<F, A>>): $<F, A>
@@ -74,14 +77,20 @@ export function _monad<F>(base: MonadArg<F>): IMonad<F> {
             }), 
             ...base 
         }),
-        base => ({
-            ...applicative<F>({
-                apply: fab => fa => base.bind(fab, f => base.map(fa, f)),
-                ...base
-            }),
-            ...base
-        }),
         base => {
+            const lift2 = <A, B, C>(f: (a: A, b: B) => C) => (fa: $<F, A>, fb: $<F, B>): $<F, C> => 
+                base.bind(fa, a => base.bind(fb, b => base.unit(f(a, b))));
+        
+            const lift3 = <A, B, C, D>(f: (a: A, b: B, c: C) => D) => (fa: $<F, A>, fb: $<F, B>, fc: $<F, C>): $<F, D> => 
+                base.bind(fa, a => base.bind(fb, b => base.bind(fc, c => base.unit(f(a, b, c)))));
+        
+            const liftMonoid = <M>(m: IMonoidBase<M>) => {
+                return monoid<$B2<F, M>>({
+                    empty: () => base.unit(m.empty()),
+                    append: lift2(m.append)
+                });
+            };
+
             const flatMap = <A, B>(f: (a: A) => $<F, B>) => (fa: $<F, A>) => base.bind(fa, f);
             const flat = <A>(ffa: $<F, $<F, A>>): $<F, A> => base.bind(ffa, id);
         
@@ -103,6 +112,9 @@ export function _monad<F>(base: MonadArg<F>): IMonad<F> {
 
             return {
                 [is_monad]: true,
+                lift2,
+                lift3,
+                liftMonoid,
                 flatMap,
                 flat,
                 fish: _kleisli,

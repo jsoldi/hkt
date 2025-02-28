@@ -3,8 +3,6 @@ export * from './core/hkt.js';
 export * from './core/utils.js';
 
 // Type classes
-export * from './classes/alternative.js';
-export * from './classes/applicative.js';
 export * from './classes/fold.js';
 export * from './classes/foldable.js';
 export * from './classes/functor.js';

@@ -1,11 +1,14 @@
-import { alternative, IAlternative } from "./alternative.js";
 import { $, $K1 } from "../core/hkt.js";
 import { IMonad, IMonadBase, monad } from "./monad.js";
-import { IMonoidBase, monoid } from "./monoid.js";
+import { IMonoid, IMonoidBase, monoid } from "./monoid.js";
 import { TypeClassArg } from "./utilities.js";
 import { pipe } from "../core/utils.js";
+import { ISemiring, semiring } from "./semiring.js";
 
-export interface IMonadPlus<F> extends IMonad<F>, IAlternative<F> {
+export interface IMonadPlus<F> extends IMonad<F>, IMonoid<F> {
+    guard(b: unknown): $<F, null>
+    semiring<M>(mult: IMonoid<M>): ISemiring<F, M>    
+    from<A>(as: A[]): $<F, A>
     filter<A, B extends A>(f: (a: A) => a is B): (fa: $<F, A>) => $<F, B>
     filter<A>(f: (a: A) => unknown): (fa: $<F, A>) => $<F, A>
     some<A>(fa: $<F, A>): $<F, A[]>
@@ -26,12 +29,15 @@ export function _monadPlus<F>(base: MonadPlusArg<F>): IMonadPlus<F> {
             ...monoid(base),
             ...monad(base),
             ...base
-        }),
-        base => ({
-            ...alternative(base),
-            ...base
-        }),        
+        }),      
         base => {
+            const guard = (b: unknown) => b ? base.unit(null) : base.empty<null>();
+
+            const from = <A>(as: A[]) => 
+                as.reduce((acc, a) => base.append(acc, base.unit(a)), base.empty<A>());
+
+            const _semiring = <M>(mult: IMonoid<M>): ISemiring<F, M> => semiring<F, M>({ sum: base, mult: base.liftMonoid(mult) });
+
             const filter = <A>(f: (a: A) => unknown) => (fa: $<F, A>) => base.bind(fa, a => f(a) ? base.unit(a) : base.empty<A>());
 
             const some = <A>(fa: $<F, A>): $<F, A[]> => base.bind(
@@ -46,6 +52,9 @@ export function _monadPlus<F>(base: MonadPlusArg<F>): IMonadPlus<F> {
 
             return {
                 [is_monadPlus]: true,
+                guard,
+                from,
+                semiring: _semiring,
                 filter,
                 some,
                 many,
