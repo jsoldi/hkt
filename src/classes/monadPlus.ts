@@ -36,7 +36,7 @@ export function _monadPlus<F>(base: MonadPlusArg<F>): IMonadPlus<F> {
             const from = <A>(as: A[]) => 
                 as.reduce((acc, a) => base.append(acc, base.unit(a)), base.empty<A>());
 
-            const _semiring = <M>(mult: IMonoid<M>): ISemiring<F, M> => semiring<F, M>({ sum: base, mult: mult.liftMonad(base) });
+            const _semiring = <M>(mult: IMonoid<M>): ISemiring<F, M> => semiring<F, M>({ sum: base, mult: mult.liftMonoid(base) });
 
             const filter = <A>(f: (a: A) => unknown) => (fa: $<F, A>) => base.bind(fa, a => f(a) ? base.unit(a) : base.empty<A>());
 

@@ -19,10 +19,8 @@ type KArrayTrans = $<$Q, KArray>
 interface IArray extends IMonadPlus<KArray>, IFoldable<KArray>, IUnfoldable<KArray>, ITraversable<KArray>, ITransformer<KArrayTrans> {
     first<A>(fa: A[]): A | undefined
     foldr<A, B>(f: (a: A, b: B) => B): (b: B) => (fa: A[]) => B
-    filter: {
-        <T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[];
-        <T>(predicate: (item: T) => unknown): (items: T[]) => T[];
-    },
+    filter<T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[]
+    filter<T>(predicate: (item: T) => unknown): (items: T[]) => T[]
     chunks(size: number): <A>(fa: A[]) => A[][]
     distinctBy<A, B>(f: (a: A) => B): (fa: A[]) => A[]
     mapAsync: <A, B>(f: (a: A) => Promise<B>) => (fa: A[]) => Promise<B[]>
@@ -30,16 +28,26 @@ interface IArray extends IMonadPlus<KArray>, IFoldable<KArray>, IUnfoldable<KArr
     skip<A>(n: number): (fa: A[]) => A[]
     zip<A, B>(fa: A[], fb: B[]): [A, B][]
     transform<M>(base: IMonad<M>): IArrayTrans<M>
+    liftMonoid<M>(base: IMonad<M>): IArrayTrans<M>
+    sequence<M>(m: IMonad<M>): {
+        (ta: []): $<M, []>
+        <A>(ta: [$<M, A>]): $<M, [A]>
+        <A, B>(ta: [$<M, A>, $<M, B>]): $<M, [A, B]>
+        <A, B, C>(ta: [$<M, A>, $<M, B>, $<M, C>]): $<M, [A, B, C]>
+        <A, B, C, D>(ta: [$<M, A>, $<M, B>, $<M, C>, $<M, D>]): $<M, [A, B, C, D]>
+        <A, B, C, D, E>(ta: [$<M, A>, $<M, B>, $<M, C>, $<M, D>, $<M, E>]): $<M, [A, B, C, D, E]>
+        <A, B, C, D, E, F>(ta: [$<M, A>, $<M, B>, $<M, C>, $<M, D>, $<M, E>, $<M, F>]): $<M, [A, B, C, D, E, F]>
+        <A, B, C, D, E, F, G>(ta: [$<M, A>, $<M, B>, $<M, C>, $<M, D>, $<M, E>, $<M, F>, $<M, G>]): $<M, [A, B, C, D, E, F, G]>
+        <A, B, C, D, E, F, G, H>(ta: [$<M, A>, $<M, B>, $<M, C>, $<M, D>, $<M, E>, $<M, F>, $<M, G>, $<M, H>]): $<M, [A, B, C, D, E, F, G, H]>
+        <A>(ta: $<M, A>[]): $<M, A[]>        
+    }
 }
 
 export interface IArrayTrans<M> extends IMonadTrans<KArrayTrans, M>, IFold<$B2<M, KArray>, M>, IMonadPlus<$B2<M, KArray>> {
 }
 
 export const array: IArray = (() => {
-    const filter: {
-        <T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[];
-        <T>(predicate: (item: T) => unknown): (items: T[]) => T[];
-    } = <T, S extends T>(predicate: (item: T) => any): (items: T[]) => T[] | S[] => {
+    const filter: IArray['filter'] = <T, S extends T>(predicate: (item: T) => any): (items: T[]) => T[] | S[] => {
         return (items: T[]) => items.filter(predicate);
     };    
 
@@ -129,29 +137,24 @@ export const array: IArray = (() => {
         foldl,
     });
 
-    const liftMonad = <M>(m: IMonad<M>) => {
-        return monadPlus<$B2<M, KArray>>({
-            unit: m.unit,
-            bind: m.bind,
-            empty: <A>() => m.unit<A[]>([]),
-            append: (fa, fb) => m.bind(fa, a => a.length === 0 ? fb : m.map(fb, b => a.concat(b))),
-        });
-    };
-
-    const transform = <M>(outer: IMonad<M>): IArrayTrans<M> => {
+    const transform = <M>(m: IMonad<M>): IArrayTrans<M> => {
         const __monadTrans = monadTrans<KArrayTrans, M>({ 
-            map: (fa, f) => outer.map(fa, a => a.map(f)),
-            unit: a => outer.unit([a]),
-            bind: (fa, f) => outer.bind(fa, ae => outer.map(
-                _traversable.sequence(outer)(ae.map(f)), 
+            map: (fa, f) => m.map(fa, a => a.map(f)),
+            unit: a => m.unit([a]),
+            bind: (fa, f) => m.bind(fa, ae => m.map(
+                _traversable.sequence(m)(ae.map(f)), 
                 a => a.flat()
             )),
-            lift: a => outer.map(a, a => [a]),
-            wrap: a => outer.unit(a),
+            lift: a => m.map(a, a => [a]),
+            wrap: a => m.unit(a),
         });
         
-        const __monoid = liftMonad(outer);
-        const __foldable: IFold<$B2<M, KArray>, M> = _foldable.liftFoldUnder<M>(outer);
+        const __monoid = monoid<$B2<M, KArray>>({
+            empty: <A>() => m.unit<A[]>([]),
+            append: (fa, fb) => m.bind(fa, a => a.length === 0 ? fb : m.map(fb, b => a.concat(b)))
+        });
+
+        const __foldable: IFold<$B2<M, KArray>, M> = _foldable.liftFoldUnder<M>(m);
 
         return {
             ...__monadTrans,
@@ -184,6 +187,7 @@ export const array: IArray = (() => {
         take,
         skip,
         zip,
-        liftMonad,
+        liftMonoid: transform, // Override default to make it short-circuit on append
+        sequence: _traversable.sequence as any,
     };
 })();

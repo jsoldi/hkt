@@ -3,6 +3,7 @@ import { pipe } from "../core/utils.js"
 import { IMonad, monad } from "../classes/monad.js"
 import { ISemigroup } from "../classes/monoid.js"
 import { ITransformer, monadTrans } from "../classes/transformer.js"
+import { Lazy } from "./lazy.js"
 
 export interface Left<out L> {
     readonly right: false
@@ -32,8 +33,9 @@ interface IEitherCore {
     bimap<A, B, C, D = C>(onLeft: (a: A) => C, onRight: (b: B) => D): (fa: Either<A, B>) => Either<C, D>;
     lefts<A, B>(fa: Either<A, B>[]): A[];
     rights<A, B>(fa: Either<A, B>[]): B[];
-    or<A, X>(fa: Either<A, X>): <B, Y = X>(fb: Either<B, Y>) => Either<B, X | Y>;
-    and<A, X>(fa: Either<A, X>): <B, Y = X>(fb: Either<B, Y>) => Either<A | B, Y>;
+    or<B>(b: B): <L, A>(fa: Either<L, A>) => Either<L, A> | B;
+    and<B>(b: B): <L, A>(fa: Either<L, A>) => Either<L, A> | B;
+    else<B>(b: Lazy<B>): <L, A>(fa: Either<L, A>) => A | B;
     isLeft<A, B>(fa: Either<A, B>): fa is Left<A>;
     isRight<A, B>(fa: Either<A, B>): fa is Right<B>;
     fromLeft<C>(a: C): <A, B>(fa: Either<A, B>) => A | C;
@@ -76,8 +78,9 @@ const core: IEitherCore = {
 
         return result;
     },
-    or: <A, X>(fa: Either<A, X>) => <B, Y>(fb: Either<B, Y>) => fa.right ? fa : fb,
-    and: <A, X>(fa: Either<A, X>) => <B, Y>(fb: Either<B, Y>) => fa.right ? fb : fa,
+    or: b => fa => fa.right ? fa : b,
+    and: b => fa => fa.right ? b : fa,
+    else: b => fa => fa.right ? fa.value : b(),
     isLeft: <A, B>(fa: Either<A, B>): fa is Left<A> => !fa.right,
     isRight: <A, B>(fa: Either<A, B>): fa is Right<B> => fa.right,
     fromLeft: <C>(a: C) => <A, B>(fa: Either<A, B>) => fa.right ? a : fa.value,

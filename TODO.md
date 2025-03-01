@@ -1,0 +1,1 @@
+TODO: `liftMonad` should be just `transform`. Let monoid have a `transform` member too.

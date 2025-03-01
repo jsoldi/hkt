@@ -1,9 +1,8 @@
 import { $, $I, KRoot } from "../core/hkt.js"
 import { IMonad, monad } from "../classes/monad.js";
 import { ITransformer, monadTrans } from "../classes/transformer.js";
-import { IMonadPlus, monadPlus } from "../classes/monadPlus.js";
 
-export type StateTrans<F, S, T> = (a: S) => $<F, readonly [T, S]>
+export type StateTrans<F, S, T> = (a: S) => $<F, [T, S]>
 export type State<S, T> = StateTrans<$I, S, T>
 
 export interface KState<S> extends KRoot {

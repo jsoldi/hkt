@@ -7,7 +7,7 @@ import { contFunctorFree, IContFunctorFree } from "./contFunctorFree.js";
 
 export interface IContMonadFree<F> extends IContFunctorFree<F> {
     readonly contMonad: IMonadFree<F>
-    drop<A>(cta: Cont<A, KFree<F>>): $<F, A> // TODO: Call it run I think
+    run<A>(cta: Cont<A, KFree<F>>): $<F, A> 
 }
 
 export function contMonadFree<F>(m: IMonadFree<F>): IContMonadFree<F> {
@@ -16,12 +16,12 @@ export function contMonadFree<F>(m: IMonadFree<F>): IContMonadFree<F> {
     return pipe(
         contFunctorFree<F>(m),
         base => {
-            const drop: I['drop'] = cta => m.drop(cta(m.unit));
+            const run: I['run'] = cta => m.run(cta(m.unit));
 
             return {
                 ...base,
                 contMonad: m,
-                drop
+                run
             }
         }
     )

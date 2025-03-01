@@ -21,6 +21,7 @@ export * from './types/array.js';
 export * from './types/async.js';
 export * from './types/either.js';
 export * from './types/gen.js';
+export * from './types/lazy.js';
 export * from './types/maybe.js';
 export * from './types/object.js';
 export * from './types/primitive.js';
