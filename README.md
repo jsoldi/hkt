@@ -11,7 +11,7 @@ npm install @jsoldi/hkt
 ## Example
 
 ```typescript
-import { array } from "./index.js";
+import { array } from '@jsoldi/hkt';
 
 // Monad's pipe is like Haskell's do notation
 console.log(array.pipe(
@@ -63,7 +63,7 @@ export interface IMonadBase<F> {
 ### Defining a custom monad
 
 ```typescript
-import { KRoot, monad } from './index.js';
+import { KRoot, monad } from '@jsoldi/hkt';
 
 // Non higher-kinded Log type
 type Log<T> = [string[], T];
@@ -172,7 +172,7 @@ import {
     monadPlus, 
     chain, 
     lazy 
-} from "./index.js";
+} from '@jsoldi/hkt';
 
 // alias for trampline
 const t = cont.trampoline;
