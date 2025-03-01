@@ -163,7 +163,16 @@ pipe(
 ### Stack-safe arithmetic parser
 
 ```typescript
-import { cont, maybe, state, KTypeOf, KRoot, monadPlus, chain, lazy } from "./index.js";
+import { 
+    cont, 
+    maybe, 
+    state, 
+    KTypeOf, 
+    KRoot, 
+    monadPlus, 
+    chain, 
+    lazy 
+} from "./index.js";
 
 // alias for trampline
 const t = cont.trampoline;
@@ -188,10 +197,12 @@ const parser = (() => {
     const base = monadPlus<KParser>({ 
         unit: s.unit,
         // Suspend the computation of the second parser for lazy evaluation
-        bind: (p, f) => s.bind(p, a => input => t.suspend(() => f(a)(input))),
+        bind: (p, f) => 
+            s.bind(p, a => input => t.suspend(() => f(a)(input))),
         empty: () => _ => m.empty(),
         // No need to run the second parser if the first one succeeds
-        append: (p1, p2) => input => m.append(p1(input), t.suspend(() => p2(input)))
+        append: (p1, p2) => input => 
+            m.append(p1(input), t.suspend(() => p2(input)))
     });
 
     // Next character parser
@@ -209,7 +220,10 @@ const parser = (() => {
     }
 
     // Chain left-associative parser
-    const chainl1 = <A>(p: Parser<A>, op: Parser<(a: A, b: A) => A>): Parser<A> => 
+    const chainl1 = <A>(
+        p: Parser<A>, 
+        op: Parser<(a: A, b: A) => A>
+    ): Parser<A> => 
         base.bind(
             p,
             a => base.map(
