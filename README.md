@@ -25,7 +25,7 @@ console.log(array.pipe(
 
 ## Usage
 
-Higher kinded types can be defined by extending from the `KRoot` interface:
+Higher kinded types can be defined by extending the `KRoot` interface:
 
 ```typescript
 import { KRoot } from '@jsoldi/hkt';
@@ -83,7 +83,7 @@ const logger = {
             return [[...logA, ...logB], b]; // Concatenate logs
         },
     }),
-    log: <A>(log: string, a: A): Log<A> => [[log], a] // Add log 
+    log: <A>(log: string, a: A): Log<A> => [[log], a] // Add a log 
 }
 
 const add = (a: number, b: number): Log<number> => 
@@ -101,21 +101,22 @@ const res = logger.pipe(
     (a, b) => { 
         console.log('Addition result:', b);
         console.log('Multiplication result:', a);
-        return logger.unit(b);
+        return logger.unit(a);
     }
 );
 
 console.log(res); // [["Multiplying 1 and 2", "Adding 2 and 3"], 5]
 ```
 
-### Continuations and trampolines: Stack-safe recursion in TypeScript
+### Continuations and Trampolines
 
 ```typescript
 import { pipe, KTypeOf, cont, ContVoid } from '@jsoldi/hkt';
 
-// Stack-safe trampoline combining continuations and thunks
+// Stack-safe trampoline which combines continuations and thunks
 const t = cont.trampoline;
 type Trampoline<T> = KTypeOf<typeof t, T>;
+// Trampoline<T> = <R>(resolve: (t: T) => Free<R, KLazy>) => Free<R, KLazy>
 
 // Fibonacci sequence using trampoline and memoization
 const fibonacci = t.memo((n: bigint): Trampoline<bigint> => {
@@ -174,13 +175,13 @@ import {
     lazy 
 } from '@jsoldi/hkt';
 
-// alias for trampline
+// Alias for trampline
 const t = cont.trampoline;
 
-// put maybe inside trampoline
+// Put maybe inside trampoline
 const m = maybe.transform(t);
 
-// put trampoline inside state monad
+// Put trampoline inside state monad
 const s = state.of<string>().transform(m); 
 
 // Non-higher-kinded parser type
@@ -194,13 +195,14 @@ interface KParser extends KRoot {
 }
 
 const parser = (() => {
-    // Create a monadPlus (monad & monoid) instance for the parser
+    // Create a monadPlus (monad + monoid) instance for the parser
     const base = monadPlus<KParser>({ 
         unit: s.unit,
         // Suspend the computation of the second parser for lazy evaluation
         bind: (p, f) => 
             s.bind(p, a => input => t.suspend(() => f(a)(input))),
         empty: () => _ => m.empty(),
+        // `append` outputs the first non-empty result
         // No need to run the second parser if the first one succeeds
         append: (p1, p2) => input => 
             m.append(p1(input), t.suspend(() => p2(input)))
@@ -260,7 +262,7 @@ const math = (() => {
         parser.map(parser.char('/'), _ => (a: number, b: number) => a / b)
     );
 
-    // Bracketed expression parser
+    // Numbers and groups parser
     const group: Parser<number> = parser.append(
         num,
         parser.pipe(
@@ -272,9 +274,15 @@ const math = (() => {
     );
 
     // Arithmetic expression parser
-    const expr = parser.chainl1(parser.chainl1(group, mulOp), addOp);
+    const expr = parser.chainl1(
+        parser.chainl1(
+            group,  // Parse numbers and groups first
+            mulOp   // Then parse multiplication and division
+        ),
+        addOp       // Finally parse addition and subtraction
+    );
 
-    // Final parser
+    // Remove whitespace and parse expression
     const parse = chain(
         (s: string) => s.replace(/\s/g, ''), 
         expr, 
@@ -289,6 +297,7 @@ const math = (() => {
 
 console.log(math.parse('10.1 + 20 * 30 + 40')); // 650.1
 
+// Trampoline is stack-safe
 console.log(math.parse(
     Array.from({ length: 10000 }, (_, i) => i).join('+')
 )); // 49995000
