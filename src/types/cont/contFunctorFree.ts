@@ -10,8 +10,8 @@ export type ContFree<A, F> = Cont<A, KFree<F>>
 export interface IContFunctorFree<F> extends IContMonad<KFree<F>> {
     readonly contMonad: IFunctorFree<F>
     suspend<A>(f: $<F, ContFree<A, F>>): ContFree<A, F>
-    lift<A>(lfa: $<F, A>): ContFree<A, F>
-    mapThunk<G>(transform: <R>(gt: $<G, Free<Free<R, F>, G>>) => $<F, Free<Free<R, F>, G>>): <A>(ag: Cont<A, KFree<G>>) => ContFree<A, F>
+    delay<A>(lfa: $<F, A>): ContFree<A, F> // Inverse of `run`
+    mapFree<G>(transform: <R>(gt: $<G, Free<Free<R, F>, G>>) => $<F, Free<Free<R, F>, G>>): <A>(ag: Cont<A, KFree<G>>) => ContFree<A, F>
 }
 
 export function contFunctorFree<F>(m: IFunctorFree<F>): IContFunctorFree<F> {
@@ -21,9 +21,9 @@ export function contFunctorFree<F>(m: IFunctorFree<F>): IContFunctorFree<F> {
         contMonad<KFree<F>>(m),
         base => {
             const suspend: I['suspend'] = f => resolve => m.suspend(m.freeBase.map(f, ct => ct(resolve)));
-            const lift: I['lift'] = fa => resolve => m.suspend(m.freeBase.map(fa, resolve))
+            const delay: I['delay'] = fa => resolve => m.suspend(m.freeBase.map(fa, resolve))
 
-            const mapThunk = <G>(transform: <R>(gt: $<G, Free<Free<R, F>, G>>) => $<F, Free<Free<R, F>, G>>) => 
+            const mapFree = <G>(transform: <R>(gt: $<G, Free<Free<R, F>, G>>) => $<F, Free<Free<R, F>, G>>) => 
                 base.mapCont<KFree<G>, KFree<F>>(
                     either.left, 
                     <R>(fg: Free<Free<R, F>, G>) => 
@@ -38,8 +38,8 @@ export function contFunctorFree<F>(m: IFunctorFree<F>): IContFunctorFree<F> {
                 ...base,
                 contMonad: m,
                 suspend,
-                lift,
-                mapThunk,
+                delay,
+                mapFree,
             }
         }
     )

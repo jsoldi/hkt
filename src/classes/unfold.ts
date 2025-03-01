@@ -4,6 +4,7 @@ import { maybe, Maybe } from "../types/maybe.js";
 import { IMonad } from "./monad.js";
 import { TypeClassArg } from "./utilities.js";
 import { pipe } from "../core/utils.js";
+import { Lazy } from "../types/lazy.js";
 
 export interface IUnfoldBase<F, G> extends IFunctorBase<F> { 
     readonly scalar: IMonad<G> // This is the monad that contains the maybe-pair if this was the fixed point of IFunctor<F>
@@ -12,8 +13,9 @@ export interface IUnfoldBase<F, G> extends IFunctorBase<F> {
 
 export interface IUnfold<F, G> extends IUnfoldBase<F, G>, IFunctor<F> {    
     iterate<A>(f: (a: A) => Maybe<A>): (a: A) => $<F, A>
-    forLoop<A>(pred: (a: A) => unknown, next: (a: A) => A): (init: A) => $<F, A>
-    range(start: number, endExc: number): $<F, number>
+    forLoop<A>(init: A, pred: (a: A) => unknown, next: (a: A) => A): $<F, A>
+    range(start: number, endExcl: number): $<F, number>
+    replicate<A>(n: number, a: Lazy<A>): $<F, A>
 }
 
 const is_unfold = Symbol('is_unfold');
@@ -32,14 +34,20 @@ export function unfold<F, G>(base: TypeClassArg<IUnfoldBase<F, G>, IUnfold<F, G>
         }),
         base => {
             const iterate: I['iterate'] = f => base.unfold(a => base.scalar.unit(maybe.map(f(a), a2 => [a, a2])));
-            const forLoop: I['forLoop'] = (pred, next) => iterate(a => pred(a) ? maybe.just(next(a)) : maybe.nothing);
-            const range: I['range'] = (start: number, endExc: number) => forLoop<number>(t => t < endExc, t => t + 1)(start);
+
+            const forLoop: I['forLoop'] = <A>(init: A, pred: (a: A) => unknown, next: (a: A) => A) => 
+                iterate<A>(a => pred(a) ? maybe.just(next(a)) : maybe.nothing)(init);
+
+            const range: I['range'] = (start: number, endExc: number) => forLoop<number>(start, t => t < endExc, t => t + 1);
+
+            const replicate: I['replicate'] = (n, a) => base.map(range(0, n), a);
 
             return {
                 ...{ [is_unfold]: true },
                 iterate,
                 forLoop,
                 range,
+                replicate,
                 ...base,
             };        
         }

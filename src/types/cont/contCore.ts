@@ -37,7 +37,7 @@ export function contCore<M>(): ICont<M> {
                 if (mb.right) {
                     return resolve(mb.value);
                 } else {
-                    return until(predicate)(fa)(resolve); // Here you could return a thunk
+                    return until(predicate)(fa)(resolve); 
                 }
             });
 

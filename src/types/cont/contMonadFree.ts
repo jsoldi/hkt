@@ -1,13 +1,11 @@
 import { $ } from "../../core/hkt.js";
 import { pipe } from "../../core/utils.js";
-import { KFree } from "../free/functorFree.js";
 import { IMonadFree } from "../free/monadFree.js";
-import { Cont } from "./contCore.js";
-import { contFunctorFree, IContFunctorFree } from "./contFunctorFree.js";
+import { ContFree, contFunctorFree, IContFunctorFree } from "./contFunctorFree.js";
 
 export interface IContMonadFree<F> extends IContFunctorFree<F> {
     readonly contMonad: IMonadFree<F>
-    run<A>(cta: Cont<A, KFree<F>>): $<F, A> 
+    run<A>(cta: ContFree<A, F>): $<F, A> // Inverse of `delay`
 }
 
 export function contMonadFree<F>(m: IMonadFree<F>): IContMonadFree<F> {

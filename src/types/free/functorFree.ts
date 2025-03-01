@@ -13,7 +13,7 @@ export interface KFree<F> extends KRoot {
 export interface IFunctorFree<F> extends IMonad<KFree<F>> {
     readonly freeBase: IFunctor<F>
     suspend<A>(f: $<F, Free<A, F>>): Free<A, F> 
-    lift<A>(f: $<F, A>): Free<A, F>
+    delay<A>(f: $<F, A>): Free<A, F>
     mapFreeFrom<G, A>(transform: (ft: $<G, Free<A, G>>) => $<F, Free<A, G>>): (ft: Free<A, G>) => Free<A, F>
     mapFreeTo<G, A>(transform: (ft: $<F, Free<A, G>>) => $<G, Free<A, G>>): (ft: Free<A, F>) => Free<A, G>
     foldFree<A, B>(pure: (a: A) => B, impure: (fb: $<F, B>) => B): (ft: Free<A, F>) => B
@@ -22,7 +22,7 @@ export interface IFunctorFree<F> extends IMonad<KFree<F>> {
 export function functorFree<F>(freeBase: IFunctor<F>): IFunctorFree<F> {
     const unit = <A, G = F>(a: A): Free<A, G> => either.left(a);
     const suspend = <A, G = F>(f: $<G, Free<A, G>>): Free<A, G> => either.right(f);
-    const lift = <A>(fa: $<F, A>): Free<A, F> => suspend(freeBase.map(fa, unit));
+    const delay = <A>(fa: $<F, A>): Free<A, F> => suspend(freeBase.map(fa, unit));
 
     const foldFree = <A, B>(pure: (a: A) => B, impure: (fb: $<F, B>) => B) => function go(ta: Free<A, F>): B {    
         if (ta.right) {
@@ -50,7 +50,7 @@ export function functorFree<F>(freeBase: IFunctor<F>): IFunctorFree<F> {
         ...monad<KFree<F>>({ unit, bind }),
         freeBase,
         suspend,
-        lift,
+        delay,
         foldFree,
         mapFreeFrom,
         mapFreeTo
