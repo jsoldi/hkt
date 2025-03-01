@@ -177,14 +177,15 @@ import {
 // alias for trampline
 const t = cont.trampoline;
 
-// alias for maybe
+// put maybe inside trampoline
 const m = maybe.transform(t);
 
-// put maybe inside a state monad
+// put trampoline inside state monad
 const s = state.of<string>().transform(m); 
 
 // Non-higher-kinded parser type
-type Parser<T> = KTypeOf<typeof s, T>; // (a: string) => Maybe<[T, string]>
+type Parser<T> = KTypeOf<typeof s, T>; 
+// Parser<T> = (a: string) => Cont<Maybe<[T, string]>, KFree<KLazy>>
 
 // Higher-kinded parser type
 interface KParser extends KRoot {
