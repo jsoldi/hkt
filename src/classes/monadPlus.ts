@@ -83,6 +83,6 @@ _monadPlus.const = <T>(t: T) => _monadPlus<$K1<T>>({
 });
 
 _monadPlus.void = _monadPlus.const<void>(undefined);
-_monadPlus.null = _monadPlus.const(null);
+_monadPlus.null = _monadPlus.const<null>(null);
 
 export const monadPlus: IMonadPlusFactory = _monadPlus;

@@ -1,6 +1,10 @@
 # @jsoldi/hkt
 
-Lightweight Haskell-style higher-kinded types for TypeScript, enabling type-safe functional programming with core abstractions like Monad, Functor, and Monoid. Effortlessly compose computations, build custom monads, and work with common JS types such as Array, Promise, AsyncGenerator — while keeping type safety.
+Lightweight library that brings Haskell-style higher-kinded types to TypeScript, enabling type-safe functional programming with core abstractions like Monad, Functor, and Monoid. The goal is to provide a bridge between the elegance of functional programming and the practical realities of JavaScript.
+
+Rather than introducing alternative types (like cons-lists) or enforcing purity via an IO type, the library embraces JavaScript's objects — arrays, promises, and async generators — allowing users to handle side effects as they see fit.
+
+For example, instead of directly defining a foldable interface, the library provides a more general fold interface, of which foldable is a special case, where results are wrapped in a monad. This approach allows types like AsyncGenerator to be foldable by returning a task (a function that returns a promise), unlocking a wide range of capabilities for async generators. The aim is to be both theoretically grounded and idiomatic to JavaScript, ensuring that functional programming abstractions work seamlessly with the language's native constructs.
 
 ## Installation
 
@@ -15,12 +19,12 @@ npm install @jsoldi/hkt
 ```typescript
 import { array } from '@jsoldi/hkt';
 
-// Monad's `pipe` emulates Haskell `do` notation. Each function receives 
-// all the previous results in reverse order.
+// Monad's `pipe` emulates Haskell's do notation. Each function 
+// receives all the previous results in reverse order.
 const res = array.pipe(
-    ['♦️', '♣️', '♥️', '♠️'],               // suits
-    _ => array.range(1, 13),            // ranks
-    (rank, suit) => [`${rank}${suit}`]  // rank-suit pairs
+    ['♦️', '♣️', '♥️', '♠️'], // suits
+    _ => array.range(1, 13), // ranks
+    (rank, suit) => [`${rank}${suit}`] // rank-suit pairs
 ); 
 
 console.log(res); // ['1♦️', '2♦️', '3♦️', '4♦️', …, '12♠️', '13♠️']
