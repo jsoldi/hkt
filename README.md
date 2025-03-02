@@ -115,6 +115,8 @@ const res = logger.pipe(
 console.log(res); // [["Multiplying 1 and 2", "Adding 2 and 3"], 5]
 ```
 
+## Advanced examples
+
 ### Continuations and Trampolines
 
 ```typescript
