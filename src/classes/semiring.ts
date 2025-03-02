@@ -10,8 +10,8 @@ export interface ISemiringBase<F, M> extends ITypeClass<F> {
 export interface ISemiring<F, M> extends ISemiringBase<F, M> {
     zero<A>(): $<F, A>
     one<A>(): $<F, $<M, A>>
-    plus<A>(a: $<F, A>, b: $<F, A>): $<F, A>
-    times<A>(a: $<F, $<M, A>>, b: $<F, $<M, A>>): $<F, $<M, A>>
+    plus<A>(...as: $<F, A>[]): $<F, A>
+    times<A>(...as: $<F, $<M, A>>[]): $<F, $<M, A>>
     fromNatural<A>(nat: number): $<F, $<M, A>>
 }
 
@@ -23,20 +23,18 @@ export function semiring<F, M>(base: TypeClassArg<ISemiringBase<F, M>, ISemiring
 
     const zero = base.sum.empty;
     const one = base.mult.empty;
-    const plus = base.sum.append;
-    const times = base.mult.append;
 
     return {
         ...{ [is_semiring]: true },
         zero,
         one,
-        plus,
-        times,
-        fromNatural: <A>(natural: number) => {
+        plus: (...as) => base.sum.concat(as),
+        times: (...as) => base.mult.concat(as),
+        fromNatural: function<A>(natural: number) {
             let result = zero<$<M, A>>();
 
             for (let i = 0; i < natural; i++)
-                result = plus(result, one<A>());
+                result = this.plus(result, one<A>());
             
             return result;
         },

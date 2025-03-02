@@ -4,7 +4,6 @@ import { maybe, Maybe } from "../types/maybe.js";
 import { IMonad } from "./monad.js";
 import { TypeClassArg } from "./utilities.js";
 import { pipe } from "../core/utils.js";
-import { Lazy } from "../types/lazy.js";
 
 export interface IUnfoldBase<F, G> extends IFunctorBase<F> { 
     readonly scalar: IMonad<G> // This is the monad that contains the maybe-pair if this was the fixed point of IFunctor<F>
@@ -14,8 +13,8 @@ export interface IUnfoldBase<F, G> extends IFunctorBase<F> {
 export interface IUnfold<F, G> extends IUnfoldBase<F, G>, IFunctor<F> {    
     iterate<A>(f: (a: A) => Maybe<A>): (a: A) => $<F, A>
     forLoop<A>(init: A, pred: (a: A) => unknown, next: (a: A) => A): $<F, A>
-    range(start: number, endExcl: number): $<F, number>
-    replicate<A>(n: number, a: Lazy<A>): $<F, A>
+    range(start: number, end: number): $<F, number>
+    replicate<A>(n: number, a: A): $<F, A>
 }
 
 const is_unfold = Symbol('is_unfold');
@@ -38,9 +37,9 @@ export function unfold<F, G>(base: TypeClassArg<IUnfoldBase<F, G>, IUnfold<F, G>
             const forLoop: I['forLoop'] = <A>(init: A, pred: (a: A) => unknown, next: (a: A) => A) => 
                 iterate<A>(a => pred(a) ? maybe.just(next(a)) : maybe.nothing)(init);
 
-            const range: I['range'] = (start: number, endExc: number) => forLoop<number>(start, t => t < endExc, t => t + 1);
+            const range: I['range'] = (start: number, end: number) => forLoop<number>(start, t => t <= end, t => t + 1);
 
-            const replicate: I['replicate'] = (n, a) => base.map(range(0, n), a);
+            const replicate: I['replicate'] = (n, a) => base.map(range(1, n), _ => a);
 
             return {
                 ...{ [is_unfold]: true },

@@ -8,22 +8,38 @@ Lightweight Haskell-style higher-kinded types for TypeScript, enabling type-safe
 npm install @jsoldi/hkt
 ```
 
-## Example
+## Examples
+
+### Piping computations
 
 ```typescript
 import { array } from '@jsoldi/hkt';
 
-// Monad's pipe is like Haskell's do notation
-console.log(array.pipe(
-    [0, 1],
-    _ => [0, 1],
-    _ => [0, 1],
-    // Previous results are passed in reverse order
-    (c, b, a) => [a * 4 + b * 2 + c * 1]
-)); // [0, 1, 2, 3, 4, 5, 6, 7]
+// Monad's `pipe` emulates Haskell `do` notation. Each function receives 
+// all the previous results in reverse order.
+const res = array.pipe(
+    ['♦️', '♣️', '♥️', '♠️'],               // suits
+    _ => array.range(1, 13),            // ranks
+    (rank, suit) => [`${rank}${suit}`]  // rank-suit pairs
+); 
+
+console.log(res); // ['1♦️', '2♦️', '3♦️', '4♦️', …, '12♠️', '13♠️']
 ```
 
-## Usage
+### Binary counting
+
+```typescript
+import { array, string } from '@jsoldi/hkt';
+
+// This semiring uses array's `bind` to distribute addition (array 
+// concatenation) over multiplication (string concatenation), 
+const s = array.semiring(string);
+const arg = array.replicate(5, ['0', '1']); // ['0', '1'] × 5
+const res = s.times(...arg); // ('0' + '1') × ('0' + '1') … 
+console.log(res); // ['00000', '00001', '00010',  …, '11111']
+```
+
+## Higher-kinded types
 
 Higher kinded types can be defined by extending the `KRoot` interface:
 
@@ -58,8 +74,6 @@ export interface IMonadBase<F> {
 }
 ```
 
-## Examples
-
 ### Defining a custom monad
 
 ```typescript
@@ -92,17 +106,10 @@ const add = (a: number, b: number): Log<number> =>
 const mul = (a: number, b: number): Log<number> => 
     logger.log(`Multiplying ${a} and ${b}`, a * b);
 
-// Monad's `pipe` is like Haskell's `do` notation
 const res = logger.pipe(
     logger.unit(1),
     x => mul(x, 2),
-    x => add(x, 3),
-    // Previous results are passed as arguments
-    (a, b) => { 
-        console.log('Addition result:', b);
-        console.log('Multiplication result:', a);
-        return logger.unit(a);
-    }
+    x => add(x, 3)
 );
 
 console.log(res); // [["Multiplying 1 and 2", "Adding 2 and 3"], 5]
@@ -123,7 +130,6 @@ const fibonacci = t.memo((n: bigint): Trampoline<bigint> => {
     if (n < 2)
         return t.unit(n);
 
-    // Like `pipe` but specialized to the monad
     return t.pipe(
         t.suspend(() => fibonacci(n - 1n)),
         _ => t.suspend(() => fibonacci(n - 2n)),
@@ -141,7 +147,9 @@ const prompt = (message: string): ContVoid<string> => resolve => {
     });
 };
 
-// `pipe` passes the first argument to the function composition of the rest
+// Standalone `pipe` is the trivial (identity) monad's `pipe` — passing 
+// the first argument through the (reversed) function composition of the 
+// rest.
 pipe(
     cont.void.map(
         prompt('Enter position in Fibonacci sequence or "exit": '),
