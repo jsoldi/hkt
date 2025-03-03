@@ -7,7 +7,9 @@ import { TypeClassArg } from "./utilities.js";
 import { chain, pipe } from "../core/utils.js";
 
 export interface IFoldBase<F, G> extends IFunctorBase<F> { 
-    readonly scalar: IMonad<G> // This is the monad that contains the maybe-pair if this was the fixed point of IFunctor<F>
+    // This is the monad that contains the maybe-pair if this was the fixed 
+    // point of IFunctor<F>. See https://en.wikipedia.org/wiki/Catamorphism
+    readonly scalar: IMonad<G> 
     foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: $<F, A>) => $<G, B>
 }
 

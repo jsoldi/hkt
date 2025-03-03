@@ -1,10 +1,10 @@
 # @jsoldi/hkt
 
-Lightweight library that brings Haskell-style higher-kinded types to TypeScript, enabling type-safe functional programming with core abstractions like Monad, Functor, and Monoid. The goal is to provide a bridge between the elegance of functional programming and the practical realities of JavaScript.
+Lightweight library that brings Haskell-style higher-kinded types to TypeScript for type-safe functional programming. It includes common abstractions like Monad, Functor, and Monoid, along with implementations for common JavaScript objects. The idea is to provide a solid foundation for functional programming without abandoning JavaScript's natural constructs.
 
-Rather than introducing alternative types (like cons-lists) or enforcing purity via an IO type, the library embraces JavaScript's objects — arrays, promises, and async generators — allowing users to handle side effects as they see fit.
+As an example, instead of directly defining a *foldable* interface, the library provides a more general *fold* interface (with *foldable* as a special case), where results are wrapped in a monad. This approach allows types like `AsyncGenerator` to be folded by returning a task (a promise returning function), adding foldable capabilities to async generators.
 
-For example, instead of directly defining a foldable interface, the library provides a more general fold interface, of which foldable is a special case, where results are wrapped in a monad. This approach allows types like AsyncGenerator to be foldable by returning a task (a function that returns a promise), unlocking a wide range of capabilities for async generators. The aim is to be both theoretically grounded and idiomatic to JavaScript, ensuring that functional programming abstractions work seamlessly with the language's native constructs.
+The aim is for the library to integrable seamlessly into existing projects and start getting the benefits of functional programming right away, without the need to adopt a new paradigm or to rewrite existing code.
 
 ## Installation
 

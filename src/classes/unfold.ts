@@ -6,7 +6,9 @@ import { TypeClassArg } from "./utilities.js";
 import { pipe } from "../core/utils.js";
 
 export interface IUnfoldBase<F, G> extends IFunctorBase<F> { 
-    readonly scalar: IMonad<G> // This is the monad that contains the maybe-pair if this was the fixed point of IFunctor<F>
+    // This is the monad that contains the maybe-pair if this was the fixed 
+    // point of IFunctor<F>. See https://en.wikipedia.org/wiki/Catamorphism
+    readonly scalar: IMonad<G> 
     unfold<A, B>(alg: (b: B) => $<G, Maybe<[A, B]>>): (b: B) => $<F, A>
 }
 
