@@ -4,7 +4,7 @@ Lightweight library that brings Haskell-style higher-kinded types to TypeScript 
 
 As an example, instead of directly defining a *foldable* interface, the library provides a more general *fold* interface (with *foldable* as a special case), where results are wrapped in a monad. This approach allows types like `AsyncGenerator` to be folded by returning a task (a promise returning function), adding foldable capabilities to async generators.
 
-The aim is for the library to integrable seamlessly into existing projects and start getting the benefits of functional programming right away, without the need to adopt a new paradigm or to rewrite existing code.
+The aim is for the library to integrate seamlessly into existing projects and start getting the benefits of functional programming right away, without the need to adopt a new paradigm or to rewrite any existing code.
 
 ## Installation
 
