@@ -12,17 +12,27 @@ import { contMonad, IContMonad } from "./contMonad.js";
 import { contMonadFree, IContMonadFree } from "./contMonadFree.js";
 import { contVoid, IContVoid } from "./contVoid.js";
 
+/** The continuation factory. */
 export interface IContFactory {
+    /** The identity continuation, where computations immediately return a value. */
     readonly trivial: IContMonad<$I>
+    /** The void continuation, where computations do not return a value. */
     readonly void: IContVoid
+    /** The trampoline continuation for stack-safe recursion. */
     readonly trampoline: IContMonadFree<KLazy>
+    /** The trampoline continuation for stack-safe async recursion. */
     readonly trampolineAsync: IContMonadFree<KTask>
+    /** Creates a continuation monad where results are wrapped in type `M`. */
     ofType<M>(): ICont<M>
+    /** Creates a continuation monad where results are wrapped in a monad. */
     ofMonad<M>(m: IMonad<M>): IContMonad<M>
+    /** Creates a continuation monad where results are wrapped in a free monad given a functor. */
     ofFunctorFree<M>(m: IFunctorFree<M>): IContFunctorFree<M>
+    /** Creates a continuation monad where results are wrapped in a free monad given a monad. */
     ofMonadFree<M>(m: IMonadFree<M>): IContMonadFree<M>
 }
 
+/** The continuation factory. */
 export const cont: IContFactory = (() => {
     const getTrivial = memo(() => contMonad<$I>(monad.trivial));
     const getTrampoline = memo(() => contMonadFree(free.trampoline));

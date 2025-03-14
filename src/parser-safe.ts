@@ -1,4 +1,4 @@
-// import { cont, maybe, state, KTypeOf, KRoot, monadPlus, chain, lazy } from "./index.js";
+// import { cont, maybe, state, TypeArg, KRoot, monadPlus, chain, lazy } from "./index.js";
 
 // // alias for trampline
 // const t = cont.trampoline;
@@ -10,7 +10,7 @@
 // const s = state.of<string>().transform(m); 
 
 // // Non-higher-kinded parser type
-// type Parser<T> = KTypeOf<typeof s, T>; // (a: string) => Maybe<[T, string]>
+// type Parser<T> = TypeArg<typeof s, T>; // (a: string) => Maybe<[T, string]>
 
 // // Higher-kinded parser type
 // interface KParser extends KRoot {

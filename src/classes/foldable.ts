@@ -5,19 +5,27 @@ import { IMonadBase, ITrivial, monad } from "./monad.js";
 import { TypeClassArg } from "./utilities.js";
 import { chain, pipe } from "../core/utils.js";
 
+/** The minimal definition of a foldable. */
 export interface IFoldableBase<F> extends IFunctorBase<F> {
+    /** Folds the values of `fa` using the given function and initial value. */
     foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: $<F, A>) => B
 }
 
+/** The foldable interface, where `scalar` is the trivial (identity) monad. */
 export interface IFoldable<F> extends IFoldableBase<F>, IFold<F, $I> {
+    /** The trivial (identity) monad. */
     readonly scalar: ITrivial;
+    /** Lifts a fold over the given monad. */
     liftFoldOver<M>(m: IMonadBase<M>): IFold<$B2<F, M>, M>
+    /** Lifts a fold under the given monad. */
     liftFoldUnder<M>(m: IMonadBase<M>): IFold<$Q2<F, M>, M>
+    /** Nests a fold within another fold. */
     nestFold<M, N>(m: IFoldBase<M, N>): IFold<$B2<F, M>, N>
 }
 
 const is_foldable = Symbol("is_foldable");
 
+/** Creates an `IFoldable` from an `IFoldableBase`. */
 export function foldable<F>(base: TypeClassArg<IFoldableBase<F>, IFoldable<F>, typeof is_foldable>): IFoldable<F> {
     if (is_foldable in base)
         return base;

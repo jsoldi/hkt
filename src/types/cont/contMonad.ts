@@ -4,13 +4,19 @@ import { pipe } from "../../core/utils.js"
 import { ICont, Cont, contCore } from "./contCore.js"
 import { ContVoid } from "./contVoid.js"
 
+/** A continuation monad where results are wrapped in a monad. */
 export interface IContMonad<M> extends ICont<M> {
+    /** The monad that wraps the continuation results. */
     readonly contMonad: IMonad<M>
+    /** Lifts a monadic value into the continuation monad. */
     lift<A>(a: $<M, A>): Cont<A, M>
-    drop<A>(ca: Cont<A, M>): $<M, A>    
+    /** Drops the continuation and returns a monadic value. */
+    drop<A>(ca: Cont<A, M>): $<M, A>
+    /** Transforms the given continuation into a void continuation. */
     toVoid<A>(ca: Cont<A, M>): ContVoid<A>
 }
 
+/** Creates a continuation monad where results are wrapped in the given monad. */
 export function contMonad<M>(m: IMonad<M>): IContMonad<M> {
     type I = IContMonad<M>;
 

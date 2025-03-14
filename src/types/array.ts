@@ -9,26 +9,40 @@ import { IUnfoldable, unfoldable } from "../classes/unfoldable.js";
 import { Maybe } from "./maybe.js";
 import { monoid } from "../classes/monoid.js";
 
+/** The array higher-kinded type. */
 export interface KArray extends KRoot {
     readonly 0: unknown
     readonly body: Array<this[0]>
 }
 
-type KArrayTrans = $<$Q, KArray>
+/** The array transformer higher-kinded type. */
+export type KArrayTrans = $<$Q, KArray>
 
+/** The array interface. */
 interface IArray extends IMonadPlus<KArray>, IFoldable<KArray>, IUnfoldable<KArray>, ITraversable<KArray>, ITransformer<KArrayTrans> {
-    first<A>(fa: A[]): A | undefined
+    /** Folds the values of `fa` from right to left using the given function and initial value. */
     foldr<A, B>(f: (a: A, b: B) => B): (b: B) => (fa: A[]) => B
+    /** Filters the items of an array using a predicate function. */
     filter<T, S extends T>(predicate: (item: T) => item is S): (items: T[]) => S[]
+    /** Filters the items of an array using a predicate function. */    
     filter<T>(predicate: (item: T) => unknown): (items: T[]) => T[]
+    /** Splits an array into chunks of the given size. */
     chunks(size: number): <A>(fa: A[]) => A[][]
+    /** Removes duplicate items from an array using a key function. */
     distinctBy<A, B>(f: (a: A) => B): (fa: A[]) => A[]
+    /** Maps an async function over an array. */
     mapAsync: <A, B>(f: (a: A) => Promise<B>) => (fa: A[]) => Promise<B[]>
+    /** Takes the first `n` items of an array. */
     take<A>(n: number): (fa: A[]) => A[]
+    /** Skips the first `n` items of an array. */
     skip<A>(n: number): (fa: A[]) => A[]
+    /** Zips two arrays into an array of pairs. */
     zip<A, B>(fa: A[], fb: B[]): [A, B][]
+    /** Produces a monad transformer having `Array` as the inner monad. */
     transform<M>(base: IMonad<M>): IArrayTrans<M>
+    /** Lifts the array monoid into a monad. */
     liftMonoid<M>(base: IMonad<M>): IArrayTrans<M>
+    /** Sequences an array of monads into a monad of an array. */
     sequence<M>(m: IMonad<M>): {
         (ta: []): $<M, []>
         <A>(ta: [$<M, A>]): $<M, [A]>
@@ -43,15 +57,16 @@ interface IArray extends IMonadPlus<KArray>, IFoldable<KArray>, IUnfoldable<KArr
     }
 }
 
+/** The array transformer interface. */
 export interface IArrayTrans<M> extends IMonadTrans<KArrayTrans, M>, IFold<$B2<M, KArray>, M>, IMonadPlus<$B2<M, KArray>> {
 }
 
+/** The array module. */
 export const array: IArray = (() => {
     const filter: IArray['filter'] = <T, S extends T>(predicate: (item: T) => any): (items: T[]) => T[] | S[] => {
         return (items: T[]) => items.filter(predicate);
     };    
 
-    const first = <A>(fa: A[]): A | undefined => fa[0];
     const foldl = <A, B>(f: (b: B, a: A) => B) => (b: B) => (fa: A[]) => fa.reduce(f, b);
     const foldr = <A, B>(f: (a: A, b: B) => B) => (b: B) => (fa: A[]) => fa.reduceRight((a, b) => f(b, a), b);
         
@@ -176,7 +191,6 @@ export const array: IArray = (() => {
             unfold: _unfold,
         }),
         ..._monadPlus, 
-        first,
         filter,
         transform,
         foldl,

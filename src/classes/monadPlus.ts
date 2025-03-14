@@ -5,13 +5,20 @@ import { TypeClassArg } from "./utilities.js";
 import { pipe } from "../core/utils.js";
 import { ISemiring, semiring } from "./semiring.js";
 
+/** The monad plus interface. */
 export interface IMonadPlus<F> extends IMonad<F>, IMonoid<F> {
+    /** Guards a value based on a boolean condition. */
     guard(b: unknown): $<F, null>
+    /** Creates a semiring from a monoid where addition is this monadPlus and multiplication is the given monoid. */
     semiring<M>(mult: IMonoid<M>): ISemiring<F, M>    
+    /** Creates a monad from an array of values. */
     from<A>(as: A[]): $<F, A>
+    /** Filters values in a monadPlus based on a predicate. */
     filter<A, B extends A>(f: (a: A) => a is B): (fa: $<F, A>) => $<F, B>
     filter<A>(f: (a: A) => unknown): (fa: $<F, A>) => $<F, A>
+    /** Applies a monadic action zero or more times. */
     some<A>(fa: $<F, A>): $<F, A[]>
+    /** Applies a monadic action one or more times. */
     many<A>(fa: $<F, A>): $<F, A[]>
 }
 
@@ -19,6 +26,7 @@ const is_monadPlus = Symbol("is_monadPlus");
 
 export type MonadPlusArg<F> = TypeClassArg<IMonadBase<F> & IMonoidBase<F>, IMonadPlus<F>, typeof is_monadPlus>;
 
+/** Creates a `IMonadPlus` from an instance of `IMonadBase` and `IMonoidBase`. */
 export function _monadPlus<F>(base: MonadPlusArg<F>): IMonadPlus<F> {   
     if (is_monadPlus in base) 
         return base;
@@ -64,11 +72,15 @@ export function _monadPlus<F>(base: MonadPlusArg<F>): IMonadPlus<F> {
     );
 }
 
+/** The monad plus factory. */
 export interface IMonadPlusFactory {
+    /** Creates a monad plus from a monad and a monoid. */
     <F>(base: MonadPlusArg<F>): IMonadPlus<F>;
-    /** Type T **must** have a single possible value like `null` or `undefined`. */
+    /** Creates a constant monadPlus. Type T **must** have a single instance such as `null`. */
     const<const T>(t: T): IMonad<$K1<T>>;
+    /** The void constant. */
     readonly void: IMonad<$K1<void>>;
+    /** Creates a monad plus with a null type. */
     readonly null: IMonad<$K1<null>>;
 }
 
@@ -85,4 +97,5 @@ _monadPlus.const = <T>(t: T) => _monadPlus<$K1<T>>({
 _monadPlus.void = _monadPlus.const<void>(undefined);
 _monadPlus.null = _monadPlus.const<null>(null);
 
+/** The monad plus factory. */
 export const monadPlus: IMonadPlusFactory = _monadPlus;

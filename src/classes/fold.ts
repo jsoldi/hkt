@@ -6,26 +6,42 @@ import { num } from "../types/primitive.js";
 import { TypeClassArg } from "./utilities.js";
 import { chain, pipe } from "../core/utils.js";
 
+/** The minimal definition of a fold. */
 export interface IFoldBase<F, G> extends IFunctorBase<F> { 
-    // This is the monad that contains the maybe-pair if this was the fixed 
-    // point of IFunctor<F>. See https://en.wikipedia.org/wiki/Catamorphism
+    /**
+     * The monad that wraps the result of the fold operation. As a 
+     * [catamorphism](https://en.wikipedia.org/wiki/Catamorphism), 
+     * this is the monad that wraps the maybe-tuple of the 
+     * fixed-point of `IFunctor<F>`. 
+     */
     readonly scalar: IMonad<G> 
+    /** Folds the values of `fa` using the given function and initial value. */
     foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: $<F, A>) => $<G, B>
 }
 
+/** The fold interface, extended by `IFoldable`. */
 export interface IFold<F, G> extends IFoldBase<F, G>, IFunctor<F> {    
+    /** Folds the given structure into an array. */
     toArray<A>(fa: $<F, A>): $<G, A[]>
+    /** Folds the given structure using the given monoid. */
     fold<M>(m: IMonoid<M>): <A>(fa: $<F, $<M, A>>) => $<G, $<M, A>>
+    /** Same as `foldl`, but with the arguments reordered. */
     reduce<T, U>(acc: U, f: (acc: U, a: T) => U): (fa: $<F, T>) => $<G, U>
+    /** Counts the number of elements in the given structure. */
     length(fa: $<F, unknown>): $<G, number>
+    /** Sums the values of the given structure. */
     sum(fa: $<F, number>): $<G, number>
+    /** Averages the values of the given structure. */
     avg(fa: $<F, number>): $<G, number>
+    /** Checks if any of the values in the given structure satisfy the predicate. */
     any<A>(p: (a: A) => unknown): (fa: $<F, A>) => $<G, boolean>
+    /** Checks if all of the values in the given structure satisfy the predicate. */
     all<A>(p: (a: A) => unknown): (fa: $<F, A>) => $<G, boolean>
 }
 
 const is_fold = Symbol('is_fold');
 
+/** Creates an `IFold` from an `IFoldBase`. */
 export function fold<F, G>(base: TypeClassArg<IFoldBase<F, G>, IFold<F, G>, typeof is_fold>): IFold<F, G> {
     if (is_fold in base)
         return base;

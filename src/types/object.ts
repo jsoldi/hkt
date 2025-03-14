@@ -9,25 +9,33 @@ import { IMonad } from "../classes/monad.js";
 
 type K = keyof any;
 
+/** The higher-kinded type of TypeScript's `Record` type. */
 export interface KObject extends KRoot {
     readonly 0: unknown
     readonly body: Record<K, this[0]>
 }
 
-interface IObject extends IFunctor<KObject>, ITraversable<KObject>, IMonoid<KObject> {
+/** The object interface, providing a set of functions for working with JavaScript objects. */
+export interface IObject extends IFunctor<KObject>, ITraversable<KObject>, IMonoid<KObject> {
+    /** Returns an array of key-value pairs from the given object. */
     entries<A>(fa: Record<K, A>): [K, A][]
+    /** Returns an array of keys from the given object. */
     keys<A>(fa: Record<K, A>): K[]
+    /** Returns an array of values from the given object. */
     values<A>(fa: Record<K, A>): A[]
+    /** Maps the values and keys of the given object using the given function and produces a new object. */
     rebuild<T extends Record<K, any>, B>(fa: T, f: (a: T[keyof T], k: keyof T) => [B, K]): { [K in keyof T]: B }
+    /** Maps the values and keys of the given object using the given function and produces a new object. */
     map<T extends Record<K, any>, R>(obj: T, f: (a: T[keyof T], k: K) => R): { [K in keyof T]: R }
+    /** Maps the values and keys of the given object using the given function and produces a new object. */
     map<A, B>(fa: Record<K, A>, f: (a: A, k: K) => B): Record<K, B>
-    fmap<T extends Record<K, any>, B>(f: (a: T[keyof T]) => B): (fa: T) => { [K in keyof T]: B }
-    fmap<T extends Record<K, any>, B, C>(f: (a: T[keyof T]) => B, g: (b: B) => C): (fa: T) => { [K in keyof T]: C }
-    fmap<T extends Record<K, any>, B, C, D>(f: (a: T[keyof T]) => B, g: (b: B) => C, h: (c: C) => D): (fa: T) => { [K in keyof T]: D }
+    /** Converts the given object into a reader, where non-existent keys return `Nothing`. */
     toReader<A>(fa: Record<K, A>): Reader<K, Maybe<A>>
+    /** Converts the given reader into an object having the specified keys. */
     fromReader(keys: K[]): <A>(r: Reader<K, A>) => Record<K, A>
 }
 
+/** The object module, providing a set of functions for working with JavaScript objects. */
 export const object: IObject = (() => {
     const rebuild = <T extends Record<K, any>, B>(fa: T, f: (a: T[keyof T], k: keyof T) => [B, K]): { [K in keyof T]: B } => {
         const result: Record<K, B> = {};

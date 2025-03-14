@@ -1,10 +1,10 @@
 # @jsoldi/hkt
 
-Lightweight library that brings Haskell-style higher-kinded types to TypeScript for type-safe functional programming. It includes common abstractions like Monad, Functor, and Monoid, along with implementations for common JavaScript objects. The idea is to provide a solid foundation for functional programming without abandoning JavaScript's natural constructs.
+Lightweight library that brings Haskell-style higher-kinded types to TypeScript. It includes common abstractions like Monad, Functor, and Monoid, along with implementations for common JavaScript objects. The idea is to provide a solid foundation for functional programming in TypeScript without abandoning JavaScript's native features.
 
 As an example, instead of directly defining a *foldable* interface, the library provides a more general *fold* interface (with *foldable* as a special case), where results are wrapped in a monad. This approach allows types like `AsyncGenerator` to be folded by returning a task (a promise returning function), adding foldable capabilities to async generators.
 
-The aim is for the library to integrate seamlessly into existing projects and start getting the benefits of functional programming right away, without the need to adopt a new paradigm or to rewrite any existing code.
+The aim is for the library to integrate seamlessly into existing projects without the need to adopt a new paradigm or to rewrite existing code.
 
 ## Installation
 
@@ -124,11 +124,11 @@ console.log(res); // [["Multiplying 1 and 2", "Adding 2 and 3"], 5]
 ### Continuations and Trampolines
 
 ```typescript
-import { pipe, KTypeOf, cont, ContVoid } from '@jsoldi/hkt';
+import { pipe, TypeArg, cont, ContVoid } from '@jsoldi/hkt';
 
 // Stack-safe trampoline which combines continuations and thunks
 const t = cont.trampoline;
-type Trampoline<T> = KTypeOf<typeof t, T>;
+type Trampoline<T> = TypeArg<typeof t, T>;
 // Trampoline<T> = <R>(resolve: (t: T) => Free<R, KLazy>) => Free<R, KLazy>
 
 // Fibonacci sequence using trampoline and memoization
@@ -182,7 +182,7 @@ import {
     cont, 
     maybe, 
     state, 
-    KTypeOf, 
+    TypeArg, 
     KRoot, 
     monadPlus, 
     chain, 
@@ -199,7 +199,7 @@ const m = maybe.transform(t);
 const s = state.of<string>().transform(m); 
 
 // Non-higher-kinded parser type
-type Parser<T> = KTypeOf<typeof s, T>; 
+type Parser<T> = TypeArg<typeof s, T>; 
 // Parser<T> = (a: string) => Cont<Maybe<[T, string]>, KFree<KLazy>>
 
 // Higher-kinded parser type

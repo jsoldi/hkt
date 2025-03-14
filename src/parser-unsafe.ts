@@ -1,4 +1,4 @@
-// import { maybe, state, KTypeOf, KRoot, monadPlus, chain } from "./index.js";
+// import { maybe, state, TypeArg, KRoot, monadPlus, chain } from "./index.js";
 
 // // alias for maybe
 // const m = maybe; 
@@ -7,7 +7,7 @@
 // const s = state.of<string>().transform(m); 
 
 // // Non-higher-kinded parser type
-// type Parser<T> = KTypeOf<typeof s, T>; // (a: string) => Maybe<[T, string]>
+// type Parser<T> = TypeArg<typeof s, T>; // (a: string) => Maybe<[T, string]>
 
 // // Higher-kinded parser type
 // interface KParser extends KRoot {

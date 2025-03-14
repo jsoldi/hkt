@@ -4,20 +4,28 @@ import { Maybe, maybe } from "../maybe.js";
 import { pipe } from "../../core/utils.js";
 import { IContMonad } from "./contMonad.js";
 
+/** The continuation monad. The result of computations are wrapped in type `M`. */
 export type Cont<T, M> = <R>(resolve: (t: T) => $<M, R>) => $<M, R>;
 
+/** The higher-kinded type of the continuation monad. The result of computations are wrapped in type `M`. */
 export interface KCont<M> extends KRoot {
     readonly 0: unknown
     readonly body: Cont<this[0], M>
 }
 
+/** The continuation monad interface. */
 export interface ICont<M> extends IMonad<KCont<M>> {
+    /** Changes the result type of the continuation monad. */
     mapCont<M, N, I = N>(wrap: <R>(r: $<N, R>) => $<M, $<I, R>>, peel: <R>(mb: $<M, $<I, R>>) => $<N, R>): <A>(ca: Cont<A, M>) => Cont<A, N>
+    /** Memoizes the result of a continuation. The given function must be pure and its argument must be serializable. */
     memo<A, B>(f: (a: A) => Cont<B, M>): (a: A) => Cont<B, M>
+    /** Repeatedly maps the continuation through the given function until the predicate is satisfied. */
     until<A, B>(predicate: (a: A) => Maybe<B>): (fa: Cont<A, M>) => Cont<B, M>
+    /** Repeatedly evaluates a continuation while the predicate is satisfied. */
     doWhile<A>(predicate: (a: A) => boolean): (fa: Cont<A, M>) => Cont<A, M>
 }
 
+/** Creates a continuation monad where results are wrapped in type `M`. */
 export function contCore<M>(): ICont<M> {
     type I = IContMonad<M>;
 

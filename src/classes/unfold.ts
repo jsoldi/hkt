@@ -5,22 +5,37 @@ import { IMonad } from "./monad.js";
 import { TypeClassArg } from "./utilities.js";
 import { pipe } from "../core/utils.js";
 
+/** The minimal definition of an unfold. */
 export interface IUnfoldBase<F, G> extends IFunctorBase<F> { 
-    // This is the monad that contains the maybe-pair if this was the fixed 
-    // point of IFunctor<F>. See https://en.wikipedia.org/wiki/Catamorphism
-    readonly scalar: IMonad<G> 
-    unfold<A, B>(alg: (b: B) => $<G, Maybe<[A, B]>>): (b: B) => $<F, A>
+    /**
+     * The monad that wraps the result of the unfold operation. As a 
+     * [catamorphism](https://en.wikipedia.org/wiki/Catamorphism), 
+     * this is the monad that wraps the maybe-tuple of the 
+     * fixed-point of `IFunctor<F>`.
+     */
+    readonly scalar: IMonad<G>;
+    /** Unfolds new elements by applying the given function to a seed value. */
+    unfold<A, B>(alg: (b: B) => $<G, Maybe<[A, B]>>): (b: B) => $<F, A>;
 }
 
+/** The unfold interface, extended by `IUnfoldable`. */
 export interface IUnfold<F, G> extends IUnfoldBase<F, G>, IFunctor<F> {    
-    iterate<A>(f: (a: A) => Maybe<A>): (a: A) => $<F, A>
-    forLoop<A>(init: A, pred: (a: A) => unknown, next: (a: A) => A): $<F, A>
-    range(start: number, end: number): $<F, number>
-    replicate<A>(n: number, a: A): $<F, A>
+    /** Iterates by applying the function until it returns nothing. */
+    iterate<A>(f: (a: A) => Maybe<A>): (a: A) => $<F, A>;
+
+    /** Builds a sequence, starting from init, while pred is true, then uses next to advance. */
+    forLoop<A>(init: A, pred: (a: A) => unknown, next: (a: A) => A): $<F, A>;
+
+    /** Creates a range of numbers from start to end inclusive. */
+    range(start: number, end: number): $<F, number>;
+
+    /** Replicates the given value `n` times within the structure. */
+    replicate<A>(n: number, a: A): $<F, A>;
 }
 
 const is_unfold = Symbol('is_unfold');
 
+/** Creates an `IUnfold` from an `IUnfoldBase`. */
 export function unfold<F, G>(base: TypeClassArg<IUnfoldBase<F, G>, IUnfold<F, G>, typeof is_unfold>): IUnfold<F, G> {
     if (is_unfold in base)
         return base;
