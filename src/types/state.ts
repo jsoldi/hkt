@@ -22,7 +22,7 @@ export interface KStateTrans<S> extends KRoot {
 }
 
 /** The state interface, providing stateful computations. */
-interface IState<S> extends IMonad<KState<S>>, ITransformer<KStateTrans<S>> {
+export interface IState<S> extends IMonad<KState<S>>, ITransformer<KStateTrans<S>> {
     /** Produces a state that evaluates to the current state. */
     readonly get: State<S, S>
     /** Produces a state that evaluates to the given value. */

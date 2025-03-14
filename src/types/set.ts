@@ -2,13 +2,13 @@ import { KRoot } from "../core/hkt.js";
 import { IMonadPlus, monadPlus } from "../classes/monadPlus.js";
 
 /** Higher-kinded Set type. */
-interface KSet extends KRoot {
+export interface KSet extends KRoot {
     readonly 0: unknown
     readonly body: Set<this[0]>
 }
 
 /** The set interface, providing a set of functions for working with sets. */
-interface ISet extends IMonadPlus<KSet> {
+export interface ISet extends IMonadPlus<KSet> {
     /** Produces a Set containing all the elements in the first set and also in the second set. */
     union: <A>(fa: Set<A>) => (fb: Set<A>) => Set<A>
     /** Produces a Set containing all the elements which are both in the first and second set. */

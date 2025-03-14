@@ -19,7 +19,7 @@ export interface KArray extends KRoot {
 export type KArrayTrans = $<$Q, KArray>
 
 /** The array interface. */
-interface IArray extends IMonadPlus<KArray>, IFoldable<KArray>, IUnfoldable<KArray>, ITraversable<KArray>, ITransformer<KArrayTrans> {
+export interface IArray extends IMonadPlus<KArray>, IFoldable<KArray>, IUnfoldable<KArray>, ITraversable<KArray>, ITransformer<KArrayTrans> {
     /** Folds the values of `fa` from right to left using the given function and initial value. */
     foldr<A, B>(f: (a: A, b: B) => B): (b: B) => (fa: A[]) => B
     /** Filters the items of an array using a predicate function. */
@@ -30,7 +30,7 @@ interface IArray extends IMonadPlus<KArray>, IFoldable<KArray>, IUnfoldable<KArr
     chunks(size: number): <A>(fa: A[]) => A[][]
     /** Removes duplicate items from an array using a key function. */
     distinctBy<A, B>(f: (a: A) => B): (fa: A[]) => A[]
-    /** Maps an async function over an array. */
+    /** Maps an async function over an array, running promises sequentially. */
     mapAsync: <A, B>(f: (a: A) => Promise<B>) => (fa: A[]) => Promise<B[]>
     /** Takes the first `n` items of an array. */
     take<A>(n: number): (fa: A[]) => A[]

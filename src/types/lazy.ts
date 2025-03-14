@@ -14,7 +14,7 @@ export interface KLazy extends KRoot {
 }
 
 /** The lazy monad. */
-interface ILazy extends IMonad<KLazy> {
+export interface ILazy extends IMonad<KLazy> {
     /** Memoizes the given lazy value. */
     memo<A>(f: Lazy<A>): Lazy<A>
     /** Creates a lazy value from the given constant function. */
