@@ -60,6 +60,14 @@ export interface IMaybe extends IMonadPlus<KMaybe>, IFoldable<KMaybe>, ITraversa
 
 /** The maybe transformer interface, providing a set of functions for working with `Maybe` values within a monad. */
 export interface IMaybeTrans<M> extends IMonadTrans<$<$Q, KMaybe>, M>, IFold<$B2<M, KMaybe>, M>, IMonadPlus<$B2<M, KMaybe>> {
+    /** Creates a `Just` value, representing an existing value. */
+    just<A>(a: A): $<M, Just<A>>
+    /** The `Nothing` value, representing the lack of a value. */
+    readonly nothing: $<M, Nothing>
+    /** Checks if the given value is a `Just`. */
+    isJust<A>(fa: $<M, Maybe<A>>): $<M, boolean>
+    /** Checks if the given value is a `Nothing`. */
+    isNothing<A>(fa: $<M, Maybe<A>>): $<M, boolean>    
     /** Applies one of two functions to the value of a `Maybe` within a monad. */
     either<A, B, C = B>(onLeft: () => $<M, B>, onRight: (b: A) => $<M, C>): (fa: $<M, Maybe<A>>) => $<M, B | C>;
     /** Returns the first value in a list, or `Nothing` if the list is empty. */
@@ -87,9 +95,9 @@ export const maybe: IMaybe = (() => {
     const isNothing = <A>(fa: Maybe<A>): fa is Nothing => !fa.right;
     const fromList = <A>(fa: A[]): Maybe<A> => fa.length > 0 ? just(fa[0]) : nothing;
     const toList = <A>(fa: Maybe<A>): [] | [A] => fa.right ? [fa.value] : [];
-    const map = <A, B>(fa: Maybe<A>, f: (a: A) => B): Maybe<B> => fa.right ? just(f(fa.value)) : nothing;
+    const map = <A, B>(fa: Maybe<A>, f: (a: A) => B): Maybe<B> => fa.right ? just(f(fa.value)) : fa;
     const unit = <A>(a: A): Maybe<A> => just(a);
-    const bind = <A, B>(fa: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> => fa.right ? f(fa.value) : nothing;
+    const bind = <A, B>(fa: Maybe<A>, f: (a: A) => Maybe<B>): Maybe<B> => fa.right ? f(fa.value) : fa;
     const fromNullable = <A>(a: A): Maybe<NonNullable<A>> => a == null ? nothing : just<NonNullable<A>>(a);
     const empty = <A>(): Maybe<A> => nothing;
     const append = base.append;
@@ -138,6 +146,10 @@ export const maybe: IMaybe = (() => {
                 empty: __monoid.empty,
                 unit: __monadTrans.unit,
             }),
+            just: a => m.unit(just(a)),
+            nothing: m.unit(nothing),
+            isJust: fa => m.map(fa, isJust),
+            isNothing: fa => m.map(fa, isNothing),
             or: <B>(b: $<M, B>) => <A>(fa: $<M, Maybe<A>>): $<M, Maybe<A> | B> => m.bind(fa, ma => 
                 (ma.right ? m.unit(ma) : b) as $<M, Maybe<A> | B>
             ),

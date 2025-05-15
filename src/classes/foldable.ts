@@ -4,11 +4,14 @@ import { $, $I, $B2, $Q2 } from "../core/hkt.js";
 import { IMonadBase, ITrivial, monad } from "./monad.js";
 import { TypeClassArg } from "./utilities.js";
 import { chain, pipe } from "../core/utils.js";
+import { Maybe } from "../types/maybe.js";
 
 /** The minimal definition of a foldable. */
 export interface IFoldableBase<F> extends IFunctorBase<F> {
     /** Folds the values of `fa` using the given function and initial value. */
     foldl<A, B>(f: (b: B, a: A) => B): (b: B) => (fa: $<F, A>) => B
+    /** Deconstructs the foldable into a tuple of the first element and the rest. */
+    // decons<A>(fa: $<F, A>): Maybe<[A, $<F, A>]>
 }
 
 /** The foldable interface, where `scalar` is the trivial (identity) monad. */
