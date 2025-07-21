@@ -1,5 +1,3 @@
-# @jsoldi/hkt
-
 Lightweight library that brings Haskell-style higher-kinded types to TypeScript. It includes common abstractions like Monad, Functor, and Monoid, along with implementations for common JavaScript objects. The idea is to provide a solid foundation for functional programming in TypeScript without abandoning JavaScript's native features.
 
 As an example, instead of directly defining a *foldable* interface, the library provides a more general *fold* interface (with *foldable* as a special case), where results are wrapped in a monad. This approach allows types like `AsyncGenerator` to be folded by returning a task (a promise returning function), adding foldable capabilities to async generators.
@@ -153,9 +151,8 @@ const prompt = (message: string): ContVoid<string> => resolve => {
     });
 };
 
-// Standalone `pipe` is the trivial (identity) monad's `pipe` — passing 
-// the first argument through the (reversed) function composition of the 
-// rest.
+// Standalone `pipe` is the trivial (identity) monad's `pipe, passing 
+// the first argument to the (reversed) function composition of the rest.
 pipe(
     cont.void.map(
         prompt('Enter position in Fibonacci sequence or "exit": '),

@@ -30,6 +30,8 @@ export interface IArray extends IMonadPlus<KArray>, IFoldable<KArray>, IUnfoldab
     chunks(size: number): <A>(fa: A[]) => A[][]
     /** Removes duplicate items from an array using a key function. */
     distinctBy<A, B>(f: (a: A) => B): (fa: A[]) => A[]
+    /** Groups items of an array by a key function. */
+    groupBy<A, B>(f: (a: A) => B): (fa: A[]) => Map<B, A[]>
     /** Maps an async function over an array, running promises sequentially. */
     mapAsync: <A, B>(f: (a: A) => Promise<B>) => (fa: A[]) => Promise<B[]>
     /** Takes the first `n` items of an array. */
@@ -107,6 +109,22 @@ export const array: IArray = (() => {
                 keys.add(b);
                 result.push(a);
             }
+        }
+
+        return result;
+    }
+
+    const groupBy = <A, B>(f: (a: A) => B) => (fa: A[]): Map<B, A[]> => {
+        const result = new Map<B, A[]>();
+
+        for (const a of fa) {
+            const b = f(a);
+            const group = result.get(b);
+
+            if (group) 
+                group.push(a);
+            else 
+                result.set(b, [a]);
         }
 
         return result;
@@ -197,6 +215,7 @@ export const array: IArray = (() => {
         foldr,
         chunks: chunk,
         distinctBy,
+        groupBy,
         mapAsync,
         take,
         skip,
