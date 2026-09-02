@@ -75,6 +75,8 @@ export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KTask>, IUnfol
     chunks<T>(size: number): (fa: Async<T>) => Async<T[]>
     /** Zips two Asyncs into an Async of pairs. */
     zip<A, B>(fa: Async<A>, fb: Async<B>): Async<[A, B]>
+    /** Likely `fmap` but the function returns a promise */
+    fmapAsync<A, B>(f: (a: A) => Promise<B>): (fa: Async<A>) => Async<B>
 }
 
 /** The `Async` module, providing a set of functions to work with `Async` instances, which are functions that return an `AsyncGenerator` */
@@ -104,6 +106,11 @@ export const async: IAsync = (() => {
     const map: I['map'] = (fa, f) => async function* () {
         for await (const a of fa())
             yield f(a);
+    }
+
+    const fmapAsync: I['fmapAsync'] = f => fa => async function* () {
+        for await (const a of fa())
+            yield await f(a);
     }
 
     const from = <T, A extends any[]>(asyncLike: AsyncLike<T, A>, ...args: A): Async<T> => async function* () {
@@ -277,6 +284,7 @@ export const async: IAsync = (() => {
         flatMap,
         fun: fun,
         from, // override MonadPlus implementation
+        fmapAsync,
         take,
         flat,
         toArray,
