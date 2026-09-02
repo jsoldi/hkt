@@ -29,6 +29,8 @@ export interface IMonoid<F> extends IMonoidBase<F> {
     dual(): IMonoid<F>
     /** Lifts this monoid into a monad. */
     liftMonoid<M>(m: IMonad<M>): IMonoid<$B2<M, F>>
+    /** Creates an `IMonoid` with a fixed type argument. */
+    concrete<T>(): IMonoid<$K1<$<F, T>>>
 }
 
 const is_monoid = Symbol("is_monoid");
@@ -75,12 +77,18 @@ function _monoid<F>(base: MonoidArg<F>): IMonoid<F> {
                 });
             };
 
+            const concrete = <T>() => _monoid.concrete<$<F, T>>(
+                base.empty<T>(),
+                (a, b) => base.append(a, b)
+            );
+
             return {
                 [is_monoid]: true,
                 when,
                 join,
                 dual,
                 liftMonoid,
+                concrete,
                 ...base,
             }
         }

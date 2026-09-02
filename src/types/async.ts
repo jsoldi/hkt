@@ -61,6 +61,8 @@ export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KTask>, IUnfol
     filter<T, S extends T>(pred: (a: T) => a is S): (fa: Async<T>) => Async<S>
     /** Filters the items of an Async using a predicate function. */
     filter<T>(pred: (a: T) => unknown): (fa: Async<T>) => Async<T>
+    /** Filters the items of an Async using a, async predicate function. */
+    filterAsync<T>(pred: (a: T) => Promise<unknown>): (fa: Async<T>) => Async<T>
     /** Takes items from the Async while the predicate is true. */
     takeWhile<T>(pred: (a: T) => unknown): (fa: Async<T>) => Async<T>
     /** Skips items from the Async while the predicate is true. */
@@ -135,6 +137,13 @@ export const async: IAsync = (() => {
     const filter: I['filter'] = <T>(pred: (a: T) => unknown) => (fa: Async<T>) => async function* () {
         for await (const a of fa()) {
             if (pred(a))
+                yield a;
+        }
+    }
+
+    const filterAsync: I['filterAsync'] = <T>(pred: (a: T) => Promise<unknown>) => (fa: Async<T>) => async function* () {
+        for await (const a of fa()) {
+            if (await pred(a))
                 yield a;
         }
     }
@@ -266,6 +275,7 @@ export const async: IAsync = (() => {
         flat,
         toArray,
         filter,
+        filterAsync,
         takeWhile,
         skipWhile,
         distinctBy,

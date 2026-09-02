@@ -1,6 +1,6 @@
 import { $, $I, KRoot } from "../core/hkt.js"
 import { IMonad, monad } from "../classes/monad.js";
-import { ITransformer, monadTrans } from "../classes/transformer.js";
+import { IMonadTrans, ITransformer, monadTrans } from "../classes/transformer.js";
 
 /** The state monad transformer value type, representing a function that takes a state and returns a new state and a value wrapped in the given type `F`. */
 export type StateTrans<F, S, T> = (a: S) => $<F, [T, S]>
@@ -29,6 +29,12 @@ export interface IState<S> extends IMonad<KState<S>>, ITransformer<KStateTrans<S
     put<S>(s: S): State<S, null>
     /** Creates a `state` module with a fixed environment type. */
     of<T>(): IState<T>
+    transform<M>(base: IMonad<M>): IStateTrans<S, M>
+}
+
+export interface IStateTrans<S, M> extends IMonadTrans<KStateTrans<S>, M> {
+    // get<A>(fa: StateTrans<M, S, A>): StateTrans<M, S, S>
+    // put<A>(fa: StateTrans<M, S, A>, s: S): StateTrans<M, S, null>
 }
 
 /** Creates a state monad with a fixed state type. */
@@ -44,17 +50,18 @@ function stateOf<S>(): IState<S> {
     const get: State<S, S> = s => [s, s];
     const put = <S>(s: S): State<S, null> => _ => [null, s];
 
-    const transform = <M>(inner: IMonad<M>) => {
+    const transform = <M>(inner: IMonad<M>): IStateTrans<S, M> => {
         const unit = <A>(a: A): StateTrans<M, S, A> => s => inner.unit([a, s] as const);
 
         const bind = <A, B>(fa: StateTrans<M, S, A>, f: (a: A) => StateTrans<M, S, B>): StateTrans<M, S, B> => s => 
             inner.bind(fa(s), ([a, t]) => f(a)(t));
 
         const lift = <A>(ma: $<M, A>): StateTrans<M, S, A> => s => inner.map(ma, a => [a, s] as const);
-
         const wrap: <A>(fa: State<S, A>) => StateTrans<M, S, A> = fa => s => inner.unit(fa(s));
 
-        return monadTrans<KStateTrans<S>, M>({ unit, bind, lift, wrap });
+        return {
+            ...monadTrans<KStateTrans<S>, M>({ unit, bind, lift, wrap }),
+        }
     };
 
     return {
