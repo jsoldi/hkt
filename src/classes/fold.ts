@@ -23,6 +23,8 @@ export interface IFoldBase<F, G> extends IFunctorBase<F> {
 export interface IFold<F, G> extends IFoldBase<F, G>, IFunctor<F> {    
     /** Folds the given structure into an array. */
     toArray<A>(fa: $<F, A>): $<G, A[]>
+    /** Returns the first element of the given structure, if any. */
+    first<A>(fa: $<F, A>): $<G, A | undefined>
     /** Folds the given structure using the given monoid. */
     fold<M>(m: IMonoid<M>): <A>(fa: $<F, $<M, A>>) => $<G, $<M, A>>
     /** Same as `foldl`, but with the arguments reordered. */
@@ -56,6 +58,7 @@ export function fold<F, G>(base: TypeClassArg<IFoldBase<F, G>, IFold<F, G>, type
         }),
         base => {
             const toArray: I['toArray'] = <A>(fa: $<F, A>) => base.foldl((acc: A[], a: A) => [...acc, a])([])(fa);
+            const first: I['first'] = <A>(fa: $<F, A>) => base.foldl<A, A | undefined>((acc, a) => acc ?? a)(undefined)(fa);
             const _fold: I['fold'] = m => base.foldl(m.append)(m.empty());
             const reduce: I['reduce'] = <T, U>(acc: U, f: (acc: U, a: T) => U) => base.foldl(f)(acc);
             const length: I['length'] = fa => base.foldl((acc: number, _: unknown) => acc + 1)(0)(fa);
@@ -71,6 +74,7 @@ export function fold<F, G>(base: TypeClassArg<IFoldBase<F, G>, IFold<F, G>, type
             return {
                 [is_fold]: true,
                 toArray,
+                first,
                 fold: _fold,
                 reduce,
                 length,

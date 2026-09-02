@@ -110,3 +110,31 @@
 // const aver = Array.from({ length: 4 }, (_, i) => i).join('+');
 // const result = math.parse('10.1 + 20 * 30 + 40'); // 650.1
 // console.log(result);
+
+// import { pipe } from "./core/utils";
+// import { async } from "./types/async";
+// import { task } from "./types/task";
+
+// const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+// const ses = async.from(async function * (): AsyncGenerator<number> {
+//     console.log('Starting async generator');
+//     await delay(1000);
+//     yield 1;
+//     console.log('Yielding 2');
+//     await delay(1000);
+//     yield 2;
+//     console.log('Yielding 3');
+//     await delay(1000);
+//     yield 3;
+//     console.log('Async generator finished');
+//     await delay(1000);
+// });
+
+// const rat = await pipe(
+//     ses,
+//     async.first,
+//     task.run
+// );
+
+// console.log('result:', rat);

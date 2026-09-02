@@ -134,6 +134,12 @@ export const async: IAsync = (() => {
         return result;
     }
 
+    const first: I['first'] = fa => async function () {
+        for await (const a of fa()) {
+            return a;
+        }
+    }
+
     const filter: I['filter'] = <T>(pred: (a: T) => unknown) => (fa: Async<T>) => async function* () {
         for await (const a of fa()) {
             if (pred(a))
@@ -274,6 +280,7 @@ export const async: IAsync = (() => {
         take,
         flat,
         toArray,
+        first,
         filter,
         filterAsync,
         takeWhile,
