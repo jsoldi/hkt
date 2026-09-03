@@ -74,7 +74,7 @@ export interface IAsync extends IMonadPlus<KAsync>, IFold<KAsync, KTask>, IUnfol
     /** Split the Async into chunks of the given size. */
     chunks<T>(size: number): (fa: Async<T>) => Async<T[]>
     /** Zips two Asyncs into an Async of pairs. */
-    zip<A, B>(fa: Async<A>, fb: Async<B>): Async<[A, B]>
+    zip<A>(fa: Async<A>): <B>(fb: Async<B>) => Async<[A, B]>
     /** Likely `fmap` but the function returns a promise */
     fmapAsync<A, B>(f: (a: A) => Promise<B>): (fa: Async<A>) => Async<B>
 }
@@ -241,7 +241,7 @@ export const async: IAsync = (() => {
         }
     };
 
-    const zip = <A, B>(fa: Async<A>, fb: Async<B>): Async<[A, B]> => async function* () {
+    const zip = <A>(fa: Async<A>): <B>(fb: Async<B>) => Async<[A, B]> => fb => async function* () {
         const a = fa();
         const b = fb();
 

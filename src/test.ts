@@ -111,9 +111,10 @@
 // const result = math.parse('10.1 + 20 * 30 + 40'); // 650.1
 // console.log(result);
 
-// import { pipe } from "./core/utils";
-// import { async } from "./types/async";
-// import { task } from "./types/task";
+import { pipe } from "./core/utils.js";
+import { async } from "./types/async.js";
+import { maybe } from "./types/maybe.js";
+import { task } from "./types/task.js";
 
 // const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -138,3 +139,14 @@
 // );
 
 // console.log('result:', rat);
+
+// console.log('Starting iteration:');
+// const rekt = async.iterate<number>(i => maybe.just(i + 1))(10);
+// const lal = async.from(['uno', 'dos', 'tres']);
+// const zip = async.zip(rekt)(lal);
+// console.log('Initial value:', 10);
+
+// for await (const [a, b] of zip()) {
+//     await new Promise(resolve => setTimeout(resolve, 1));
+//     console.log(a, b);
+// }

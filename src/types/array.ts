@@ -39,7 +39,7 @@ export interface IArray extends IMonadPlus<KArray>, IFoldable<KArray>, IUnfoldab
     /** Skips the first `n` items of an array. */
     skip<A>(n: number): (fa: A[]) => A[]
     /** Zips two arrays into an array of pairs. */
-    zip<A, B>(fa: A[], fb: B[]): [A, B][]
+    zip<A>(fa: A[]): <B>(fb: B[]) => [A, B][]
     /** Produces a monad transformer having `Array` as the inner monad. */
     transform<M>(base: IMonad<M>): IArrayTrans<M>
     /** Lifts the array monoid into a monad. */
@@ -147,7 +147,7 @@ export const array: IArray = (() => {
     const bind = <A, B>(fa: A[], f: (a: A) => B[]): B[] => fa.flatMap(f);
     const empty = <A>(): A[] => [];
     const append = <A>(fa: A[], fb: A[]): A[] => fa.concat(fb);
-    const zip = <A, B>(fa: A[], fb: B[]): [A, B][] => Array.from({ length: Math.min(fa.length, fb.length) }, (_, i) => [fa[i], fb[i]]);
+    const zip = <A>(fa: A[]) => <B>(fb: B[]): [A, B][] => Array.from({ length: Math.min(fa.length, fb.length) }, (_, i) => [fa[i], fb[i]]);
 
     const _traversable = traversable<KArray>({
         traverse: <M>(m: IMonad<M>) => <A, B>(f: (a: A) => $<M, B>) => (ta: A[]): $<M, B[]> => 
